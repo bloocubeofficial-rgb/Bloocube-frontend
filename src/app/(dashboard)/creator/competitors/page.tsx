@@ -93,6 +93,8 @@ const CompetitorAnalysisPage = () => {
   const [quickError, setQuickError] = useState<string | null>(null);
   const [fetchedData, setFetchedData] = useState<any>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [aiTestStatus, setAiTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [aiTestMessage, setAiTestMessage] = useState<string>('');
 
   // Load competitor data and analysis history
   useEffect(() => {
@@ -310,6 +312,29 @@ const CompetitorAnalysisPage = () => {
     return 'text-red-600';
   };
 
+  const testAIServices = async () => {
+    setAiTestStatus('testing');
+    setAiTestMessage('Testing AI Services connection...');
+    
+    try {
+      const response = await apiRequest<{ success: boolean; data: any; message: string }>(
+        '/api/competitor/test-ai'
+      );
+      
+      if (response.success) {
+        setAiTestStatus('success');
+        const processingTime = response.data.test_analysis?.processing_time || 'N/A';
+        setAiTestMessage(`AI Services connected successfully! Processing time: ${processingTime}ms`);
+      } else {
+        setAiTestStatus('error');
+        setAiTestMessage('AI Services test failed');
+      }
+    } catch (error: any) {
+      setAiTestStatus('error');
+      setAiTestMessage(`AI Services connection failed: ${error.message || 'Unknown error'}`);
+    }
+  };
+
   return (
     <CreatorLayout 
       title="Competitors"
@@ -330,6 +355,24 @@ const CompetitorAnalysisPage = () => {
               </button>
             </Link>
             <button
+              onClick={testAIServices}
+              disabled={aiTestStatus === 'testing'}
+              className={`px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-2 text-sm ${
+                aiTestStatus === 'success' 
+                  ? 'bg-green-100 text-green-700 border border-green-300' 
+                  : aiTestStatus === 'error'
+                  ? 'bg-red-100 text-red-700 border border-red-300'
+                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Zap className="w-4 h-4" />
+              <span>
+                {aiTestStatus === 'testing' ? 'Testing AI...' : 
+                 aiTestStatus === 'success' ? 'AI Connected' :
+                 aiTestStatus === 'error' ? 'AI Error' : 'Test AI'}
+              </span>
+            </button>
+            <button
               onClick={() => setShowHistory(!showHistory)}
               className="border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2 text-sm"
             >
@@ -349,6 +392,22 @@ const CompetitorAnalysisPage = () => {
           </div>
         </div>
       </div>
+
+      {/* AI Services Status */}
+      {aiTestMessage && (
+        <div className={`mb-4 p-4 rounded-lg border ${
+          aiTestStatus === 'success' 
+            ? 'bg-green-50 border-green-200 text-green-800' 
+            : aiTestStatus === 'error'
+            ? 'bg-red-50 border-red-200 text-red-800'
+            : 'bg-blue-50 border-blue-200 text-blue-800'
+        }`}>
+          <div className="flex items-center space-x-2">
+            <Zap className="w-4 h-4" />
+            <span className="text-sm font-medium">{aiTestMessage}</span>
+          </div>
+        </div>
+      )}
 
       {/* Quick Analysis Form */}
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50 p-5 mb-8">
@@ -404,7 +463,7 @@ const CompetitorAnalysisPage = () => {
                 disabled={quickLoading}
                 className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-300 text-sm"
               >
-                {quickLoading ? 'Analyzing…' : 'Start AI Analysis'}
+                {quickLoading ? 'AI Analyzing…' : 'Start AI Analysis'}
               </button>
             )}
           </div>
@@ -531,6 +590,19 @@ const CompetitorAnalysisPage = () => {
                 Fetched: {new Date(fetchedData.fetchedAt).toLocaleTimeString()}
               </span>
             </div>
+          </div>
+
+          {/* AI Services Status */}
+          <div className="mt-2 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+            <div className="flex items-center">
+              <Zap className="w-4 h-4 text-yellow-600 mr-2" />
+              <span className="text-sm font-medium text-yellow-800">
+                AI Services: Ready for Analysis
+              </span>
+            </div>
+            <p className="text-xs text-yellow-700 mt-1">
+              Enhanced AI analysis will be performed. If AI services are unavailable, basic analysis will be provided.
+            </p>
           </div>
         </div>
       )}
