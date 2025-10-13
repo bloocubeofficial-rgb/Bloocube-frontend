@@ -6,7 +6,6 @@ import {
   Bell, 
   Check, 
   Trash2, 
-  MoreVertical, 
   AlertCircle, 
   Info, 
   CheckCircle, 
@@ -14,7 +13,6 @@ import {
   X
 } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
-import type { Notification } from '@/lib/notificationService';
 
 interface NotificationDropdownProps {
   className?: string;
@@ -34,7 +32,6 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
     closeDropdown,
     getPriorityIcon,
     getPriorityColor,
-    getTypeIcon,
     dropdownRef
   } = useNotifications();
 
