@@ -15,6 +15,10 @@ export const config = {
     // callbackUrl: 'http://localhost:3000/auth/instagram/callback'
     callbackUrl: (process.env.FRONTEND_URL || 'http://localhost:3000') + '/auth/instagram/callback'
   },
+  facebook: {
+    // callbackUrl: 'http://localhost:3000/auth/facebook/callback'
+    callbackUrl: (process.env.FRONTEND_URL || 'http://localhost:3000') + '/auth/facebook/callback'
+  },
 };
 
 export const getApiBase = (): string => {
