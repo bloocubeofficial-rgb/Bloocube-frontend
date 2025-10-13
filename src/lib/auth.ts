@@ -107,6 +107,19 @@ export const authUtils = {
     };
   },
 
+  // Set token only (useful for auto-login scenarios)
+  setToken(token: string): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('token', token);
+    
+    // Update cache
+    authCache = {
+      token,
+      user: authCache?.user || null,
+      timestamp: Date.now()
+    };
+  },
+
   // Clear cache (useful for testing or forced refresh)
   clearCache(): void {
     authCache = null;

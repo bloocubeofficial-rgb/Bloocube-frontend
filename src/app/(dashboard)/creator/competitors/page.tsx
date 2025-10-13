@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { Search, Filter, Users, Eye, Heart, MessageCircle, Share2, BarChart3, Target, Zap, Plus, ExternalLink } from 'lucide-react';
+import { Search, Filter, Users, Eye, Heart, MessageCircle, Share2, BarChart3, Target, Zap, Plus, ExternalLink, X } from 'lucide-react';
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 //
 import { apiRequest } from '@/lib/apiClient';
@@ -91,6 +91,8 @@ const CompetitorAnalysisPage = () => {
   const [quickInput, setQuickInput] = useState('');
   const [quickLoading, setQuickLoading] = useState(false);
   const [quickError, setQuickError] = useState<string | null>(null);
+  const [fetchedData, setFetchedData] = useState<any>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Load competitor data and analysis history
   useEffect(() => {
@@ -213,7 +215,7 @@ const CompetitorAnalysisPage = () => {
     }
   };
 
-  const startQuickAnalysis = async () => {
+  const fetchCompetitorData = async () => {
     const profileUrl = buildProfileUrl(quickPlatform, quickInput);
     if (!profileUrl) {
       setQuickError('Enter a valid username or full profile URL');
@@ -222,20 +224,69 @@ const CompetitorAnalysisPage = () => {
     setQuickError(null);
     setQuickLoading(true);
     try {
+      const resp = await apiRequest<{ success: boolean; data: any }>(
+        '/api/competitor/fetch',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            competitorUrl: profileUrl,
+            platform: quickPlatform
+          })
+        }
+      );
+      if (resp.success) {
+        setFetchedData(resp.data);
+        setShowPreview(true);
+        setQuickError(null);
+      } else {
+        setQuickError('Failed to fetch competitor data. Please try again.');
+      }
+    } catch (e: unknown) {
+      const err = e as { message?: string } | undefined;
+      setQuickError(err?.message || 'Failed to fetch competitor data. Please try again.');
+    } finally {
+      setQuickLoading(false);
+    }
+  };
+
+  const startQuickAnalysis = async () => {
+    if (!fetchedData) {
+      setQuickError('Please fetch competitor data first');
+      return;
+    }
+    setQuickLoading(true);
+    setQuickError(null);
+    try {
       const resp = await apiRequest<{ success: boolean; data: Record<string, unknown> }>(
         '/api/competitor/analyze',
         {
           method: 'POST',
           body: JSON.stringify({
-            competitorUrls: [profileUrl],
+            competitorUrls: [fetchedData.profile.profileUrl],
             analysisType: 'comprehensive',
-            options: { maxPosts: 30, timePeriodDays: 30, includeContentAnalysis: true, includeEngagementAnalysis: true, includeAudienceAnalysis: true, includeCompetitiveInsights: true, includeRecommendations: true }
+            platform: quickPlatform,
+            options: { 
+              maxPosts: 30, 
+              timePeriodDays: 30, 
+              includeContentAnalysis: true, 
+              includeEngagementAnalysis: true, 
+              includeAudienceAnalysis: true, 
+              includeCompetitiveInsights: true, 
+              includeRecommendations: true,
+              fetchRealTimeData: true,
+              platformSpecific: true
+            }
           })
         }
       );
       if (resp.success) {
         // Update list immediately from returned data
         await loadAnalysisHistory();
+        // Reset form
+        setFetchedData(null);
+        setShowPreview(false);
+        setQuickInput('');
+        setQuickError(null);
       } else {
         setQuickError('Analysis failed. Please try again.');
       }
@@ -339,16 +390,150 @@ const CompetitorAnalysisPage = () => {
             {quickError && <div className="text-sm text-red-600">{quickError}</div>}
           </div>
           <div>
-            <button
-              onClick={startQuickAnalysis}
-              disabled={quickLoading}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 text-sm"
-            >
-              {quickLoading ? 'Analyzing…' : 'Analyze Now'}
-            </button>
+            {!showPreview ? (
+              <button
+                onClick={fetchCompetitorData}
+                disabled={quickLoading}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 text-sm"
+              >
+                {quickLoading ? 'Fetching Data…' : 'Fetch Competitor Data'}
+              </button>
+            ) : (
+              <button
+                onClick={startQuickAnalysis}
+                disabled={quickLoading}
+                className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-300 text-sm"
+              >
+                {quickLoading ? 'Analyzing…' : 'Start AI Analysis'}
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Competitor Data Preview */}
+      {showPreview && fetchedData && (
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50 p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <Eye className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Competitor Data Preview</h3>
+                <p className="text-sm text-gray-500">Review the fetched data before AI analysis</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setShowPreview(false);
+                setFetchedData(null);
+              }}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Profile Information */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                <Users className="w-4 h-4 mr-2" />
+                Profile Information
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Platform:</span>
+                  <span className="font-medium capitalize">{fetchedData.profile.platform}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Username:</span>
+                  <span className="font-medium">@{fetchedData.profile.username}</span>
+                </div>
+                {fetchedData.profile.followers && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Followers:</span>
+                    <span className="font-medium">{formatNumber(fetchedData.profile.followers)}</span>
+                  </div>
+                )}
+                {fetchedData.profile.verified && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Verified:</span>
+                    <span className="text-green-600 font-medium">✓ Yes</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Content Statistics */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Content Statistics
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Recent Posts:</span>
+                  <span className="font-medium">{fetchedData.content.totalPosts}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Posts/Week:</span>
+                  <span className="font-medium">{fetchedData.content.averagePostsPerWeek.toFixed(1)}</span>
+                </div>
+                {fetchedData.content.topHashtags && fetchedData.content.topHashtags.length > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Top Hashtag:</span>
+                    <span className="font-medium">#{fetchedData.content.topHashtags[0]?.tag}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Engagement Metrics */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                <Heart className="w-4 h-4 mr-2" />
+                Engagement Metrics
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Engagement Rate:</span>
+                  <span className={`font-medium ${getEngagementColor(parseFloat(fetchedData.engagement.engagementRate))}`}>
+                    {fetchedData.engagement.engagementRate}%
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Avg Likes:</span>
+                  <span className="font-medium">{formatNumber(fetchedData.engagement.averageLikes || 0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Avg Comments:</span>
+                  <span className="font-medium">{formatNumber(fetchedData.engagement.averageComments || 0)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Data Quality Indicator */}
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className={`w-3 h-3 rounded-full mr-2 ${
+                  fetchedData.dataQuality.level === 'high' ? 'bg-green-500' :
+                  fetchedData.dataQuality.level === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
+                }`}></div>
+                <span className="text-sm font-medium text-gray-700">
+                  Data Quality: {fetchedData.dataQuality.level.toUpperCase()}
+                </span>
+              </div>
+              <span className="text-xs text-gray-500">
+                Fetched: {new Date(fetchedData.fetchedAt).toLocaleTimeString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Enhanced Filters Section */}
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50 p-5 mb-8 hover:shadow-md transition-all duration-200">
@@ -497,12 +682,16 @@ const CompetitorAnalysisPage = () => {
       )}
 
       {/* Loading State */}
-      {loading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-3 text-gray-600">Loading competitors...</span>
-        </div>
-      )}
+                {loading && (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span className="ml-3 text-gray-600">Loading competitors...</span>
+                    <div className="mt-4 text-sm text-gray-500 text-center max-w-md">
+                      <p>Fetching real-time data from social media platforms...</p>
+                      <p className="mt-1">This may take a few moments as we collect fresh data.</p>
+                    </div>
+                  </div>
+                )}
 
       {/* Competitors Grid */}
       {!loading && (

@@ -52,6 +52,9 @@ const CompetitorAnalysisPage = () => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fetchedData, setFetchedData] = useState<any[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const [fetchingData, setFetchingData] = useState(false);
   // Avoid calling useSearchParams in this component; use child wrapped in Suspense instead
 
   // Add new competitor URL input
@@ -151,12 +154,62 @@ const CompetitorAnalysisPage = () => {
     setCompetitorUrls([{ id: '1', url, ...validateUrl(url) }]);
   }, []);
 
-  // Start competitor analysis
-  const startAnalysis = async () => {
+  // Fetch competitor data for preview
+  const fetchCompetitorData = async () => {
     const validUrls = competitorUrls.filter(comp => comp.isValid && comp.url.trim());
     
     if (validUrls.length === 0) {
       setError('Please add at least one valid competitor profile URL');
+      return;
+    }
+
+    setFetchingData(true);
+    setError(null);
+    setFetchedData([]);
+
+    try {
+      const fetchPromises = validUrls.map(async (comp) => {
+        const url = new URL(comp.url);
+        const hostname = url.hostname.toLowerCase();
+        let platform = 'unknown';
+        
+        if (hostname.includes('instagram.com')) platform = 'instagram';
+        else if (hostname.includes('twitter.com') || hostname.includes('x.com')) platform = 'twitter';
+        else if (hostname.includes('youtube.com')) platform = 'youtube';
+        else if (hostname.includes('linkedin.com')) platform = 'linkedin';
+        else if (hostname.includes('facebook.com')) platform = 'facebook';
+
+        const response = await apiRequest<{ success: boolean; data: any }>('/api/competitor/fetch', {
+          method: 'POST',
+          body: JSON.stringify({
+            competitorUrl: comp.url,
+            platform: platform
+          })
+        });
+
+        return response.success ? response.data : null;
+      });
+
+      const results = await Promise.all(fetchPromises);
+      const validResults = results.filter(result => result !== null);
+      
+      if (validResults.length > 0) {
+        setFetchedData(validResults);
+        setShowPreview(true);
+      } else {
+        setError('Failed to fetch data for any of the competitors');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch competitor data');
+    } finally {
+      setFetchingData(false);
+    }
+  };
+
+  // Start competitor analysis
+  const startAnalysis = async () => {
+    if (fetchedData.length === 0) {
+      setError('Please fetch competitor data first');
       return;
     }
 
@@ -165,11 +218,15 @@ const CompetitorAnalysisPage = () => {
     setResults(null);
 
     try {
+      // Extract platforms from fetched data
+      const platforms = [...new Set(fetchedData.map(data => data.profile.platform))];
+
       const response = await apiRequest<{ success: boolean; data: AnalysisResult }>('/api/competitor/analyze', {
         method: 'POST',
         body: JSON.stringify({
-          competitorUrls: validUrls.map(comp => comp.url),
+          competitorUrls: fetchedData.map(data => data.profile.profileUrl),
           analysisType,
+          platforms: platforms,
           options: {
             maxPosts: 50,
             timePeriodDays: 30,
@@ -177,13 +234,17 @@ const CompetitorAnalysisPage = () => {
             includeEngagementAnalysis: true,
             includeAudienceAnalysis: true,
             includeCompetitiveInsights: true,
-            includeRecommendations: true
+            includeRecommendations: true,
+            fetchRealTimeData: true,
+            platformSpecific: true,
+            useEnvironmentCredentials: true
           }
         })
       });
 
       if (response.success) {
         setResults(response.data);
+        setShowPreview(false);
       } else {
         setError('Analysis failed. Please try again.');
       }
@@ -324,30 +385,130 @@ const CompetitorAnalysisPage = () => {
                   </div>
                 )}
 
-                {/* Start Analysis Button */}
-                <button
-                  onClick={startAnalysis}
-                  disabled={loading || competitorUrls.filter(c => c.isValid).length === 0}
-                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-                >
-                  {loading ? (
-                    <>
-                      <Clock className="h-5 w-5 mr-2 animate-spin" />
-                      Analyzing Competitors...
-                    </>
+                {/* Action Buttons */}
+                <div className="space-y-3">
+                  {!showPreview ? (
+                    <button
+                      onClick={fetchCompetitorData}
+                      disabled={fetchingData || competitorUrls.filter(c => c.isValid).length === 0}
+                      className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                    >
+                      {fetchingData ? (
+                        <>
+                          <Clock className="h-5 w-5 mr-2 animate-spin" />
+                          Fetching Competitor Data...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="h-5 w-5 mr-2" />
+                          Fetch Competitor Data
+                        </>
+                      )}
+                    </button>
                   ) : (
-                    <>
-                      <Search className="h-5 w-5 mr-2" />
-                      Start Analysis
-                    </>
+                    <button
+                      onClick={startAnalysis}
+                      disabled={loading}
+                      className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                    >
+                      {loading ? (
+                        <>
+                          <Clock className="h-5 w-5 mr-2 animate-spin" />
+                          Running AI Analysis...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="h-5 w-5 mr-2" />
+                          Start AI Analysis
+                        </>
+                      )}
+                    </button>
                   )}
-                </button>
+                </div>
 
                 {loading && (
                   <div className="mt-4 text-center text-gray-600">
-                    <p>This may take a few minutes as we collect and analyze data from social media platforms...</p>
+                    <div className="flex flex-col items-center space-y-3">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <div>
+                        <p className="font-medium">Analyzing competitors...</p>
+                        <p className="text-sm mt-1">Fetching real-time data from social media platforms</p>
+                        <p className="text-xs mt-1 text-gray-500">This may take a few minutes as we collect fresh data</p>
+                      </div>
+                    </div>
                   </div>
                 )}
+              </div>
+            ) : showPreview && fetchedData.length > 0 ? (
+              /* Competitor Data Preview */
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold">Competitor Data Preview</h2>
+                  <button
+                    onClick={() => {
+                      setShowPreview(false);
+                      setFetchedData([]);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {fetchedData.map((data, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="font-semibold text-lg">@{data.profile.username}</h3>
+                          <p className="text-sm text-gray-600 capitalize">{data.profile.platform}</p>
+                        </div>
+                        <div className="text-right">
+                          {data.profile.followers && (
+                            <div className="text-lg font-bold">{data.profile.followers.toLocaleString()}</div>
+                          )}
+                          <div className="text-sm text-gray-600">followers</div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <div className="font-medium text-gray-700">Engagement Rate</div>
+                          <div className="text-lg font-semibold">{data.engagement.engagementRate}%</div>
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-700">Recent Posts</div>
+                          <div className="text-lg font-semibold">{data.content.totalPosts}</div>
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-700">Data Quality</div>
+                          <div className={`text-lg font-semibold capitalize ${
+                            data.dataQuality.level === 'high' ? 'text-green-600' :
+                            data.dataQuality.level === 'medium' ? 'text-yellow-600' : 'text-red-600'
+                          }`}>
+                            {data.dataQuality.level}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-blue-900">Ready for AI Analysis</p>
+                      <p className="text-xs text-blue-700">Click "Start AI Analysis" to proceed with comprehensive analysis</p>
+                    </div>
+                    <button
+                      onClick={startAnalysis}
+                      disabled={loading}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-300 transition-colors"
+                    >
+                      {loading ? 'Analyzing...' : 'Start AI Analysis'}
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : (
               /* Analysis Results */
@@ -427,7 +588,7 @@ const CompetitorAnalysisPage = () => {
                         <div className="flex items-center justify-between mb-2">
                           <div>
                             <h4 className="font-semibold">@{competitor.username}</h4>
-                            <div className="text-sm text-black text-gray-600">{competitor.platform}</div>
+                            <div className="text-sm text-gray-600">{competitor.platform}</div>
                           </div>
                           <div className="text-right">
                             <div className="text-lg font-bold">{competitor.key_metrics.followers.toLocaleString()}</div>

@@ -36,6 +36,12 @@ export const LazyInstagramIntegration = lazy(() =>
   }))
 );
 
+export const LazyFacebookIntegration = lazy(() => 
+  import('@/Components/Facebook/FacebookIntegration').then(module => ({
+    default: module.FacebookIntegration
+  }))
+);
+
 export const LazySidebar = lazy(() => 
   import('@/Components/Creater/Sidebar')
 );
@@ -62,6 +68,12 @@ export const LinkedInIntegrationWithSuspense = (props: Record<string, unknown>) 
 export const InstagramIntegrationWithSuspense = (props: Record<string, unknown>) => (
   <Suspense fallback={<LoadingSpinner />}>
     <LazyInstagramIntegration {...props} />
+  </Suspense>
+);
+
+export const FacebookIntegrationWithSuspense = (props: Record<string, unknown>) => (
+  <Suspense fallback={<LoadingSpinner />}>
+    <LazyFacebookIntegration {...props} />
   </Suspense>
 );
 

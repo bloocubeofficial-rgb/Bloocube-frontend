@@ -7,10 +7,12 @@ import { TwitterIntegrationWithSuspense } from "@/Components/LazyComponents";
 import { LinkedInIntegrationWithSuspense } from "@/Components/LazyComponents";
 import { YouTubeIntegrationWithSuspense } from "@/Components/LazyComponents";
 import { InstagramIntegrationWithSuspense } from "@/Components/LazyComponents";
+import { FacebookIntegrationWithSuspense } from "@/Components/LazyComponents";
 import type { TwitterIntegrationRef } from "@/Components/Twitter/TwitterIntegration";
 import type { LinkedInIntegrationRef } from "@/Components/LinkedIn/LinkedInIntegration";
 import type { YouTubeIntegrationRef } from "@/Components/YouTube/YouTubeIntegration";
 import type { InstagramIntegrationRef } from "@/Components/Instagram/InstagramIntegration";
+import type { FacebookIntegrationRef } from "@/Components/Facebook/FacebookIntegration";
 import { useRef } from "react";
 
 interface FormData {
@@ -56,6 +58,7 @@ function SettingsPageContent() {
   const linkedinRef = useRef<LinkedInIntegrationRef>(null);
   const youtubeRef = useRef<YouTubeIntegrationRef>(null);
   const instagramRef = useRef<InstagramIntegrationRef>(null);
+  const facebookRef = useRef<FacebookIntegrationRef>(null);
 
   const [formData, setFormData] = useState<FormData>({
     email: "john@example.com",
@@ -395,20 +398,7 @@ function SettingsPageContent() {
           <InstagramIntegrationWithSuspense ref={instagramRef} />
 
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-200 rounded-lg gap-3">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <span className="text-blue-600 font-medium text-sm">F</span>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Facebook</p>
-                  <p className="text-sm text-gray-500">Not connected</p>
-                </div>
-              </div>
-              <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
-                Connect
-              </button>
-            </div>
+            <FacebookIntegrationWithSuspense ref={facebookRef} />
 
             <TwitterIntegrationWithSuspense ref={twitterRef} />
 

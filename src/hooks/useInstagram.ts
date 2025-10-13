@@ -8,18 +8,17 @@ import { authUtils } from "@/lib/auth";
 export const useInstagram = () => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [profile, setProfile] = useState<InstagramUser | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false); // Start with false to avoid stuck loading
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Removed automatic checkConnection() to prevent 429 errors
-    // Connection status will be checked manually when needed
+    // Initialize state without making API calls to prevent stuck loading
     if (!authUtils.isAuthenticated()) {
       setLoading(false);
       setIsConnected(false);
       setProfile(null);
     } else {
-      // Set initial state without making API calls
+      // For authenticated users, we'll check connection manually when needed
       setLoading(false);
       setIsConnected(false);
       setProfile(null);
@@ -84,6 +83,7 @@ export const useInstagram = () => {
       
       if (response.success && response.authURL) {
         localStorage.setItem("instagram_state", response.state || "");
+        // Don't set loading to false here since we're redirecting
         window.location.href = response.authURL;
       } else {
         throw new Error(response.error || "Failed to generate auth URL");

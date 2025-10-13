@@ -12,15 +12,28 @@ export interface InstagramIntegrationRef {
 }
 
 export const InstagramIntegration = forwardRef<InstagramIntegrationRef, InstagramIntegrationProps>(({ className = '' }, ref) => {
-  // We rely on the useInstagram hook to handle all API/auth URL generation logic
-  const { isConnected, profile, loading, error, connect, disconnect, checkConnection } = useInstagram();
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  // We rely on the useInstagram hook to handle all API/auth URL generation logic
+  const { isConnected, profile, loading, error, connect, disconnect, checkConnection } = useInstagram();
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [hasCheckedConnection, setHasCheckedConnection] = useState(false);
 
-  // Expose checkConnection method to parent component
-  useImperativeHandle(ref, () => ({
-    checkConnection
-  }));
+  // Expose checkConnection method to parent component
+  useImperativeHandle(ref, () => ({
+    checkConnection: async () => {
+      setHasCheckedConnection(true);
+      return checkConnection();
+    }
+  }));
+
+  // Auto-check connection on mount for authenticated users
+  React.useEffect(() => {
+    if (!hasCheckedConnection && !loading) {
+      setHasCheckedConnection(true);
+      // Don't auto-check to prevent stuck loading state
+      // checkConnection();
+    }
+  }, [hasCheckedConnection, loading]);
 
   const handleConnect = async () => {
     try {
@@ -73,9 +86,18 @@ export const InstagramIntegration = forwardRef<InstagramIntegrationRef, Instagra
                 </span>
               )}
             </div>
-          ) : (
-            <p className="text-sm text-gray-500">Not connected</p>
-          )}
+          ) : (
+            <div className="flex items-center space-x-2">
+              <p className="text-sm text-gray-500">Not connected</p>
+              <button
+                onClick={checkConnection}
+                disabled={loading}
+                className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+              >
+                {loading ? 'Checking...' : 'Check'}
+              </button>
+            </div>
+          )}
           {error && (
             <p className="text-sm text-red-500 mt-1">{error}</p>
           )}
