@@ -17,8 +17,6 @@ import { Alert, AlertDescription } from "@/Components/ui/Alert";
 import {
   Select,
   SelectTrigger,
-  SelectValue,
-  SelectContent,
   SelectItem,
 } from "@/Components/ui/Select";
 import Link from "next/link";
@@ -247,13 +245,14 @@ const SignupForm: React.FC = () => {
               Select Role
             </Label>
             <Select value={role} onValueChange={setRole}>
-              <SelectTrigger className="h-11 bg-white/5 border-white/10 text-white rounded-xl">
-                <SelectValue placeholder="Choose a role" />
-              </SelectTrigger>
-              <SelectContent>
+              <SelectTrigger 
+                value={role} 
+                onChange={(e) => setRole(e.target.value)}
+                className="h-11 bg-white/5 border-white/10 text-white rounded-xl"
+              >
                 <SelectItem value="creator">Creator</SelectItem>
                 <SelectItem value="brand">Brand</SelectItem>
-              </SelectContent>
+              </SelectTrigger>
             </Select>
           </div>
 
