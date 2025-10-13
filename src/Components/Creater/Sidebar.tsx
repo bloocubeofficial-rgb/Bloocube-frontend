@@ -9,6 +9,7 @@ import {
   User,
   Store,
   LogOut,
+  Bell,
 } from 'lucide-react';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -22,6 +23,7 @@ const sidebarItems = [
   { name: 'Marketplace', icon: Store, href: '/creator/marketplace' },
   { name: 'Bids', icon: FileText, href: '/creator/bids' },
   { name: 'Competitors', icon: Users, href: '/creator/competitors' },
+  { name: 'Notifications', icon: Bell, href: '/creator/notifications' },
   { name: 'Settings', icon: Settings, href: '/creator/settings' },
 ];
 

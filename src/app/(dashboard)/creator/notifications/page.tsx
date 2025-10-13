@@ -1,0 +1,263 @@
+'use client';
+
+import React, { useState } from 'react';
+import { 
+  Bell, 
+  Check, 
+  Trash2, 
+  AlertCircle, 
+  Info, 
+  CheckCircle, 
+  AlertTriangle,
+  Filter,
+  Search
+} from 'lucide-react';
+import CreatorLayout from '@/Components/Creater/CreatorLayout';
+import { useNotifications } from '@/hooks/useNotifications';
+
+export default function CreatorNotificationsPage() {
+  const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    error,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    getPriorityIcon,
+    getPriorityColor,
+    getTypeIcon
+  } = useNotifications({ autoRefresh: true });
+
+  const getTypeIconComponent = (type: string) => {
+    switch (type) {
+      case 'system':
+        return <AlertCircle className="w-5 h-5 text-blue-600" />;
+      case 'campaign_update':
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'bid_status':
+        return <Info className="w-5 h-5 text-purple-600" />;
+      case 'post_status':
+        return <CheckCircle className="w-5 h-5 text-indigo-600" />;
+      case 'alert':
+        return <AlertTriangle className="w-5 h-5 text-red-600" />;
+      case 'warning':
+        return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
+      default:
+        return <Info className="w-5 h-5 text-gray-600" />;
+    }
+  };
+
+  const filteredNotifications = notifications.filter(notification => {
+    const matchesFilter = filter === 'all' || 
+      (filter === 'unread' && !notification.isRead) || 
+      (filter === 'read' && notification.isRead);
+    
+    const matchesSearch = searchTerm === '' || 
+      notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      notification.message.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesFilter && matchesSearch;
+  });
+
+  return (
+    <CreatorLayout 
+      title="Notifications" 
+      subtitle="Stay updated with your latest activities and important updates"
+    >
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-gray-200/50 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl">
+                <Bell className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+                <p className="text-gray-600">
+                  {unreadCount > 0 
+                    ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
+                    : 'All caught up!'
+                  }
+                </p>
+              </div>
+            </div>
+            
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
+              >
+                <Check className="w-4 h-4" />
+                <span>Mark all read</span>
+              </button>
+            )}
+          </div>
+
+          {/* Filters and Search */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search notifications..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Filter className="w-4 h-4 text-gray-500" />
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value as 'all' | 'unread' | 'read')}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All</option>
+                <option value="unread">Unread</option>
+                <option value="read">Read</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Notifications List */}
+        <div className="space-y-4">
+          {loading && (
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-gray-200/50 shadow-sm">
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
+                <span className="ml-3 text-gray-600">Loading notifications...</span>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50/80 backdrop-blur-sm rounded-2xl p-6 border border-red-200/50 shadow-sm">
+              <div className="flex items-center space-x-3">
+                <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                  <span className="text-red-600 text-sm">!</span>
+                </div>
+                <span className="text-red-700 font-medium">{error}</span>
+              </div>
+            </div>
+          )}
+
+          {!loading && !error && filteredNotifications.length === 0 && (
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-gray-200/50 shadow-sm text-center">
+              <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications found</h3>
+              <p className="text-gray-500">
+                {searchTerm || filter !== 'all' 
+                  ? 'Try adjusting your search or filter criteria'
+                  : 'You\'re all caught up! New notifications will appear here.'
+                }
+              </p>
+            </div>
+          )}
+
+          {!loading && !error && filteredNotifications.map((notification) => (
+            <div
+              key={notification._id}
+              className={`bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 shadow-sm hover:shadow-md transition-all duration-200 ${
+                !notification.isRead ? 'ring-2 ring-blue-100 bg-blue-50/30' : ''
+              }`}
+            >
+              <div className="flex items-start space-x-4">
+                {/* Type Icon */}
+                <div className="flex-shrink-0 mt-1">
+                  {getTypeIconComponent(notification.type)}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        {notification.title}
+                      </h3>
+                      <p className="text-gray-600 mb-3 leading-relaxed">
+                        {notification.message}
+                      </p>
+                    </div>
+                    
+                    {/* Priority Badge */}
+                    <div className={`ml-4 px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(notification.priority)}`}>
+                      {getPriorityIcon(notification.priority)} {notification.priority}
+                    </div>
+                  </div>
+
+                  {/* Time and Actions */}
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center space-x-4">
+                      <span className="text-sm text-gray-500">
+                        {notification.timeAgo}
+                      </span>
+                      {!notification.isRead && (
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                          New
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      {!notification.isRead && (
+                        <button
+                          onClick={() => markAsRead(notification._id)}
+                          className="px-3 py-1 text-sm text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors duration-200 flex items-center space-x-1"
+                        >
+                          <Check className="w-4 h-4" />
+                          <span>Mark read</span>
+                        </button>
+                      )}
+                      
+                      <button
+                        onClick={() => deleteNotification(notification._id)}
+                        className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200 flex items-center space-x-1"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Delete</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  {notification.actions && notification.actions.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="flex flex-wrap gap-2">
+                        {notification.actions.map((action, index) => (
+                          <a
+                            key={index}
+                            href={action.url}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                              action.style === 'primary' 
+                                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                : action.style === 'success'
+                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                : action.style === 'warning'
+                                ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                                : action.style === 'danger'
+                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {action.label}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </CreatorLayout>
+  );
+}
