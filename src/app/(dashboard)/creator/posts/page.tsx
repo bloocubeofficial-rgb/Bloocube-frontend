@@ -370,6 +370,8 @@ export default function PostsPage() {
   const [success, setSuccess] = useState<string>('');
   const [posts, setPosts] = useState<Post[]>([]);
   const [scheduledPosts, setScheduledPosts] = useState<Post[]>([]);
+  const [openMenuScheduledId, setOpenMenuScheduledId] = useState<string | null>(null);
+  const [openMenuPublishedId, setOpenMenuPublishedId] = useState<string | null>(null);
   const [youtubeConnected, setYoutubeConnected] = useState<boolean>(false);
   const [checkingConnection, setCheckingConnection] = useState<boolean>(false);
 
@@ -393,10 +395,12 @@ export default function PostsPage() {
 
   const loadPosts = async () => {
     try {
-      const response = await apiRequest<{posts: Post[], pagination: any}>('/api/posts');
-      const allPosts = response.posts || [];
-      setPosts(allPosts.filter(p => p.status === 'published'));
-      setScheduledPosts(allPosts.filter(p => p.status === 'scheduled'));
+      const [publishedRes, scheduledRes] = await Promise.all([
+        apiRequest<{posts: Post[], pagination: any}>('/api/posts?status=published'),
+        apiRequest<{scheduled: Post[], pagination: any}>('/api/posts/scheduled')
+      ]);
+      setPosts(publishedRes.posts || []);
+      setScheduledPosts((scheduledRes as any).scheduled || []);
     } catch (err) {
       console.error('Failed to load posts:', err);
     }
@@ -1329,17 +1333,48 @@ const createTwitterPostPayload = (postData: any, selectedPostType: string, media
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      {post.scheduling?.scheduled_for ? new Date(post.scheduling.scheduled_for).toLocaleString() : 'Not scheduled'}
+                      {post.scheduling?.scheduled_at
+                        ? new Date(post.scheduling.scheduled_at).toLocaleString()
+                        : post.scheduling?.scheduled_for
+                          ? new Date(post.scheduling.scheduled_for).toLocaleString()
+                          : (post as any).scheduledAt
+                            ? new Date((post as any).scheduledAt).toLocaleString()
+                            : 'Not scheduled'}
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
                         {post.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <button className="text-gray-400 hover:text-gray-600">
+                    <td className="px-6 py-4 relative">
+                      <button
+                        className="text-gray-400 hover:text-gray-600"
+                        onClick={() => setOpenMenuScheduledId(openMenuScheduledId === post._id ? null : (post._id as string))}
+                      >
                         <MoreHorizontal size={16} />
                       </button>
+                      {openMenuScheduledId === post._id && (
+                        <div className="absolute right-6 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            onClick={() => { setOpenMenuScheduledId(null); /* TODO: implement view */ }}
+                          >
+                            View
+                          </button>
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            onClick={() => { setOpenMenuScheduledId(null); /* TODO: implement edit */ }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                            onClick={() => { setOpenMenuScheduledId(null); /* TODO: implement cancel schedule */ }}
+                          >
+                            Cancel Schedule
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -1413,10 +1448,35 @@ const createTwitterPostPayload = (postData: any, selectedPostType: string, media
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <button className="text-gray-400 hover:text-gray-600">
+                    <td className="px-6 py-4 relative">
+                      <button
+                        className="text-gray-400 hover:text-gray-600"
+                        onClick={() => setOpenMenuPublishedId(openMenuPublishedId === post._id ? null : (post._id as string))}
+                      >
                         <MoreHorizontal size={16} />
                       </button>
+                      {openMenuPublishedId === post._id && (
+                        <div className="absolute right-6 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            onClick={() => { setOpenMenuPublishedId(null); /* TODO: implement view */ }}
+                          >
+                            View
+                          </button>
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            onClick={() => { setOpenMenuPublishedId(null); /* TODO: implement copy link */ }}
+                          >
+                            Copy Link
+                          </button>
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                            onClick={() => { setOpenMenuPublishedId(null); /* TODO: implement delete */ }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
