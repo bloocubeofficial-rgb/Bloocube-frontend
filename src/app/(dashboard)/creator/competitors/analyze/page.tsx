@@ -314,7 +314,7 @@ const CompetitorAnalysisPage = () => {
                                   ? 'border-red-300 bg-red-50' 
                                   : competitor.isValid 
                                     ? 'border-green-300 border bg-green-50' 
-                                    : 'border-gray-300 border'
+                                    : 'border-gray-800 border'
                               }`}
                             />
                             {competitor.isValid && (
@@ -338,7 +338,7 @@ const CompetitorAnalysisPage = () => {
                         {competitorUrls.length > 1 && (
                           <button
                             onClick={() => removeCompetitorUrl(competitor.id)}
-                            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                            className="p-2 text-gray-700 hover:text-red-500 transition-colors"
                           >
                             <X className="h-5 w-5" />
                           </button>
@@ -366,7 +366,7 @@ const CompetitorAnalysisPage = () => {
                   <select
                     value={analysisType}
                     onChange={(e) => setAnalysisType(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="comprehensive">Comprehensive Analysis</option>
                     <option value="content_focused">Content-Focused Analysis</option>
@@ -391,7 +391,7 @@ const CompetitorAnalysisPage = () => {
                     <button
                       onClick={fetchCompetitorData}
                       disabled={fetchingData || competitorUrls.filter(c => c.isValid).length === 0}
-                      className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                      className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 disabled:bg-gray-800 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
                     >
                       {fetchingData ? (
                         <>
@@ -409,7 +409,7 @@ const CompetitorAnalysisPage = () => {
                     <button
                       onClick={startAnalysis}
                       disabled={loading}
-                      className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                      className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 disabled:bg-gray-800 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
                     >
                       {loading ? (
                         <>
@@ -449,7 +449,7 @@ const CompetitorAnalysisPage = () => {
                       setShowPreview(false);
                       setFetchedData([]);
                     }}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className="text-gray-700 hover:text-gray-600 transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -503,7 +503,7 @@ const CompetitorAnalysisPage = () => {
                     <button
                       onClick={startAnalysis}
                       disabled={loading}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-300 transition-colors"
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-800 transition-colors"
                     >
                       {loading ? 'Analyzing...' : 'Start AI Analysis'}
                     </button>

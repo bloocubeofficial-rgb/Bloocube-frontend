@@ -157,7 +157,7 @@ export default function BrandAnalyticsPage() {
           <div key={stat.title} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">{stat.title}</p>
+                <p className="text-sm text-gray-900">{stat.title}</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
                 <div className="flex items-center gap-1 mt-2">
                   {stat.changeType === 'positive' ? (
@@ -170,7 +170,7 @@ export default function BrandAnalyticsPage() {
                   }`}>
                     {stat.change}
                   </span>
-                  <span className="text-sm text-gray-500">vs last period</span>
+                  <span className="text-sm text-gray-900">vs last period</span>
                 </div>
               </div>
               <div className={`p-3 rounded-lg ${getColorClasses(stat.color)}`}>
@@ -187,8 +187,8 @@ export default function BrandAnalyticsPage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Performance</h3>
           <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
             <div className="text-center">
-              <ChartBarIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">Chart coming soon</p>
+              <ChartBarIcon className="w-12 h-12 text-gray-800 mx-auto mb-2" />
+              <p className="text-sm text-gray-900">Chart coming soon</p>
             </div>
           </div>
         </div>
@@ -197,8 +197,8 @@ export default function BrandAnalyticsPage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Engagement Trends</h3>
           <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
             <div className="text-center">
-              <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">Chart coming soon</p>
+              <TrendingUp className="w-12 h-12 text-gray-800 mx-auto mb-2" />
+              <p className="text-sm text-gray-900">Chart coming soon</p>
             </div>
           </div>
         </div>
@@ -218,7 +218,7 @@ export default function BrandAnalyticsPage() {
               <div key={campaign.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex-1">
                   <h4 className="font-medium text-gray-900">{campaign.title}</h4>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                  <div className="flex items-center gap-4 mt-2 text-sm text-gray-900">
                     <span>Reach: {campaign.reach}</span>
                     <span>Engagement: {campaign.engagement}</span>
                     <span>Spend: {campaign.spend}</span>
@@ -258,7 +258,7 @@ export default function BrandAnalyticsPage() {
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-900">{creator.name}</h4>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
+                    <div className="flex items-center gap-4 mt-1 text-sm text-gray-900">
                       <span>{creator.platform}</span>
                       <span>{creator.followers} followers</span>
                       <span>{creator.engagement} engagement</span>
@@ -266,7 +266,7 @@ export default function BrandAnalyticsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-500">{creator.posts} posts</span>
+                  <span className="text-sm text-gray-900">{creator.posts} posts</span>
                   <span className="text-sm font-medium text-green-600">{creator.performance}</span>
                 </div>
               </div>
@@ -283,7 +283,7 @@ export default function BrandAnalyticsPage() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Total Revenue</p>
+              <p className="text-sm text-gray-900">Total Revenue</p>
               <p className="text-2xl font-bold text-gray-900">₹2.4L</p>
               <p className="text-sm text-green-600 mt-1">+15% from last month</p>
             </div>
@@ -296,7 +296,7 @@ export default function BrandAnalyticsPage() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Average Campaign Value</p>
+              <p className="text-sm text-gray-900">Average Campaign Value</p>
               <p className="text-2xl font-bold text-gray-900">₹10K</p>
               <p className="text-sm text-green-600 mt-1">+8% from last month</p>
             </div>
@@ -309,7 +309,7 @@ export default function BrandAnalyticsPage() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">ROI</p>
+              <p className="text-sm text-gray-900">ROI</p>
               <p className="text-2xl font-bold text-gray-900">340%</p>
               <p className="text-sm text-green-600 mt-1">+12% from last month</p>
             </div>
@@ -324,8 +324,8 @@ export default function BrandAnalyticsPage() {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trends</h3>
         <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
           <div className="text-center">
-              <CurrencyDollarIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">Revenue chart coming soon</p>
+              <CurrencyDollarIcon className="w-12 h-12 text-gray-800 mx-auto mb-2" />
+            <p className="text-sm text-gray-900">Revenue chart coming soon</p>
           </div>
         </div>
       </div>
