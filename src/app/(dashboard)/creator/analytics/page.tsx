@@ -14,7 +14,6 @@ import {
   ArcElement,
   BarElement,
 } from 'chart.js';
-import { Menu } from 'lucide-react';
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 import { apiRequest } from '@/lib/apiClient';
 import { authUtils } from '@/lib/auth';
@@ -47,9 +46,9 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, color, 
       </div>
     </div>
     <div className="space-y-1">
-      <p className="text-sm text-gray-600">{title}</p>
+      <p className="text-sm text-gray-800">{title}</p>
       <p className="text-2xl font-bold">{value}</p>
-      <p className="text-xs text-gray-500">{subtitle}</p>
+      <p className="text-xs text-gray-700">{subtitle}</p>
     </div>
   </div>
 );
@@ -71,8 +70,12 @@ const AnalyticsDashboard: React.FC = () => {
   const fetchAnalytics = async () => {
     try {
       setError(null);
-      const user = authUtils.getUser() as { id?: string } | null;
-      const userId = user?.id || (authUtils as unknown as { getUserId?: () => string }).getUserId?.();
+      const user = authUtils.getUser() as { id?: string; _id?: string; userId?: string } | null;
+      const userId =
+        user?.id ||
+        user?._id ||
+        user?.userId ||
+        (authUtils as unknown as { getUserId?: () => string }).getUserId?.();
       if (!userId) throw new Error('Not authenticated');
       const res = await apiRequest<{ success: boolean; data: { analytics: AnalyticsItem[] } }>(`/api/analytics/user/${userId}`);
       setAnalytics(res?.data?.analytics || []);
@@ -209,7 +212,6 @@ const AnalyticsDashboard: React.FC = () => {
   }, [analytics]);
 
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 // chart options with correct typing
 const chartOptions: import("chart.js").ChartOptions<"line"> = {
   responsive: true,
@@ -288,10 +290,27 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
       {/* Page Title */}
       <h2 className="hidden md:block text-2xl font-bold mb-6">Analytics Overview</h2>
 
+      {/* States */}
+      {loading && (
+        <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          Loading analytics...
+        </div>
+      )}
+      {error && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+      {!loading && !error && analytics.length === 0 && (
+        <div className="mb-4 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+          No analytics available yet. Connect your social accounts and start posting to see insights.
+        </div>
+      )}
+
       {/* Date Range Selection */}
       <div className="bg-white rounded-lg p-4 mb-6 shadow-sm border">
         <h3 className="text-sm font-medium mb-2">Data Range Selection</h3>
-        <p className="text-xs text-gray-500 mb-3">Select the period for your analytics data</p>
+        <p className="text-xs text-gray-700 mb-3">Select the period for your analytics data</p>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setRangeDays(7)}
@@ -346,7 +365,7 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
         <div className="bg-white rounded-lg p-4 md:p-6 shadow-sm border">
           <div className="mb-4">
             <h3 className="text-lg font-semibold">Engagement Trends</h3>
-            <p className="text-sm text-gray-500">Likes, comments and shares over the last {rangeDays} days</p>
+            <p className="text-sm text-gray-700">Likes, comments and shares over the last {rangeDays} days</p>
           </div>
           <div style={{ height: "250px" }} className="w-full">
             <Line data={engagementData} options={chartOptions} />
@@ -360,7 +379,7 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
         <div className="bg-white rounded-lg p-4 md:p-6 shadow-sm border">
           <div className="mb-4">
             <h3 className="text-lg font-semibold">Platform Breakdown</h3>
-            <p className="text-sm text-gray-500">Engagement distribution across social media platforms</p>
+            <p className="text-sm text-gray-700">Engagement distribution across social media platforms</p>
           </div>
           <div style={{ height: '200px' }} className="w-full">
             <Pie data={platformData} options={pieOptions} />
@@ -371,7 +390,7 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
         <div className="bg-white rounded-lg p-4 md:p-6 shadow-sm border">
           <div className="mb-4">
             <h3 className="text-lg font-semibold">Post Type Performance</h3>
-            <p className="text-sm text-gray-500">Engagement by post content type</p>
+            <p className="text-sm text-gray-700">Engagement by post content type</p>
           </div>
           <div style={{ height: '200px' }} className="w-full">
             <Bar data={postTypeData} options={barOptions} />
