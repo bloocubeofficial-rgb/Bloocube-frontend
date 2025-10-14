@@ -4,6 +4,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, User, Settings, FileText, ChevronDown, BarChart3, LogOut } from 'lucide-react';
 import Sidebar from './Sidebar';
 import NotificationDropdown from './NotificationDropdown';
+import { useRouter } from 'next/navigation';
+import { authUtils } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface CreatorLayoutProps {
   children: React.ReactNode;
@@ -11,6 +14,43 @@ interface CreatorLayoutProps {
   subtitle?: string;
   headerActions?: React.ReactNode;
 }
+const UserInfo = React.memo(({ user }: { user: Record<string, unknown> | null }) => {
+  const router = useRouter();
+  
+  const handleLogout = () => {
+    authUtils.clearAuth();
+    router.push('/login');
+  };
+
+  if (!user) return null;
+
+  return (
+    <div className="flex items-center gap-4 p-5 rounded-2xl bg-white/90 backdrop-blur-sm shadow-xl border border-gray-200/30 hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] group">
+      <div className="relative">
+        <div className="w-12 h-12 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+          <User className="w-6 h-6 text-white" />
+        </div>
+        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-sm"></div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-bold text-gray-900 truncate">
+          {(user.name as string) || (user.email as string) || 'Creator Account'}
+        </p>
+        <p className="text-xs text-gray-500 truncate font-medium">
+          {(user.email as string) || 'creator@bloocube.com'}
+        </p>
+      </div>
+      <button 
+        onClick={handleLogout} 
+        className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-300 hover:scale-110 group"
+      >
+        <LogOut className="w-5 h-5" />
+      </button>
+    </div>
+  );
+});
+
+UserInfo.displayName = 'UserInfo';
 
 const CreatorLayout: React.FC<CreatorLayoutProps> = ({ 
   children, 
@@ -21,6 +61,14 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+
+  // Derive a safe display name without assuming shape of user
+  const displayName = (
+    (user as unknown as Record<string, unknown> | null)?.name as string
+  ) || (
+    (user as unknown as Record<string, unknown> | null)?.email as string
+  ) || 'Creator Account';
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -159,19 +207,28 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
                     <div className="w-7 h-7 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
                       <User className="w-3.5 h-3.5 text-white" />
                     </div>
-                    <div className="hidden md:block">
-                      <p className="text-sm font-medium text-gray-900 leading-tight">John Doe</p>
-                      <p className="text-xs text-gray-500 leading-tight">Creator</p>
+                    <div className="hidden md:block text-left">
+                      <p className="text-sm font-medium text-gray-900 leading-tight truncate max-w-[140px]">
+                        {displayName}
+                      </p>
+                      <p className="text-xs text-gray-500 leading-tight truncate max-w-[140px]">
+                        {user ? 'Creator' : 'Profile'}
+                      </p>
                     </div>
                     <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${userDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
                   
                   {/* Dropdown Menu */}
                   {userDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                    <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200/70 z-50 overflow-hidden">
+                      {/* Dropdown Header with UserInfo */}
+                      <div className="p-4 bg-gradient-to-br from-white via-blue-50/50 to-indigo-50/40 border-b border-gray-200/60">
+                        <UserInfo user={user || null} />
+                      </div>
+                      <div className="py-1">
                       <a
                         href="/creator/settings"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                        className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
                         onClick={() => setUserDropdownOpen(false)}
                       >
                         <Settings className="w-4 h-4 mr-3" />
@@ -179,7 +236,7 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
                       </a>
                       <a
                         href="/creator/bids"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                        className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
                         onClick={() => setUserDropdownOpen(false)}
                       >
                         <FileText className="w-4 h-4 mr-3" />
@@ -187,21 +244,22 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
                       </a>
                       <a
                         href="/creator/analytics"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                        className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
                         onClick={() => setUserDropdownOpen(false)}
                       >
                         <BarChart3 className="w-4 h-4 mr-3" />
                         Analytics
                       </a>
-                      <hr className="my-1" />
+                      <hr className="my-1 border-gray-200/70" />
                       <a
                         href="/logout"
-                        className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
+                        className="flex items-center px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150"
                         onClick={() => setUserDropdownOpen(false)}
                       >
                         <LogOut className="w-4 h-4 mr-3" />
                         Logout
                       </a>
+                      </div>
                     </div>
                   )}
                 </div>

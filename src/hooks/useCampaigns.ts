@@ -11,6 +11,7 @@ type ListParams = {
   minBudget?: number;
   maxBudget?: number;
   sort?: string;
+  search?: string;
 };
 
 export function useCampaigns(initialParams: ListParams = {}) {

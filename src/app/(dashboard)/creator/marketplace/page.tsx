@@ -1,10 +1,10 @@
 "use client";
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useCampaigns } from '@/hooks/useCampaigns';
 import { createBidApi } from '@/hooks/useBids';
 import type { Campaign } from '@/types/campaign';
 import { authUtils } from '@/lib/auth';
-import { Search, Filter, DollarSign, Calendar, Users, Globe, Menu } from 'lucide-react';
+import { Search, Filter, IndianRupee, Calendar, Users, Globe } from 'lucide-react';
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 
 export default function CreatorMarketplacePage() {
@@ -15,8 +15,31 @@ export default function CreatorMarketplacePage() {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const user = (authUtils.getUser?.() as { role?: string } | null) || null;
   const isCreator = user?.role === 'creator';
+  const [search, setSearch] = useState('');
 
-  const filtered = useMemo(() => campaigns, [campaigns]);
+  const filtered = useMemo(() => {
+    if (!search.trim()) return campaigns;
+    const q = search.toLowerCase();
+    return campaigns.filter((c) => {
+      const titleMatch = c.title?.toLowerCase().includes(q);
+      const descMatch = (c.description || '').toLowerCase().includes(q);
+      const platformMatch = Array.isArray(c.requirements?.platforms)
+        ? c.requirements.platforms.some((p) => String(p).toLowerCase().includes(q))
+        : false;
+      const brandMatch = typeof (c as any).brand_id?.name === 'string'
+        ? (c as any).brand_id.name.toLowerCase().includes(q)
+        : false;
+      return titleMatch || descMatch || platformMatch || brandMatch;
+    });
+  }, [campaigns, search]);
+
+  // Debounce search input and update params
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setParams({ page: 1, search: search || undefined });
+    }, 300);
+    return () => clearTimeout(id);
+  }, [search, setParams]);
 
   const placeBid = async () => {
     if (!isCreator) {
@@ -59,6 +82,8 @@ export default function CreatorMarketplacePage() {
                 type="text"
                 placeholder="Search campaigns..."
                 className="pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200 min-w-[300px]"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
           </div>
@@ -199,7 +224,7 @@ export default function CreatorMarketplacePage() {
               
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center text-green-600">
-                  <DollarSign className="w-4 h-4 mr-1" />
+                  <IndianRupee className="w-4 h-4 mr-1" />
                   <span className="text-lg font-bold">₹{c.budget.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center text-gray-500 text-sm">
@@ -293,7 +318,7 @@ export default function CreatorMarketplacePage() {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <DollarSign className="h-5 w-5 text-gray-400" />
+                    <IndianRupee className="h-5 w-5 text-gray-400" />
                   </div>
                   <input 
                     type="number" 
