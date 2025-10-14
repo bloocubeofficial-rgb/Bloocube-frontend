@@ -56,11 +56,11 @@ function SettingsPageContent() {
   const [notification, setNotification] = useState<NotificationState>({ type: null, message: '' });
   const [tokenPresent, setTokenPresent] = useState<boolean>(true);
   
-  // Notification preferences state
-  const [emailUpdates, setEmailUpdates] = useState(true);
-  const [appNotifications, setAppNotifications] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(false);
+  // Notification preferences state (maps to backend-supported fields)
+  const [marketingEmails, setMarketingEmails] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(false);
+  const [smsNotifications, setSmsNotifications] = useState(false);
   
   // Form data
   const [profileData, setProfileData] = useState<ProfileUpdateData>({});
@@ -100,6 +100,13 @@ function SettingsPageContent() {
             preferences: response.data.user.profile.preferences
           }
         });
+
+        // Initialize toggle UI from backend preferences
+        const prefs = response.data.user.profile.preferences || {} as any;
+        setMarketingEmails(prefs.marketingEmails ?? true);
+        setEmailNotifications(prefs.emailNotifications ?? true);
+        setPushNotifications(prefs.pushNotifications ?? false);
+        setSmsNotifications(prefs.smsNotifications ?? false);
       }
     } catch (error: any) {
       setNotification({ type: 'error', message: error.message || 'Failed to load profile' });
@@ -582,23 +589,31 @@ function SettingsPageContent() {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">Email Updates</p>
+                  <p className="font-medium text-gray-900">Marketing Emails</p>
                   <p className="text-sm text-gray-500">Receive product news, feature updates and special offers via email</p>
                 </div>
                 <ToggleSwitch 
-                  enabled={emailUpdates} 
-                  onToggle={() => setEmailUpdates(!emailUpdates)} 
+                  enabled={marketingEmails} 
+                  onToggle={() => {
+                    const next = !marketingEmails;
+                    setMarketingEmails(next);
+                    handlePreferenceChange('marketingEmails', next);
+                  }} 
                 />
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">In-App Notifications</p>
-                  <p className="text-sm text-gray-500">Get alerts about your tasks, projects and team communication</p>
+                  <p className="font-medium text-gray-900">Email Notifications</p>
+                  <p className="text-sm text-gray-500">Get email alerts about your tasks, posts and activity</p>
                 </div>
                 <ToggleSwitch 
-                  enabled={appNotifications} 
-                  onToggle={() => setAppNotifications(!appNotifications)} 
+                  enabled={emailNotifications} 
+                  onToggle={() => {
+                    const next = !emailNotifications;
+                    setEmailNotifications(next);
+                    handlePreferenceChange('emailNotifications', next);
+                  }} 
                 />
               </div>
 
@@ -609,67 +624,32 @@ function SettingsPageContent() {
                 </div>
                 <ToggleSwitch 
                   enabled={pushNotifications} 
-                  onToggle={() => setPushNotifications(!pushNotifications)} 
+                  onToggle={() => {
+                    const next = !pushNotifications;
+                    setPushNotifications(next);
+                    handlePreferenceChange('pushNotifications', next);
+                  }} 
                 />
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">Email Reminders</p>
-                  <p className="text-sm text-gray-500">Receive email reminders for upcoming posts or urgent project deadlines</p>
+                  <p className="font-medium text-gray-900">SMS Notifications</p>
+                  <p className="text-sm text-gray-500">Receive SMS reminders for upcoming posts or urgent deadlines</p>
                 </div>
                 <ToggleSwitch 
-                  enabled={emailNotifications} 
-                  onToggle={() => setEmailNotifications(!emailNotifications)} 
+                  enabled={smsNotifications} 
+                  onToggle={() => {
+                    const next = !smsNotifications;
+                    setSmsNotifications(next);
+                    handlePreferenceChange('smsNotifications', next);
+                  }} 
                 />
               </div>
             </div>
           </section>
 
-          {/* API Key Management */}
-          <section>
-            <h2 className="text-lg font-medium text-gray-900 mb-2">API Key Management</h2>
-            <p className="text-sm text-gray-600 mb-6">Generate or manage API keys for third-party integrations and custom applications</p>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Current API Key</label>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                  <input
-                    type="text"
-                    value={(user as any)?.apiKey || 'No API key generated'}
-                    readOnly
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 text-sm"
-                  />
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={() => {
-                        if ((user as any)?.apiKey) {
-                          navigator.clipboard.writeText((user as any).apiKey);
-                          setNotification({ type: 'success', message: 'API key copied to clipboard!' });
-                          setTimeout(() => setNotification({ type: null, message: '' }), 3000);
-                        }
-                      }}
-                      className="flex-1 sm:flex-none bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
-                    >
-                      Copy
-                    </button>
-                    <button className="flex-1 sm:flex-none bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 transition-colors text-sm">
-                      Regenerate
-                    </button>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  Warning: When regenerating an API key, all integrations and applications
-                  using the previous key will stop working until they use the new key.
-                </p>
-              </div>
-
-              <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                View API documentation
-              </button>
-            </div>
-          </section>
+          
 
           {/* Danger Zone */}
           <section>

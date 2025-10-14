@@ -36,7 +36,16 @@ type AnalyticsItem = {
   post_id?: string;
   platform?: string;
   timing?: { posted_at?: string };
-  metrics?: { likes?: number; comments?: number; shares?: number; views?: number };
+  metrics?: { 
+    likes?: number; 
+    comments?: number; 
+    shares?: number; 
+    views?: number;
+    reach?: number;
+    impressions?: number;
+    followers?: number;
+    engagement_rate?: number;
+  };
   content?: { media_type?: string; caption?: string };
 };
 
@@ -52,12 +61,18 @@ const Dashboard = () => {
   const formatNumber = (n: number) => n.toLocaleString();
   const formatCompact = (n: number) => new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (options?: { sync?: boolean }) => {
     try {
       setError(null);
       const user = authUtils.getUser() as { id?: string; _id?: string; userId?: string } | null;
       const userId = user?.id || user?._id || user?.userId || (authUtils as unknown as { getUserId?: () => string }).getUserId?.();
       if (!userId) throw new Error('Not authenticated');
+      // Optionally sync from linked social accounts before fetching
+      if (options?.sync) {
+        try {
+          await apiRequest<{ success: boolean; data?: { synced: boolean } }>(`/api/analytics/user/${userId}/sync`, { method: 'POST' });
+        } catch {}
+      }
       const res = await apiRequest<{ success: boolean; data: { analytics: AnalyticsItem[] } }>(`/api/analytics/user/${userId}`);
       setAnalytics(res?.data?.analytics || []);
       setLastUpdated(Date.now());
@@ -83,9 +98,11 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    fetchAnalytics();
+    // First load will try to sync from linked accounts, then fetch
+    fetchAnalytics({ sync: true });
     fetchPostCounts();
     const interval = setInterval(() => {
+      // Regular refresh without heavy sync
       fetchAnalytics();
       fetchPostCounts();
     }, 30000);
@@ -153,10 +170,15 @@ const Dashboard = () => {
 
   const totals = useMemo(() => {
     const sum = (key: 'likes' | 'comments' | 'shares' | 'views') => analytics.reduce((s, a) => s + (a.metrics?.[key] || 0), 0);
+    const sumReach = analytics.reduce((s, a) => s + (a.metrics?.reach || 0), 0);
+    const sumImpressions = analytics.reduce((s, a) => s + (a.metrics?.impressions || 0), 0);
+    const sumFollowers = analytics.reduce((s, a) => s + (a.metrics?.followers || 0), 0);
+    const engagementNumerator = sum('likes') + sum('comments') + sum('shares');
+    const engagementDenominator = Math.max(sum('views') || sumReach || sumImpressions || sumFollowers || 0, 1);
     return {
       totalPosts: totalPostsCount,
       scheduledPosts: scheduledCount,
-      engagementRate: analytics.length ? (((sum('likes') + sum('comments') + sum('shares')) / Math.max(sum('views'), 1)) * 100).toFixed(1) : '0.0',
+      engagementRate: analytics.length ? ((engagementNumerator / engagementDenominator) * 100).toFixed(1) : '0.0',
       avgEngagementScore: analytics.length ? Math.round((sum('likes') + sum('comments') * 2 + sum('shares') * 3) / analytics.length) : 0,
       lastUpdated,
       sums: {
@@ -173,7 +195,7 @@ const Dashboard = () => {
   const headerActions = (
     <>
       <button 
-        onClick={fetchAnalytics}
+        onClick={() => fetchAnalytics({ sync: true })}
         disabled={loading}
         className="flex items-center space-x-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
       >
