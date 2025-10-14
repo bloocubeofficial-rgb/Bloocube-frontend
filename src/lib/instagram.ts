@@ -27,18 +27,13 @@ class InstagramService {
   }
 
   // Generate Instagram OAuth URL
-  async generateAuthURL(redirectUri: string): Promise<InstagramAuthResponse> {
-    // Try public GET first
-    try {
-      const url = `/api/instagram/auth-url?redirectUri=${encodeURIComponent(redirectUri)}`;
-      return await this.request<InstagramAuthResponse>(url, { method: 'GET' });
-    } catch {
-      // Fallback to POST if GET fails
-      return this.request<InstagramAuthResponse>('/api/instagram/auth-url', {
-        method: 'POST',
-        body: JSON.stringify({ redirectUri }),
-      });
-    }
+  async generateAuthURL(redirectUri?: string): Promise<InstagramAuthResponse> {
+    return this.request<InstagramAuthResponse>('/api/instagram/auth-url', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        redirectUri: redirectUri || `${this.baseURL}/api/instagram/callback`
+      }),
+    });
   }
 
   // Handle Instagram OAuth callback (this would be called by the backend)

@@ -243,6 +243,7 @@ function SettingsPageContent() {
     const linkedinStatus = searchParams.get('linkedin');
     const youtubeStatus = searchParams.get('youtube');
     const instagramStatus = searchParams.get('instagram');
+    const facebookStatus = searchParams.get('facebook');
     const message = searchParams.get('message');
     
     if (twitterStatus === 'success') {
@@ -293,6 +294,19 @@ function SettingsPageContent() {
       }, 5000);
     } else if (instagramStatus === 'error') {
       setNotification({ type: 'error', message: message ? decodeURIComponent(message) : 'Failed to connect Instagram account' });
+      setTimeout(() => {
+        window.history.replaceState({}, '', window.location.pathname);
+        setNotification({ type: null, message: '' });
+      }, 5000);
+    } else if (facebookStatus === 'success') {
+      setNotification({ type: 'success', message: 'Facebook account connected successfully!' });
+      setTimeout(() => facebookRef.current?.checkConnection(), 1500);
+      setTimeout(() => {
+        window.history.replaceState({}, '', window.location.pathname);
+        setNotification({ type: null, message: '' });
+      }, 5000);
+    } else if (facebookStatus === 'error') {
+      setNotification({ type: 'error', message: message ? decodeURIComponent(message) : 'Failed to connect Facebook account' });
       setTimeout(() => {
         window.history.replaceState({}, '', window.location.pathname);
         setNotification({ type: null, message: '' });

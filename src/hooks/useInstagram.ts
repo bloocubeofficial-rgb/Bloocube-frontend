@@ -76,9 +76,9 @@ export const useInstagram = () => {
         throw new Error('Please log in to connect Instagram');
       }
 
-      // For business login, use backend callback URL so Facebook redirects back to API
+      // Use backend callback URL so Instagram redirects back to API
       const backendCallback = `${getApiBase()}/api/instagram/callback`;
-      const callbackUrl = redirectUri || backendCallback || config.instagram?.callbackUrl || `${window.location.origin}/auth/instagram/callback`;
+      const callbackUrl = redirectUri || backendCallback;
       const response = await instagramService.generateAuthURL(callbackUrl);
       
       if (response.success && response.authURL) {

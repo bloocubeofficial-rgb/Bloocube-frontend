@@ -2,6 +2,7 @@
 import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { useInstagram } from '@/hooks/useInstagram'; // FIX: Changed path alias '@/hooks/useInstagram' to relative path '../hooks/useInstagram'
 import { Loader2, CheckCircle, ExternalLink, Instagram } from 'lucide-react';
+import { InstagramSetupGuide } from './InstagramSetupGuide';
 
 interface InstagramIntegrationProps {
   className?: string;
@@ -98,9 +99,14 @@ export const InstagramIntegration = forwardRef<InstagramIntegrationRef, Instagra
               </button>
             </div>
           )}
-          {error && (
-            <p className="text-sm text-red-500 mt-1">{error}</p>
-          )}
+          {error && (
+            <div className="mt-2">
+              <p className="text-sm text-red-500 mb-2">{error}</p>
+              {(error.includes('Facebook Pages') || error.includes('Business Account') || error.includes('Instagram Business')) && (
+                <InstagramSetupGuide className="mt-3" />
+              )}
+            </div>
+          )}
         </div>
         </div>
       

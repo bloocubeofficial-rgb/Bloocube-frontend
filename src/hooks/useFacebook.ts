@@ -18,10 +18,12 @@ export const useFacebook = () => {
       setIsConnected(false);
       setProfile(null);
     } else {
-      // For authenticated users, we'll check connection manually when needed
-      setLoading(false);
+      // For authenticated users, start with loading true and check connection
+      setLoading(true);
       setIsConnected(false);
       setProfile(null);
+      // Auto-check connection for authenticated users
+      checkConnection();
     }
   }, []);
 
@@ -78,7 +80,7 @@ export const useFacebook = () => {
 
       // Use backend callback URL so Facebook redirects back to API
       const backendCallback = `${getApiBase()}/api/facebook/callback`;
-      const callbackUrl = redirectUri || backendCallback || config.facebook?.callbackUrl || `${window.location.origin}/auth/facebook/callback`;
+      const callbackUrl = redirectUri || backendCallback;
       const response = await facebookService.generateAuthURL(callbackUrl);
       
       if (response.success && response.authURL) {

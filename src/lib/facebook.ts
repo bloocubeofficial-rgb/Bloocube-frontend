@@ -64,7 +64,7 @@ class FacebookService {
     return this.request<FacebookAuthResponse>('/api/facebook/auth-url', {
       method: 'POST',
       body: JSON.stringify({
-        redirectUri: redirectUri || `${window.location.origin}/auth/facebook/callback`
+        redirectUri: redirectUri || `${this.baseURL}/api/facebook/callback`
       })
     });
   }

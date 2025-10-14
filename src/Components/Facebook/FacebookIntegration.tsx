@@ -30,8 +30,8 @@ export const FacebookIntegration = forwardRef<FacebookIntegrationRef, FacebookIn
   React.useEffect(() => {
     if (!hasCheckedConnection && !loading) {
       setHasCheckedConnection(true);
-      // Don't auto-check to prevent stuck loading state
-      // checkConnection();
+      // Auto-check connection to ensure UI shows correct state after refresh
+      checkConnection();
     }
   }, [hasCheckedConnection, loading]);
 
