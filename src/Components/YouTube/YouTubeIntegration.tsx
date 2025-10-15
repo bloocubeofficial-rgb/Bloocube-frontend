@@ -1,5 +1,6 @@
 import React, { useState, forwardRef, useImperativeHandle } from "react";
 import { ExternalLink, Loader2, Play } from "lucide-react";
+import { SocialIntegrationCard } from '@/Components/LazyComponents';
 import { useYouTube } from "@/hooks/useYouTube";
 
 interface YouTubeIntegrationProps {
@@ -50,83 +51,19 @@ export const YouTubeIntegration = forwardRef<YouTubeIntegrationRef, YouTubeInteg
   // Connection status will be checked only when user manually clicks connect/disconnect
 
   return (
-    <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-200 rounded-lg gap-3 ${className}`}>
-      <div className="flex items-center space-x-3">
-        <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
-          <Play className="w-4 h-4 text-white" />
-        </div>
-        <div>
-          <p className="font-medium text-gray-900">YouTube</p>
-          {isConnected && channel ? (
-            <div className="text-sm text-gray-500">
-              <p>@{channel.customUrl || channel.title}</p>
-              <p>{channel.subscriberCount} subscribers</p>
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500">Not connected</p>
-          )}
-          {error && (
-            <p className="text-sm text-red-500 mt-1">{error}</p>
-          )}
-        </div>
-      </div>
-      
-      <div className="flex items-center space-x-2">
-        {isConnected ? (
-          <>
-            <button
-              onClick={() => checkConnection()}
-              disabled={loading}
-              className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  <span>Checking...</span>
-                </>
-              ) : (
-              <>
-                <ExternalLink className="w-3 h-3" />
-                <span>Check Status</span>
-              </>
-              )}
-            </button>
-            <button
-              onClick={handleDisconnect}
-              disabled={isDisconnecting}
-              className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
-            >
-              {isDisconnecting ? (
-                <>
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  <span>Disconnecting...</span>
-                </>
-              ) : (
-                'Disconnect'
-              )}
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={handleConnect}
-            disabled={isConnecting || loading}
-            className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
-          >
-            {isConnecting ? (
-              <>
-                <Loader2 className="w-3 h-3 animate-spin" />
-                <span>Connecting...</span>
-              </>
-            ) : (
-              <>
-                <ExternalLink className="w-3 h-3" />
-                <span>Connect</span>
-              </>
-            )}
-          </button>
-        )}
-      </div>
-    </div>
+    <SocialIntegrationCard
+      className={className}
+      icon={<Play className="w-4 h-4 text-red-600" />}
+      title="YouTube"
+      connected={Boolean(isConnected && channel)}
+      loading={loading || isConnecting || isDisconnecting}
+      error={error || undefined}
+      onConnect={handleConnect}
+      onDisconnect={handleDisconnect}
+      onRefresh={checkConnection}
+      connectLabel="Connect YouTube"
+      rightArea={undefined}
+    />
   );
 });
 
