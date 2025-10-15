@@ -1,45 +1,37 @@
-// Select component with onValueChange support
-import React from "react";
-import { cn } from "@/lib/utils";
+// Working Select component using native HTML select
+import React from 'react';
+import { cn } from '@/lib/utils';
 
-export type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
+export interface SelectProps {
   value?: string;
   onValueChange?: (value: string) => void;
-};
+  children: React.ReactNode;
+  className?: string;
+}
 
-const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, children, value, onValueChange, onChange, ...props }, ref) => {
-    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      onChange?.(e);
-      onValueChange?.(e.target.value);
-    };
-
+const Select = React.forwardRef<HTMLDivElement, SelectProps>(
+  ({ className, children, ...props }, ref) => {
     return (
-      <select
-        className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          className
-        )}
+      <div
         ref={ref}
-        value={value}
-        onChange={handleChange}
+        className={cn("relative", className)}
         {...props}
       >
         {children}
-      </select>
+      </div>
     );
   }
 );
 Select.displayName = "Select";
 
-export interface SelectTriggerProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
+export interface SelectTriggerProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  children?: React.ReactNode;
+}
 
-const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
+const SelectTrigger = React.forwardRef<HTMLSelectElement, SelectTriggerProps>(
   ({ className, children, ...props }, ref) => {
     return (
-      <button
-        type="button"
+      <select
         className={cn(
           "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
           className
@@ -48,7 +40,7 @@ const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
         {...props}
       >
         {children}
-      </button>
+      </select>
     );
   }
 );
@@ -57,31 +49,34 @@ SelectTrigger.displayName = "SelectTrigger";
 export interface SelectValueProps
   extends React.HTMLAttributes<HTMLSpanElement> {
   placeholder?: string;
+  value?: string;
 }
 
 const SelectValue = React.forwardRef<HTMLSpanElement, SelectValueProps>(
-  ({ className, placeholder, ...props }, ref) => {
+  ({ className, placeholder, value, ...props }, ref) => {
     return (
-      <span ref={ref} className={cn("block truncate", className)} {...props}>
-        {placeholder}
+      <span
+        ref={ref}
+        className={cn("block truncate", className)}
+        {...props}
+      >
+        {value || placeholder}
       </span>
     );
   }
 );
 SelectValue.displayName = "SelectValue";
 
-export interface SelectContentProps
-  extends React.HTMLAttributes<HTMLDivElement> {}
+export interface SelectContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+}
 
 const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
   ({ className, children, ...props }, ref) => {
     return (
       <div
         ref={ref}
-        className={cn(
-          "relative z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md",
-          className
-        )}
+        className={cn("relative", className)}
         {...props}
       >
         {children}
@@ -91,24 +86,22 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
 );
 SelectContent.displayName = "SelectContent";
 
-export interface SelectItemProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface SelectItemProps extends React.OptionHTMLAttributes<HTMLOptionElement> {
   value: string;
+  children: React.ReactNode;
 }
 
-const SelectItem = React.forwardRef<HTMLDivElement, SelectItemProps>(
+const SelectItem = React.forwardRef<HTMLOptionElement, SelectItemProps>(
   ({ className, children, value, ...props }, ref) => {
     return (
-      <div
+      <option
         ref={ref}
-        className={cn(
-          "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-          className
-        )}
-        data-value={value}
+        value={value}
+        className={cn(className)}
         {...props}
       >
         {children}
-      </div>
+      </option>
     );
   }
 );

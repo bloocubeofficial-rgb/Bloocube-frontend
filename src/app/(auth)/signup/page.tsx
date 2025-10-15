@@ -16,6 +16,11 @@ import Button from "@/Components/ui/Button";
 import { Input } from "@/Components/ui/Input";
 import { Label } from "@/Components/ui/Label";
 import { Alert, AlertDescription } from "@/Components/ui/Alert";
+import {
+  Select,
+  SelectTrigger,
+  SelectItem,
+} from "@/Components/ui/Select";
 import Link from "next/link";
 
 const SignupPage: React.FC = () => {
@@ -30,6 +35,45 @@ const SignupPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // ✅ Handles Google signup redirect
+  const handleGoogle = async () => {
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      if (!token) localStorage.setItem("token", "guest");
+
+      const callbackUrl = `${window.location.origin}/auth/google/callback`;
+      const data = await apiRequest<{
+        success: boolean;
+        authURL?: string;
+        state?: string;
+        message?: string;
+        error?: string;
+      }>("/api/google/auth-url", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token") || "guest"}`,
+        },
+        body: JSON.stringify({ redirectUri: callbackUrl }),
+      });
+
+      if (!data.success || !data.authURL)
+        return setError(data.message || data.error || "Failed to start Google auth");
+
+      localStorage.setItem("google_state", data.state || "");
+      window.location.href = data.authURL;
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to start Google auth";
+      setError(message);
+    }
+  };
+
+  // Auto-fill email from URL param
+  useEffect(() => {
+    const emailParam = searchParams.get("email");
+    if (emailParam) setEmail(decodeURIComponent(emailParam));
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,53 +229,16 @@ const SignupPage: React.FC = () => {
             <Label htmlFor="role" className="text-zinc-300 text-sm block">
               Select Role
             </Label>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setIsSelectOpen(!isSelectOpen)}
-                className="w-full h-12 bg-white/5 border border-white/10 text-white rounded-lg px-3 flex items-center justify-between focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger 
+                value={role} 
+                onChange={(e) => setRole(e.target.value)}
+                className="h-11 bg-white/5 border-white/10 text-white rounded-xl"
               >
-                <span className="capitalize">{role}</span>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-300 ${
-                    isSelectOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              <AnimatePresence>
-                {isSelectOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }} // Thoda upar se fade in
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    transition={{ duration: 0.2, ease: "easeInOut" }}
-                    className="absolute top-full left-0 mt-1 w-full bg-white text-black border border-white/10 rounded-lg shadow-lg z-50"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setRole("creator");
-                        setIsSelectOpen(false);
-                      }}
-                      className="w-full px-3 py-2 text-left text-black hover:bg-white/10 transition-colors"
-                    >
-                      Creator
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setRole("brand");
-                        setIsSelectOpen(false);
-                      }}
-                      className="w-full px-3 py-2 text-left text-black hover:bg-white/10 transition-colors"
-                    >
-                      Brand
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                <SelectItem value="creator">Creator</SelectItem>
+                <SelectItem value="brand">Brand</SelectItem>
+              </SelectTrigger>
+            </Select>
           </div>
 
           {/* Error */}
@@ -262,16 +269,44 @@ const SignupPage: React.FC = () => {
             )}
           </Button>
 
-          {/* Google Login */}
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-[#050510] text-zinc-400">Or continue with</span>
+            </div>
+          </div>
+
+          {/* Google Signup */}
           <button
-            type="button"
-            className="mt-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all duration-300 hover:scale-105 w-full"
+            onClick={handleGoogle}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all duration-300 hover:scale-105"
           >
             <svg
               className="w-5 h-5"
               viewBox="0 0 48 48"
               xmlns="http://www.w3.org/2000/svg"
               aria-hidden="true"
+            >
+              <path
+                fill="#FFC107"
+                d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36C16.8 36 11 30.2 11 23S16.8 10 24 10c3.2 0 6.1 1.2 8.3 3.2l5.7-5.7C34.6 4.2 29.6 2 24 2C11.8 2 2 11.8 2 24s9.8 22 22 22c12.1 0 21.6-8.8 21.6-22 0-1.2-.1-2.3-.3-3.5z"
+              />
+              <path
+                fill="#4CAF50"
+                d="M24 46c5.2 0 10-1.9 13.6-5.2l-6.3-5.2C29.1 37.2 26.7 38 24 38c-5.3 0-9.7-3.1-11.5-7.6l-6.6 5.1C7.5 40.8 15 46 24 46z"
+              />
+            </svg>
+            <span className="text-sm font-medium">Sign up with Google</span>
+          </button>
+
+          <p className="mt-5 text-center text-zinc-400 text-sm">
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="text-indigo-400 hover:text-fuchsia-400 font-semibold transition-colors"
             >
               <path
                 fill="#FFC107"

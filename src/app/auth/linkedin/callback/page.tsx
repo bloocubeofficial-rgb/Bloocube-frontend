@@ -2,6 +2,27 @@
 
 import { useEffect, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { authUtils } from "@/lib/auth";
+
+// Helper function to validate JWT token format
+const isValidJWTFormat = (token: string): boolean => {
+  if (!token || typeof token !== 'string') return false;
+  
+  // JWT should have 3 parts separated by dots
+  const parts = token.split('.');
+  if (parts.length !== 3) return false;
+  
+  try {
+    // Try to decode the header and payload to check if it's valid JSON
+    const header = JSON.parse(atob(parts[0]));
+    const payload = JSON.parse(atob(parts[1]));
+    
+    // Check if it has required fields
+    return !!(header && payload && payload.id && payload.exp);
+  } catch {
+    return false;
+  }
+};
 
 function LinkedInCallbackContent() {
   const router = useRouter();
@@ -10,13 +31,72 @@ function LinkedInCallbackContent() {
 
   useEffect(() => {
     const processCallback = async () => {
-      const code = searchParams.get("code");
-      const state = searchParams.get("state");
+       // Check for direct success with session token (from backend redirect)
+       const success = searchParams.get("linkedin");
+       const token = searchParams.get("token");
+       const message = searchParams.get("message");
+       const error = searchParams.get("error");
+       const error_description = searchParams.get("error_description");
 
-      // Check for authentication errors
-      const error = searchParams.get("error");
-      const error_description = searchParams.get("error_description");
+      // Handle direct success with session token
+      if (success === "success" && token) {
+        setStatus("LinkedIn connected successfully! Logging you in...");
+        
+        try {
+          // Validate token format before using it
+          if (!isValidJWTFormat(token)) {
+            console.error('Invalid token format received');
+            setStatus("Error: Invalid session token");
+            setTimeout(() => {
+              router.replace("/creator/settings?linkedin=error&message=Invalid+session+token");
+            }, 2000);
+            return;
+          }
+          
+          // Store the session token and authenticate user
+          authUtils.setToken(token);
+          
+          // Fetch user profile to complete authentication
+          const response = await fetch('/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            if (userData.success && userData.data) {
+              // Store user data
+              authUtils.setAuth(token, userData.data.user);
+               setStatus("Successfully logged in! Redirecting...");
+               setTimeout(() => {
+                 const successMessage = message || "LinkedIn+connected+and+logged+in+successfully";
+                 router.replace(`/creator/settings?linkedin=success&message=${successMessage}`);
+               }, 1500);
+              return;
+            }
+          }
+          
+           // If user fetch fails, still proceed with token
+           setStatus("LinkedIn connected! Redirecting...");
+           setTimeout(() => {
+             const successMessage = message || "LinkedIn+connected+successfully";
+             router.replace(`/creator/settings?linkedin=success&message=${successMessage}`);
+           }, 1500);
+          
+         } catch (err) {
+           console.error('Error during auto-login:', err);
+           setStatus("LinkedIn connected! Redirecting...");
+           setTimeout(() => {
+             const successMessage = message || "LinkedIn+connected+successfully";
+             router.replace(`/creator/settings?linkedin=success&message=${successMessage}`);
+           }, 1500);
+         }
+        return;
+      }
 
+      // Handle errors from backend redirect
       if (error) {
         setStatus(`Error: ${error_description || error}`);
         setTimeout(() => {
@@ -24,6 +104,10 @@ function LinkedInCallbackContent() {
         }, 2000);
         return;
       }
+
+      // Handle OAuth callback flow (legacy - when frontend processes the callback)
+      const code = searchParams.get("code");
+      const state = searchParams.get("state");
 
       if (!code || !state) {
         setStatus("Error: Missing authorization code or state");

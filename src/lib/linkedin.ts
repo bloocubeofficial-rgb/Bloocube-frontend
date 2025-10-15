@@ -4,6 +4,7 @@ export interface LinkedInUser {
   id: string;
   firstName?: string;
   lastName?: string;
+  name?: string;
   email?: string;
   connectedAt?: string;
 }
@@ -36,15 +37,15 @@ class LinkedInService {
   }
 
   async generateAuthURL(redirectUri: string): Promise<LinkedInAuthResponse> {
-    try {
-      const url = `/api/linkedin/auth-url?redirectUri=${encodeURIComponent(redirectUri)}`;
-      return await this.request<LinkedInAuthResponse>(url, { method: 'GET' });
-    } catch {
-      return this.request<LinkedInAuthResponse>('/api/linkedin/auth-url', {
-        method: 'POST',
-        body: JSON.stringify({ redirectUri })
-      });
-    }
+    // FIX: Simplified to use a single POST request for clarity.
+    // The backend is already configured to handle it.
+    return this.request<LinkedInAuthResponse>('/api/linkedin/auth-url', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ redirectUri }),
+    });
   }
 
   async getProfile(): Promise<LinkedInProfileResponse> {
@@ -53,7 +54,7 @@ class LinkedInService {
 
   async disconnect(): Promise<{ success: boolean; message?: string; error?: string }> {
     return this.request('/api/linkedin/disconnect', {
-      method: 'DELETE'
+      method: 'DELETE',
     });
   }
   

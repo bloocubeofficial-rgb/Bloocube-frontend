@@ -83,9 +83,10 @@ export const useLinkedIn = () => {
       }
       return res;
     } catch (e: unknown) {
-      // ✅ Standardized error handling: set state instead of throwing
       const message = e instanceof Error ? e.message : 'Failed to disconnect LinkedIn';
       setError(message);
+      // FIX: Return a consistent error object to the caller.
+      return { success: false, error: message };
     } finally {
       setLoading(false);
     }

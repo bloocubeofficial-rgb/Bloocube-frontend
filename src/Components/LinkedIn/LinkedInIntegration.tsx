@@ -1,5 +1,6 @@
+// LinkedInIntegration.tsx
 "use client";
-import React, { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
+import React, { forwardRef, useImperativeHandle, useEffect } from 'react';
 import { useLinkedIn } from '@/hooks/useLinkedIn';
 
 interface LinkedInIntegrationProps {
@@ -12,7 +13,6 @@ export interface LinkedInIntegrationRef {
 
 export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIntegrationProps>(({ className = '' }, ref) => {
   const { connect, getProfile, disconnect, isConnected, profile, loading, error } = useLinkedIn();
-  const [connectionStatus, setConnectionStatus] = useState('Checking...');
 
   // Check connection status on mount
   useEffect(() => {
@@ -20,13 +20,9 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
   }, []);
 
   const checkConnectionStatus = async () => {
-    const res = await getProfile();
-    if ((res as any)?.success && (res as any).profile) {
-      const p = (res as any).profile as { firstName?: string; lastName?: string; name?: string };
-      setConnectionStatus(`Connected as ${p.name || `${p.firstName || ''} ${p.lastName || ''}`}`.trim());
-    } else {
-      setConnectionStatus('Not connected');
-    }
+    // This function now just triggers the hook's getProfile method.
+    // The component will automatically re-render with the new state.
+    await getProfile();
   };
 
   const handleConnect = async () => {
@@ -36,11 +32,25 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
       console.error('LinkedIn connection error:', err);
     }
   };
+  
+  const handleDisconnect = async () => {
+    await disconnect();
+  };
 
-  // Expose checkConnection method to parent component
+  // Expose checkConnection method to the parent component
   useImperativeHandle(ref, () => ({
     checkConnection: checkConnectionStatus
   }));
+
+  // FIX: Derive display text directly from the hook's state (profile, isConnected).
+  // This removes the need for local 'connectionStatus' state.
+  const getStatusText = () => {
+    if (loading) return 'Checking...';
+    if (isConnected && profile) {
+      return `Connected as ${profile.name || `${profile.firstName || ''} ${profile.lastName || ''}`.trim()}`;
+    }
+    return 'Not Connected';
+  };
 
   return (
     <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-200 rounded-lg gap-3 ${className}`}>
@@ -51,7 +61,7 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
         <div>
           <p className="font-medium text-gray-900">LinkedIn</p>
           <p className={`text-sm ${isConnected ? 'text-green-600' : 'text-gray-500'}`}>
-            {isConnected ? 'Connected' : connectionStatus}
+            {getStatusText()}
           </p>
           {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
         </div>
@@ -62,14 +72,15 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
           <>
             <button
               onClick={checkConnectionStatus}
-              className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-200 transition-colors"
+              disabled={loading}
+              className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-200 transition-colors disabled:opacity-50"
             >
-              Refresh
+              {loading ? 'Refreshing...' : 'Refresh'}
             </button>
             <button
-              onClick={async () => { await disconnect(); setConnectionStatus('Not connected'); }}
+              onClick={handleDisconnect}
               disabled={loading}
-              className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors disabled:opacity-50"
             >
               {loading ? 'Disconnecting...' : 'Disconnect'}
             </button>
@@ -78,7 +89,7 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
           <button
             onClick={handleConnect}
             disabled={loading}
-            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             {loading ? 'Connecting...' : 'Connect'}
           </button>
@@ -89,5 +100,3 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
 });
 
 LinkedInIntegration.displayName = 'LinkedInIntegration';
-
-

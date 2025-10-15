@@ -326,17 +326,7 @@ const TwitterPostForm = ({ postData, onFieldChange, selectedPostType }: {
             </select>
           </div>
 
-          {/* Debug Info */}
-          <div className="bg-gray-100 p-3 rounded-lg">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Debug Info</h4>
-            <pre className="text-xs text-gray-600">
-              {JSON.stringify({
-                poll_question: postData.poll_question,
-                poll_options: postData.poll_options,
-                poll_duration: postData.poll_duration
-              }, null, 2)}
-            </pre>
-          </div>
+      {/* Debug Info removed */}
         </div>
       )}
 
@@ -360,7 +350,7 @@ const TwitterPostForm = ({ postData, onFieldChange, selectedPostType }: {
 };
 
 export default function PostsPage() {
-  const [activeTab, setActiveTab] = useState<'create' | 'scheduled' | 'published'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'drafts' | 'scheduled' | 'published'>('create');
   const [selectedPlatform, setSelectedPlatform] = useState<string>('');
   const [selectedPostType, setSelectedPostType] = useState<string>('');
   const [postData, setPostData] = useState<any>({});
@@ -370,8 +360,66 @@ export default function PostsPage() {
   const [success, setSuccess] = useState<string>('');
   const [posts, setPosts] = useState<Post[]>([]);
   const [scheduledPosts, setScheduledPosts] = useState<Post[]>([]);
+  const [drafts, setDrafts] = useState<Post[]>([]);
+  const [openMenuScheduledId, setOpenMenuScheduledId] = useState<string | null>(null);
+  const [openMenuPublishedId, setOpenMenuPublishedId] = useState<string | null>(null);
   const [youtubeConnected, setYoutubeConnected] = useState<boolean>(false);
   const [checkingConnection, setCheckingConnection] = useState<boolean>(false);
+
+  // Load a draft into the form for editing/publishing
+  const loadDraftIntoForm = async (post: Post) => {
+    try {
+      // Optionally fetch latest version
+      const latest = await apiRequest<any>(`/api/posts/${post._id}`);
+      const p = latest?.post || latest?.data?.post || post;
+
+      setActiveTab('create');
+      setSelectedPlatform(p.platform);
+      setSelectedPostType(p.post_type);
+
+      const baseCaption = p?.content?.caption || '';
+      const baseHashtags = Array.isArray(p?.content?.hashtags) ? p.content.hashtags.join(',') : '';
+      const baseMentions = Array.isArray(p?.content?.mentions) ? p.content.mentions.join(',') : '';
+
+      const nextData: any = {
+        caption: baseCaption,
+        content: baseCaption,
+        hashtags: baseHashtags,
+        mentions: baseMentions
+      };
+
+      // YouTube specifics
+      const yt = (p as any).platformContent?.youtube;
+      if (p.platform === 'youtube' && yt) {
+        nextData.title = yt.title || p.title || '';
+        nextData.description = yt.description || '';
+        nextData.tags = Array.isArray(yt.tags) ? yt.tags.join(',') : '';
+        nextData.privacy = yt.privacy_status || 'public';
+      }
+
+      // Twitter basics (poll/thread not reconstructed here)
+      if (p.platform === 'twitter') {
+        nextData.content = baseCaption;
+      }
+
+      setPostData(nextData);
+      setMediaFiles([]); // Media cannot be reconstructed client-side; prompt user to re-add if needed
+    } catch (e) {
+      console.error('Failed to load draft:', e);
+    }
+  };
+
+  // Delete a draft
+  const deleteDraft = async (postId?: string) => {
+    if (!postId) return;
+    try {
+      await apiRequest(`/api/posts/${postId}`, { method: 'DELETE' });
+      // Refresh drafts list
+      loadPosts();
+    } catch (e) {
+      console.error('Failed to delete draft:', e);
+    }
+  };
 
   // Load posts on component mount
   useEffect(() => {
@@ -393,10 +441,16 @@ export default function PostsPage() {
 
   const loadPosts = async () => {
     try {
-      const response = await apiRequest<{posts: Post[], pagination: any}>('/api/posts');
-      const allPosts = response.posts || [];
-      setPosts(allPosts.filter(p => p.status === 'published'));
-      setScheduledPosts(allPosts.filter(p => p.status === 'scheduled'));
+      const [publishedRes, scheduledRes, draftsRes, failedRes] = await Promise.all([
+        apiRequest<{posts: Post[], pagination: any}>('/api/posts?status=published'),
+        apiRequest<{scheduled: Post[], pagination: any}>('/api/posts/scheduled'),
+        apiRequest<{posts: Post[], pagination: any}>('/api/posts?status=draft'),
+        apiRequest<{posts: Post[], pagination: any}>('/api/posts?status=failed')
+      ]);
+      setPosts(publishedRes.posts || []);
+      setScheduledPosts((scheduledRes as any).scheduled || []);
+      const draftsList = (draftsRes.posts || []).concat(failedRes.posts || []);
+      setDrafts(draftsList);
     } catch (err) {
       console.error('Failed to load posts:', err);
     }
@@ -523,83 +577,7 @@ export default function PostsPage() {
     }
   };
 
-  // Test function to debug API connection
-  const testApiConnection = async () => {
-    try {
-      console.log('🧪 Testing API connection...');
-      const response = await fetch('/api/health', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      console.log('🧪 Health check response:', response.status, response.statusText);
-    } catch (error) {
-      console.error('🧪 API connection test failed:', error);
-    }
-  };
-
-  // Test function to try minimal post creation
-  const testMinimalPost = async () => {
-    try {
-      console.log('🧪 Testing minimal post creation...');
-      
-      const minimalPayload = {
-        platform: 'twitter',
-        post_type: 'tweet',
-        status: 'draft',
-        content: {
-          caption: 'Test post from Bloocube',
-          hashtags: [],
-          mentions: []
-        },
-        media: []
-      };
-      
-      console.log('🧪 Sending minimal payload:', JSON.stringify(minimalPayload, null, 2));
-      
-      const response = await apiRequest('/api/posts', {
-        method: 'POST',
-        body: JSON.stringify(minimalPayload)
-      });
-      
-      console.log('🧪 Minimal post test successful:', response);
-    } catch (error) {
-      console.error('🧪 Minimal post test failed:', error);
-    }
-  };
-
-  // Test function to check authentication
-  const testAuth = async () => {
-    try {
-      console.log('🔐 Testing authentication...');
-      
-      // Check if we have a token
-      const token = localStorage.getItem('token');
-      console.log('🔐 Token exists:', !!token);
-      
-      // Test a simple authenticated request
-      const response = await apiRequest('/api/user/profile', {
-        method: 'GET'
-      });
-      
-      console.log('🔐 Auth test successful:', response);
-    } catch (error) {
-      console.error('🔐 Auth test failed:', error);
-    }
-  };
-
-  // Test function to debug form data
-  const debugFormData = () => {
-    console.log('🔍 FORM DEBUG:', {
-      selectedPlatform,
-      selectedPostType,
-      postData,
-      postDataKeys: Object.keys(postData),
-      postDataValues: Object.values(postData),
-      mediaFiles: mediaFiles.length
-    });
-  };
+  // Debug/Test helpers removed
 
 // Enhanced Twitter post payload creation
 const createTwitterPostPayload = (postData: any, selectedPostType: string, mediaFiles: File[]) => {
@@ -720,7 +698,9 @@ const createTwitterPostPayload = (postData: any, selectedPostType: string, media
           title: actualContent.trim(),
           media: mediaFiles.length > 0 ? mediaFiles.map(file => ({
             filename: file.name,
-            type: file.type,
+            // ✅ FIX: Convert the full MIME type to the simple type
+            type: file.type.startsWith('image/') ? 'image' : 
+                  file.type.startsWith('video/') ? 'video' : 'document',
             size: file.size
           })) : []
         };
@@ -1029,6 +1009,16 @@ const createTwitterPostPayload = (postData: any, selectedPostType: string, media
               Create Post
             </button>
             <button
+              onClick={() => setActiveTab('drafts')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'drafts'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Drafts ({drafts.length})
+            </button>
+            <button
               onClick={() => setActiveTab('scheduled')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'scheduled'
@@ -1225,27 +1215,6 @@ const createTwitterPostPayload = (postData: any, selectedPostType: string, media
             {selectedPlatform && selectedPostType && (
               <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
                 <button
-                  onClick={() => testApiConnection()}
-                  className="flex items-center space-x-2 px-4 py-2 border border-yellow-300 text-yellow-700 rounded-lg hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors"
-                >
-                  <span>🧪 Test API</span>
-                </button>
-                
-                <button
-                  onClick={() => testMinimalPost()}
-                  className="flex items-center space-x-2 px-4 py-2 border border-orange-300 text-orange-700 rounded-lg hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
-                >
-                  <span>🧪 Test Minimal Post</span>
-                </button>
-                
-                <button
-                  onClick={() => debugFormData()}
-                  className="flex items-center space-x-2 px-4 py-2 border border-green-300 text-green-700 rounded-lg hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
-                >
-                  <span>🔍 Debug Form</span>
-                </button>
-                
-                <button
                   onClick={() => createPost('draft')}
                   disabled={loading || (selectedPlatform === 'youtube' && !youtubeConnected)}
                   className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1284,6 +1253,82 @@ const createTwitterPostPayload = (postData: any, selectedPostType: string, media
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Drafts Tab */}
+      {activeTab === 'drafts' && (
+        <div className="bg-white rounded-lg shadow-sm border">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Drafts</h2>
+            <p className="text-sm text-gray-600">Unpublished and failed posts</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Content</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Platform</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Updated</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {drafts.map((post) => (
+                  <tr key={post._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 bg-gray-200 rounded-lg mr-3 flex items-center justify-center">
+                          {post.media?.length > 0 ? <ImageIcon size={16} /> : <FileText size={16} />}
+                        </div>
+                        <span className="text-sm text-gray-900 truncate max-w-xs">
+                          {post.content?.caption || 'No caption'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        {getPlatformIcon(post.platform)}
+                        <span className="text-sm text-gray-900 capitalize">{post.platform}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {post.updatedAt ? new Date(post.updatedAt as any).toLocaleString() : (post as any).createdAt ? new Date((post as any).createdAt).toLocaleString() : '-'}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex px-2 py-1 text-xs rounded-full ${post.status === 'failed' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
+                        {post.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => loadDraftIntoForm(post)}
+                          className="px-3 py-1.5 text-xs rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteDraft(post._id)}
+                          className="px-3 py-1.5 text-xs rounded-md border border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {drafts.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                      No drafts found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -1327,17 +1372,48 @@ const createTwitterPostPayload = (postData: any, selectedPostType: string, media
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      {post.scheduling?.scheduled_for ? new Date(post.scheduling.scheduled_for).toLocaleString() : 'Not scheduled'}
+                      {post.scheduling?.scheduled_at
+                        ? new Date(post.scheduling.scheduled_at).toLocaleString()
+                        : post.scheduling?.scheduled_for
+                          ? new Date(post.scheduling.scheduled_for).toLocaleString()
+                          : (post as any).scheduledAt
+                            ? new Date((post as any).scheduledAt).toLocaleString()
+                            : 'Not scheduled'}
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
                         {post.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <button className="text-gray-400 hover:text-gray-600">
+                    <td className="px-6 py-4 relative">
+                      <button
+                        className="text-gray-400 hover:text-gray-600"
+                        onClick={() => setOpenMenuScheduledId(openMenuScheduledId === post._id ? null : (post._id as string))}
+                      >
                         <MoreHorizontal size={16} />
                       </button>
+                      {openMenuScheduledId === post._id && (
+                        <div className="absolute right-6 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            onClick={() => { setOpenMenuScheduledId(null); /* TODO: implement view */ }}
+                          >
+                            View
+                          </button>
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            onClick={() => { setOpenMenuScheduledId(null); /* TODO: implement edit */ }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                            onClick={() => { setOpenMenuScheduledId(null); /* TODO: implement cancel schedule */ }}
+                          >
+                            Cancel Schedule
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -1411,10 +1487,35 @@ const createTwitterPostPayload = (postData: any, selectedPostType: string, media
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <button className="text-gray-400 hover:text-gray-600">
+                    <td className="px-6 py-4 relative">
+                      <button
+                        className="text-gray-400 hover:text-gray-600"
+                        onClick={() => setOpenMenuPublishedId(openMenuPublishedId === post._id ? null : (post._id as string))}
+                      >
                         <MoreHorizontal size={16} />
                       </button>
+                      {openMenuPublishedId === post._id && (
+                        <div className="absolute right-6 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            onClick={() => { setOpenMenuPublishedId(null); /* TODO: implement view */ }}
+                          >
+                            View
+                          </button>
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            onClick={() => { setOpenMenuPublishedId(null); /* TODO: implement copy link */ }}
+                          >
+                            Copy Link
+                          </button>
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                            onClick={() => { setOpenMenuPublishedId(null); /* TODO: implement delete */ }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

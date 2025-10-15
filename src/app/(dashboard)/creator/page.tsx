@@ -9,6 +9,8 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
+  Legend,
+  Brush,
   ResponsiveContainer 
 } from 'recharts';
 import {
@@ -21,7 +23,10 @@ import {
   Zap,
   ArrowUpRight,
   ArrowDownRight,
-  RefreshCw
+  RefreshCw,
+  ThumbsUp,
+  MessageSquare,
+  Share2
 } from 'lucide-react';
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 import { apiRequest } from '@/lib/apiClient';
@@ -31,7 +36,16 @@ type AnalyticsItem = {
   post_id?: string;
   platform?: string;
   timing?: { posted_at?: string };
-  metrics?: { likes?: number; comments?: number; shares?: number; views?: number };
+  metrics?: { 
+    likes?: number; 
+    comments?: number; 
+    shares?: number; 
+    views?: number;
+    reach?: number;
+    impressions?: number;
+    followers?: number;
+    engagement_rate?: number;
+  };
   content?: { media_type?: string; caption?: string };
 };
 
@@ -43,12 +57,22 @@ const Dashboard = () => {
   const [scheduledCount, setScheduledCount] = useState<number>(0);
   const [totalPostsCount, setTotalPostsCount] = useState<number>(0);
 
-  const fetchAnalytics = async () => {
+  // Formatting helpers
+  const formatNumber = (n: number) => n.toLocaleString();
+  const formatCompact = (n: number) => new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+
+  const fetchAnalytics = async (options?: { sync?: boolean }) => {
     try {
       setError(null);
-      const user = authUtils.getUser() as { id?: string } | null;
-      const userId = user?.id || (authUtils as unknown as { getUserId?: () => string }).getUserId?.();
+      const user = authUtils.getUser() as { id?: string; _id?: string; userId?: string } | null;
+      const userId = user?.id || user?._id || user?.userId || (authUtils as unknown as { getUserId?: () => string }).getUserId?.();
       if (!userId) throw new Error('Not authenticated');
+      // Optionally sync from linked social accounts before fetching
+      if (options?.sync) {
+        try {
+          await apiRequest<{ success: boolean; data?: { synced: boolean } }>(`/api/analytics/user/${userId}/sync`, { method: 'POST' });
+        } catch {}
+      }
       const res = await apiRequest<{ success: boolean; data: { analytics: AnalyticsItem[] } }>(`/api/analytics/user/${userId}`);
       setAnalytics(res?.data?.analytics || []);
       setLastUpdated(Date.now());
@@ -74,9 +98,11 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    fetchAnalytics();
+    // First load will try to sync from linked accounts, then fetch
+    fetchAnalytics({ sync: true });
     fetchPostCounts();
     const interval = setInterval(() => {
+      // Regular refresh without heavy sync
       fetchAnalytics();
       fetchPostCounts();
     }, 30000);
@@ -92,6 +118,17 @@ const Dashboard = () => {
       byMonth[key].likes += a?.metrics?.likes || 0;
       byMonth[key].comments += a?.metrics?.comments || 0;
       byMonth[key].shares += a?.metrics?.shares || 0;
+    });
+    return Object.entries(byMonth).map(([month, v]) => ({ month, ...v }));
+  }, [analytics]);
+
+  const viewsByMonth = useMemo(() => {
+    const byMonth: Record<string, { views: number }> = {};
+    analytics.forEach((a) => {
+      const d = a?.timing?.posted_at ? new Date(a.timing.posted_at) : new Date();
+      const key = `${d.getMonth() + 1}/${String(d.getFullYear()).slice(-2)}`;
+      if (!byMonth[key]) byMonth[key] = { views: 0 };
+      byMonth[key].views += a?.metrics?.views || 0;
     });
     return Object.entries(byMonth).map(([month, v]) => ({ month, ...v }));
   }, [analytics]);
@@ -133,12 +170,23 @@ const Dashboard = () => {
 
   const totals = useMemo(() => {
     const sum = (key: 'likes' | 'comments' | 'shares' | 'views') => analytics.reduce((s, a) => s + (a.metrics?.[key] || 0), 0);
+    const sumReach = analytics.reduce((s, a) => s + (a.metrics?.reach || 0), 0);
+    const sumImpressions = analytics.reduce((s, a) => s + (a.metrics?.impressions || 0), 0);
+    const sumFollowers = analytics.reduce((s, a) => s + (a.metrics?.followers || 0), 0);
+    const engagementNumerator = sum('likes') + sum('comments') + sum('shares');
+    const engagementDenominator = Math.max(sum('views') || sumReach || sumImpressions || sumFollowers || 0, 1);
     return {
       totalPosts: totalPostsCount,
       scheduledPosts: scheduledCount,
-      engagementRate: analytics.length ? (((sum('likes') + sum('comments') + sum('shares')) / Math.max(sum('views'), 1)) * 100).toFixed(1) : '0.0',
+      engagementRate: analytics.length ? ((engagementNumerator / engagementDenominator) * 100).toFixed(1) : '0.0',
       avgEngagementScore: analytics.length ? Math.round((sum('likes') + sum('comments') * 2 + sum('shares') * 3) / analytics.length) : 0,
-      lastUpdated
+      lastUpdated,
+      sums: {
+        views: sum('views'),
+        likes: sum('likes'),
+        comments: sum('comments'),
+        shares: sum('shares')
+      }
     };
   }, [analytics, lastUpdated, totalPostsCount, scheduledCount]);
 
@@ -147,7 +195,7 @@ const Dashboard = () => {
   const headerActions = (
     <>
       <button 
-        onClick={fetchAnalytics}
+        onClick={() => fetchAnalytics({ sync: true })}
         disabled={loading}
         className="flex items-center space-x-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
       >
@@ -200,7 +248,8 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Enhanced Stats Cards */}
+      {/* Enhanced Stats Cards */
+      }
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between mb-4">
@@ -263,6 +312,42 @@ const Dashboard = () => {
             </div>
           </div>
 
+          {/* KPI Cards: Views, Likes, Comments, Shares */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm font-medium text-gray-500">Total Views</div>
+                <Eye className="w-4 h-4 text-blue-600" />
+              </div>
+              <div className="text-2xl font-bold text-gray-900">{formatCompact(totals.sums?.views || 0)}</div>
+              <div className="text-xs text-gray-500 mt-1">{formatNumber(totals.sums?.views || 0)} total</div>
+            </div>
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm font-medium text-gray-500">Total Likes</div>
+                <ThumbsUp className="w-4 h-4 text-green-600" />
+              </div>
+              <div className="text-2xl font-bold text-gray-900">{formatCompact(totals.sums?.likes || 0)}</div>
+              <div className="text-xs text-gray-500 mt-1">{formatNumber(totals.sums?.likes || 0)} total</div>
+            </div>
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm font-medium text-gray-500">Total Comments</div>
+                <MessageSquare className="w-4 h-4 text-purple-600" />
+              </div>
+              <div className="text-2xl font-bold text-gray-900">{formatCompact(totals.sums?.comments || 0)}</div>
+              <div className="text-xs text-gray-500 mt-1">{formatNumber(totals.sums?.comments || 0)} total</div>
+            </div>
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm font-medium text-gray-500">Total Shares</div>
+                <Share2 className="w-4 h-4 text-orange-600" />
+              </div>
+              <div className="text-2xl font-bold text-gray-900">{formatCompact(totals.sums?.shares || 0)}</div>
+              <div className="text-xs text-gray-500 mt-1">{formatNumber(totals.sums?.shares || 0)} total</div>
+            </div>
+          </div>
+
           {/* Enhanced Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Engagement Trends */}
@@ -272,12 +357,12 @@ const Dashboard = () => {
                   <h3 className="text-lg font-bold text-gray-900">Engagement Trends</h3>
                   <p className="text-sm text-gray-500">Performance over time</p>
                 </div>
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
                   <TrendingUp className="w-5 h-5 text-white" />
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={engagementData}>
+              <ResponsiveContainer width="100%" height={320}>
+                <LineChart data={engagementData.length ? engagementData : [{ month: '', likes: 0, comments: 0, shares: 0 }] } margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis 
                     dataKey="month" 
@@ -289,6 +374,7 @@ const Dashboard = () => {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 12, fill: '#666' }}
+                    tickFormatter={(v) => new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 }).format(Number(v))}
                   />
                   <Tooltip 
                     contentStyle={{
@@ -297,13 +383,16 @@ const Dashboard = () => {
                       borderRadius: '12px',
                       boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                     }}
+                    formatter={(value) => [new Intl.NumberFormat('en-IN').format(Number(value)), '']}
                   />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
                   <Line 
                     type="monotone" 
                     dataKey="likes" 
                     stroke="#3B82F6" 
                     strokeWidth={3}
-                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 3 }}
+                    activeDot={{ r: 5 }}
                     name="Likes"
                   />
                   <Line 
@@ -311,7 +400,8 @@ const Dashboard = () => {
                     dataKey="comments" 
                     stroke="#10B981" 
                     strokeWidth={2}
-                    dot={{ fill: '#10B981', strokeWidth: 2, r: 3 }}
+                    dot={{ fill: '#10B981', strokeWidth: 2, r: 2.5 }}
+                    activeDot={{ r: 5 }}
                     name="Comments"
                   />
                   <Line 
@@ -319,29 +409,31 @@ const Dashboard = () => {
                     dataKey="shares" 
                     stroke="#EF4444" 
                     strokeWidth={2}
-                    dot={{ fill: '#EF4444', strokeWidth: 2, r: 3 }}
+                    dot={{ fill: '#EF4444', strokeWidth: 2, r: 2.5 }}
+                    activeDot={{ r: 5 }}
                     name="Shares"
                   />
+                  <Brush dataKey="month" height={18} stroke="#cbd5e1" travellerWidth={8} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
 
-            {/* Posts by Platform */}
+            {/* Views by Month */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">Posts by Platform</h3>
-                  <p className="text-sm text-gray-500">Distribution across platforms</p>
+                  <h3 className="text-lg font-bold text-gray-900">Views by Month</h3>
+                  <p className="text-sm text-gray-500">Total views across content</p>
                 </div>
                 <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Target className="w-5 h-5 text-white" />
+                  <TrendingUp className="w-5 h-5 text-white" />
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={platformData}>
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={viewsByMonth.length ? viewsByMonth : [{ month: '', views: 0 }] } margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis 
-                    dataKey="name" 
+                    dataKey="month" 
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 12, fill: '#666' }}
@@ -350,6 +442,7 @@ const Dashboard = () => {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 12, fill: '#666' }}
+                    tickFormatter={(v) => new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 }).format(Number(v))}
                   />
                   <Tooltip 
                     contentStyle={{
@@ -358,12 +451,17 @@ const Dashboard = () => {
                       borderRadius: '12px',
                       boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                     }}
+                    formatter={(value) => [new Intl.NumberFormat('en-IN').format(Number(value)), 'Views']}
                   />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
                   <Bar 
-                    dataKey="posts" 
-                    fill="#8884d8"
+                    dataKey="views" 
+                    name="Views"
+                    fill="#60A5FA"
                     radius={[8, 8, 0, 0]}
+                    isAnimationActive
                   />
+                  <Brush dataKey="month" height={18} stroke="#cbd5e1" travellerWidth={8} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
