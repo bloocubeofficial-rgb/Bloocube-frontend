@@ -14,11 +14,7 @@ import Button from "@/Components/ui/Button";
 import { Input } from "@/Components/ui/Input";
 import { Label } from "@/Components/ui/Label";
 import { Alert, AlertDescription } from "@/Components/ui/Alert";
-import {
-  Select,
-  SelectTrigger,
-  SelectItem,
-} from "@/Components/ui/Select";
+import { Select, SelectItem, SelectTrigger } from "@/Components/ui/Select";
 import Link from "next/link";
 import { apiRequest } from "@/lib/apiClient";
 
@@ -272,19 +268,27 @@ const SignupForm: React.FC = () => {
             </div>
           </div>
 
-          {/* Role */}
-          <div>
+        {/* Role */}
+        <div>
             <Label htmlFor="role" className="text-zinc-300 text-sm mb-2 block">
               Select Role
             </Label>
-            <Select value={role} onValueChange={setRole}>
-              <SelectTrigger 
-                value={role} 
+            <Select>
+              <SelectTrigger
+                id="role"
+                value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="h-11 bg-white/5 border-white/10 text-white rounded-xl"
+                className="h-11 w-full bg-white/5 border-white/10 text-white placeholder:text-zinc-500 rounded-xl focus:ring-2 focus:ring-indigo-500/30"
               >
-                <SelectItem value="creator">Creator</SelectItem>
-                <SelectItem value="brand">Brand</SelectItem>
+                <option value="" disabled>
+                  Select your role...
+                </option>
+                <SelectItem value="creator" className="cursor-pointer">
+                  Creator
+                </SelectItem>
+                <SelectItem value="brand" className="cursor-pointer">
+                  Brand
+                </SelectItem>
               </SelectTrigger>
             </Select>
           </div>

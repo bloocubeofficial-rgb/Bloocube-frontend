@@ -1,154 +1,274 @@
 "use client";
-import React, { useEffect, useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
-import Button from '@/Components/ui/Button';
-import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaYoutube, FaPinterest, FaRedditAlien, FaSlack, FaWhatsapp, FaGithub, FaDiscord } from "react-icons/fa";
-import { useRouter } from 'next/navigation';
 
-const Hero: React.FC = () => {
-  // Typewriter state (must be at top-level for hooks rules)
-  const words = useMemo(() => ["workspace", "center", "OS"], []);
-  const [index, setIndex] = useState(0);
-  const [subIndex, setSubIndex] = useState(0);
-  const [deleting, setDeleting] = useState(false);
-  
-  // Email form state
-  const [email, setEmail] = useState('');
-  const router = useRouter();
+import React, { useEffect, useState, useMemo, useRef } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { ArrowRight, Sparkles, Users, Mail } from "lucide-react";
+import Image from "next/image";
+import {
+  FaFacebookF,
+  FaTwitter,
+  FaInstagram,
+  FaLinkedinIn,
+  FaYoutube,
+} from "react-icons/fa";
+
+import img2 from "@/assets/img2.png";
+
+import img3 from "@/assets/img3.png";
+
+import img5 from "@/assets/img5.png";
+// import img6 from "@/Components/assets/img6.png";
+
+const allIcons = [
+  { icon: "", mode: "creator", img: img2, color: "" },
+  { icon: FaYoutube, mode: "brand", color: "text-red-600" },
+  { icon: "", mode: "creator", img: img3, color: "" },
+  { icon: FaLinkedinIn, mode: "brand", color: "text-blue-500" },
+  { icon: FaFacebookF, mode: "brand", color: "text-blue-700" },
+  { icon: FaInstagram, mode: "brand", color: "text-pink-500" },
+  { icon: "", mode: "creator", img: img5, color: "" },
+  { icon: FaTwitter, mode: "brand", color: "text-sky-400" },
+  // { icon: "", mode: "creator", img: img6, color: "" },
+];
+
+const Hero = React.memo(() => {
+  const [activeMode, setActiveMode] = useState("creator");
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
-    const current = words[index];
-    const atWordEnd = subIndex === current.length;
-    const atWordStart = subIndex === 0;
+    const interval = setInterval(() => {
+      setActiveMode((prev) => (prev === "creator" ? "brand" : "creator"));
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
-    const timeout = setTimeout(() => {
-      setSubIndex((prev) => prev + (deleting ? -1 : 1));
-      if (!deleting && atWordEnd) {
-        setDeleting(true);
-      } else if (deleting && atWordStart) {
-        setDeleting(false);
-        setIndex((prev) => (prev + 1) % words.length);
-      }
-    }, deleting ? 75 : 105);
-    return () => clearTimeout(timeout);
-  }, [subIndex, deleting, index, words]);
-
-  const handleEmailSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email.trim()) {
-      // Redirect to signup page with email parameter
-      router.push(`/signup?email=${encodeURIComponent(email.trim())}`);
-    }
-  };
+  const firstRender = useRef(true);
+  const prefersReducedMotion = useReducedMotion();
+  const orbit1Items = useMemo(() => allIcons.slice(0, 4), []);
+  const orbit2Items = useMemo(() => allIcons.slice(4, 8), []);
 
   return (
-    <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 md:pt-28 pb-20 sm:pb-28 md:pb-36">
-      {/* Minimal, tasteful icon accents (hidden on very small screens) */}
-      <div className="pointer-events-none absolute inset-0">
-        {/* Core icons - reduced on mobile for performance */}
-        <FaFacebookF className="hidden sm:block absolute top-16 left-4 sm:left-8 text-indigo-400/25 text-lg sm:text-2xl animate-drift-a" />
-        <FaYoutube className="hidden sm:block absolute top-20 right-2 sm:right-10 text-rose-400/25 text-xl sm:text-3xl animate-drift-b drift-delay-1" />
-        <FaInstagram className="hidden sm:block absolute top-28 left-1/5 sm:left-1/3 text-fuchsia-400/25 text-lg sm:text-2xl animate-drift-c drift-delay-2" />
-        <FaLinkedinIn className="hidden sm:block absolute top-36 right-1/6 sm:right-1/4 text-sky-400/25 text-lg sm:text-2xl animate-drift-a drift-delay-3" />
-        <FaTwitter className="hidden sm:block absolute top-52 left-6 sm:left-24 text-sky-300/25 text-lg sm:text-2xl animate-drift-b" />
+    <div className="relative min-h-screen overflow-hidden text-white ">
+      <section className="relative z-10 max-w-7xl mt-8 md:mt-18 mx-auto px-4 sm:px-6 pt-12 pb-10 flex flex-col lg:flex-row items-center lg:items-start gap-10">
+        {/* LEFT SECTION */}
+        <div className="flex-1 text-center lg:text-left w-full">
+          {/* Animated Mode Button */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeMode}
+              initial={firstRender.current ? false : { opacity: 0, x: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25 }}
+              className="flex justify-center lg:justify-start mb-6"
+              onAnimationComplete={() => {
+                firstRender.current = false;
+              }}
+            >
+              <button
+                className={`flex items-center gap-2 px-5 py-2 rounded-full border shadow-lg transition-all duration-300 hover:scale-105 ${
+                  activeMode === "creator"
+                    ? "border-cyan-400 text-cyan-400 hover:shadow-cyan-500/40"
+                    : "border-purple-400 text-purple-400 hover:shadow-purple-500/40"
+                }`}
+              >
+                {activeMode === "creator" ? (
+                  <Sparkles className="w-4 h-4" />
+                ) : (
+                  <Users className="w-4 h-4" />
+                )}
+                {activeMode === "creator" ? "Creator" : "Brand"}
+              </button>
+            </motion.div>
+          </AnimatePresence>
 
-        {/* Extra subtle icons for richness - hidden on mobile for performance */}
-        <FaPinterest className="hidden md:block absolute top-[18%] left-[55%] text-rose-400/20 text-lg sm:text-2xl animate-drift-b" style={{animationDuration:'17s'}} />
-        <FaRedditAlien className="hidden md:block absolute top-[42%] left-[8%] text-orange-400/20 text-lg sm:text-2xl animate-drift-c" style={{animationDuration:'19s', animationDelay:'1.2s'}} />
-        <FaSlack className="hidden md:block absolute top-[38%] right-[12%] text-purple-300/20 text-lg sm:text-2xl animate-drift-a" style={{animationDuration:'16s', animationDelay:'0.6s'}} />
-        <FaWhatsapp className="hidden md:block absolute top-[62%] left-[18%] text-emerald-400/20 text-lg sm:text-2xl animate-drift-b" style={{animationDuration:'18s'}} />
-        <FaGithub className="hidden md:block absolute top-[8%] right-[22%] text-zinc-300/20 text-lg sm:text-2xl animate-drift-c" style={{animationDuration:'20s'}} />
-        <FaDiscord className="hidden md:block absolute top-[70%] right-[8%] text-indigo-300/20 text-lg sm:text-2xl animate-drift-a" style={{animationDuration:'22s', animationDelay:'0.8s'}} />
-      </div>
-      <div className="text-center">
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-2xl sm:text-4xl md:text-5xl lg:text-[3.5rem] font-extrabold mb-4 text-white leading-[1.12] sm:leading-[1.1] md:leading-[1.06] tracking-[-0.01em] sm:tracking-[-0.015em] md:tracking-[-0.02em] max-w-3xl sm:max-w-4xl mx-auto px-1"
-        >
-          Your <span className="text-gradient-primary">social media</span>{' '}
-          <span className="text-gradient-primary">{words[index].substring(0, subIndex)}</span>
-          <span className="ml-1 inline-block h-[1em] w-px align-middle bg-white/70 animate-caret" />
-        </motion.h1>
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.05 }}
-          className="mx-auto mb-5 inline-flex flex-wrap items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[10.5px] sm:text-[11px] text-zinc-300 backdrop-blur"
-        >
-          AI-powered social media Management System
-          <span className="h-1 w-1 rounded-full bg-emerald-400/80" />
-          Monetize your content in 1 click
-        </motion.div>
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-sm sm:text-[15px] md:text-base text-zinc-300/90 mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed px-1"
-        >
-          Auto-posting, analytics, AI captions & hashtags, DM automation, competitor research
-          <br />
-          <span className="text-center block">-all in one platform</span>
-        </motion.p>
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mx-auto flex w-full max-w-md sm:max-w-xl flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 rounded-full sm:rounded-full border border-white/10 bg-white/[0.04] p-2 backdrop-blur px-2 sm:px-3"
-          onSubmit={handleEmailSubmit}
-        >
-          <input
-            type="email"
-            placeholder="Work email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="flex-1 bg-transparent px-3 sm:px-4 py-2 text-sm text-zinc-200 placeholder:text-zinc-500 focus:outline-none w-full"
-            required
-          />
-          <Button type="submit" size="md" className="w-full sm:w-auto">
-            Start free trial
-            <ArrowRight className="inline-block ml-2 w-4 h-4" />
-          </Button>
-        </motion.form>
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-3 sm:mt-4 text-[10.5px] sm:text-[11px] text-zinc-500 px-1"
-        >
-          By continuing you agree to our Terms and Privacy Policy.
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.35 }}
-          className="mx-auto mt-6 sm:mt-8 flex max-w-lg sm:max-w-xl flex-wrap items-center justify-center gap-2.5 sm:gap-4 opacity-80 px-1"
-        >
-          <span className="text-[10.5px] sm:text-[11px] text-zinc-500">Trusted by teams at</span>
-          <span className="group relative rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 text-[10.5px] sm:text-[11px] text-zinc-300 transition-all duration-300 hover:border-blue-400/50 hover:bg-blue-500/10 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:scale-105 cursor-pointer">
-            <div className="absolute inset-0 rounded-md bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <span className="relative z-10">Acme Co.</span>
-          </span>
-          <span className="group relative rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 text-[10.5px] sm:text-[11px] text-zinc-300 transition-all duration-300 hover:border-emerald-400/50 hover:bg-emerald-500/10 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 cursor-pointer">
-            <div className="absolute inset-0 rounded-md bg-gradient-to-r from-emerald-500/20 to-teal-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <span className="relative z-10">Vertex Labs</span>
-          </span>
-          <span className="group relative rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 text-[10.5px] sm:text-[11px] text-zinc-300 transition-all duration-300 hover:border-purple-400/50 hover:bg-purple-500/10 hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:scale-105 cursor-pointer">
-            <div className="absolute inset-0 rounded-md bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <span className="relative z-10">Northstar</span>
-          </span>
-          <span className="group relative rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 text-[10.5px] sm:text-[11px] text-zinc-300 transition-all duration-300 hover:border-orange-400/50 hover:bg-orange-500/10 hover:shadow-[0_0_20px_rgba(251,146,60,0.3)] hover:scale-105 cursor-pointer">
-            <div className="absolute inset-0 rounded-md bg-gradient-to-r from-orange-500/20 to-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <span className="relative z-10">Everline</span>
-          </span>
-        </motion.div>
-      </div>
-    </section>
+          {/* Animated Heading */}
+          <AnimatePresence mode="wait">
+            <motion.h1
+              key={activeMode}
+              initial={firstRender.current ? false : { opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 30 }}
+              transition={{ duration: 0.35, type: "tween", ease: "easeOut" }}
+              onAnimationComplete={() => {
+                firstRender.current = false;
+              }}
+              className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4 sm:mb-6 text-white leading-snug"
+            >
+              {activeMode === "creator" ? (
+                <>
+                  Launch Your{" "}
+                  <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                    Next Creator Campaign
+                  </span>{" "}
+                  in Minutes
+                </>
+              ) : (
+                <>
+                  Redefining{" "}
+                  <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+                    How Brands & Creators
+                  </span>{" "}
+                  Grow Together
+                </>
+              )}
+            </motion.h1>
+          </AnimatePresence>
+
+          {/* Static Paragraph */}
+          <p className="text-zinc-300 text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 mt-3 sm:mt-4 mb-6 sm:mb-8">
+            {activeMode === "creator"
+              ? "Discover verified creators, manage payments, and measure ROI — all in one platform."
+              : "Join our exclusive private beta and experience smarter collaborations with AI technology."}
+          </p>
+
+          {/* Email Input */}
+          <div className="w-full max-w-xl mb-8 mt-8 mx-auto lg:mx-0 relative">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5 pointer-events-none z-10" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your work email..."
+              className="w-full rounded-xl pr-20 pl-12 py-3 sm:py-4 text-sm sm:text-base text-white placeholder-gray-400 bg-black/30 backdrop-blur-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 transition-all duration-300"
+            />
+
+            <button className="absolute top-1/2 right-2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-full bg-black/40 border border-white/20 backdrop-blur-xl text-white shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:bg-white/10 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] transition-all duration-300">
+              <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" />
+            </button>
+          </div>
+
+          <p className="text-sm text-zinc-300 text-center lg:text-left mt-3">
+            By continuing you agree to our Terms and Privacy Policy.
+          </p>
+        </div>
+
+        {/* RIGHT SECTION - ORBITAL ICONS / IMAGES */}
+        <div className="flex-shrink-0 flex justify-center w-full lg:w-auto">
+          {/* Container scales responsively */}
+          <div className="relative w-[280px] h-[280px] sm:w-[350px] sm:h-[350px] md:w-[400px] md:h-[400px] lg:w-[450px] lg:h-[450px]">
+            {/* Center Circle - responsive sizing */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 lg:w-44 lg:h-44 rounded-full bg-black/10 border border-white/50 flex flex-col items-center justify-center backdrop-blur-md">
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
+                  20k+
+                </span>
+                <span className="text-xs sm:text-sm text-zinc-300">
+                  Specialists
+                </span>
+              </div>
+            </div>
+
+            {/* Orbit 1 - responsive sizing */}
+            <motion.div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/30"
+              style={{
+                width: "clamp(160px, 58%, 260px)",
+                height: "clamp(160px, 58%, 260px)",
+                aspectRatio: "1/1",
+                willChange: "transform",
+              }}
+              animate={prefersReducedMotion ? { rotate: 0 } : { rotate: 360 }}
+              transition={prefersReducedMotion ? undefined : { repeat: Infinity, duration: 40, ease: "linear" }}
+            >
+              {orbit1Items.map((item, i) => {
+                const angle = (i / 4) * 2 * Math.PI;
+                const x = 50 + 50 * Math.cos(angle);
+                const y = 50 + 50 * Math.sin(angle);
+                const isActive = activeMode === item.mode;
+
+                return (
+                  <motion.div
+                    key={`orbit1-${i}`}
+                    className={`absolute w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-full border transition-all duration-300 ${
+                      isActive
+                        ? "border-white/40 bg-white/10 shadow-[0_0_20px_rgba(255,255,255,0.5)] scale-110"
+                        : "border-white/10 bg-white/5 opacity-50 scale-95"
+                    }`}
+                    style={{
+                      left: `calc(${x}% - 1.25rem)`,
+                      top: `calc(${y}% - 1.25rem)`,
+                    }}
+                  >
+                    {item.mode === "creator" && item.img ? (
+                      <Image
+                        src={item.img}
+                        alt={`creator-${i}`}
+                        className="w-full h-full object-cover rounded-full"
+                        loading="lazy"
+                        sizes="(max-width: 640px) 32px, (max-width: 1024px) 36px, 40px"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-xl bg-black/60 backdrop-blur-md border border-white/40 p-1.5 sm:p-2 flex items-center justify-center shadow-lg">
+                        {item.icon && (
+                          <item.icon
+                            className={`text-sm sm:text-base lg:text-lg ${item.color}`}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+
+            {/* Orbit 2 - responsive sizing */}
+            <motion.div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/30"
+              style={{
+                width: "clamp(240px, 89%, 400px)",
+                height: "clamp(240px, 89%, 400px)",
+                aspectRatio: "1/1",
+                willChange: "transform",
+              }}
+              animate={prefersReducedMotion ? { rotate: 0 } : { rotate: -360 }}
+              transition={prefersReducedMotion ? undefined : { repeat: Infinity, duration: 70, ease: "linear" }}
+            >
+              {orbit2Items.map((item, i) => {
+                const angle = (i / 4) * 2 * Math.PI;
+                const x = 50 + 50 * Math.cos(angle);
+                const y = 50 + 50 * Math.sin(angle);
+                const isActive = activeMode === item.mode;
+
+                return (
+                  <motion.div
+                    key={`orbit2-${i}`}
+                    className={`absolute w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-full border transition-all duration-300 ${
+                      isActive
+                        ? "border-white/40 bg-white/10 shadow-[0_0_20px_rgba(255,255,255,0.5)] scale-110"
+                        : "border-white/10 bg-white/5 opacity-50 scale-95"
+                    }`}
+                    style={{
+                      left: `calc(${x}% - 1.25rem)`,
+                      top: `calc(${y}% - 1.25rem)`,
+                    }}
+                  >
+                    {item.mode === "creator" && item.img ? (
+                      <Image
+                        src={item.img}
+                        alt={`creator-${i}`}
+                        className="w-full h-full object-cover rounded-full"
+                        loading="lazy"
+                        sizes="(max-width: 640px) 32px, (max-width: 1024px) 36px, 40px"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-xl bg-black/60 backdrop-blur-md border border-white/40 p-1.5 sm:p-2 flex items-center justify-center shadow-lg">
+                        {item.icon && (
+                          <item.icon
+                            className={`text-sm sm:text-base lg:text-lg ${item.color}`}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
-};
+});
 
-export default Hero;
-
-
+export default Hero;
