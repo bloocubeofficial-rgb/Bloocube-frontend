@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ArrowRight, Sparkles, Users, Mail } from "lucide-react";
 import Image from "next/image";
@@ -34,6 +35,7 @@ const allIcons = [
 const Hero = React.memo(() => {
   const [activeMode, setActiveMode] = useState("creator");
   const [email, setEmail] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -133,7 +135,16 @@ const Hero = React.memo(() => {
               className="w-full rounded-xl pr-20 pl-12 py-3 sm:py-4 text-sm sm:text-base text-white placeholder-gray-400 bg-black/30 backdrop-blur-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 transition-all duration-300"
             />
 
-            <button className="absolute top-1/2 right-2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-full bg-black/40 border border-white/20 backdrop-blur-xl text-white shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:bg-white/10 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] transition-all duration-300">
+            <button
+              type="button"
+              onClick={() => {
+                const trimmed = email.trim();
+                if (!trimmed) return;
+                const encoded = encodeURIComponent(trimmed);
+                router.push(`/signup?email=${encoded}`);
+              }}
+              className="absolute top-1/2 right-2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-full bg-black/40 border border-white/20 backdrop-blur-xl text-white shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:bg-white/10 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] transition-all duration-300"
+            >
               <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" />
             </button>
           </div>
