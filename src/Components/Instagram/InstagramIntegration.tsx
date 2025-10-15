@@ -80,7 +80,8 @@ export const InstagramIntegration = forwardRef<InstagramIntegrationRef, Instagra
       onDisconnect={handleDisconnect}
       onRefresh={checkConnection}
       connectLabel="Connect Instagram"
-      rightArea={undefined}
+      profileName={profile ? `@${profile.username}` : undefined}
+      profileDetail={profile?.account_type || profile?.limitations}
     />
   );
 });

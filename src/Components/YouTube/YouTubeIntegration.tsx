@@ -62,7 +62,8 @@ export const YouTubeIntegration = forwardRef<YouTubeIntegrationRef, YouTubeInteg
       onDisconnect={handleDisconnect}
       onRefresh={checkConnection}
       connectLabel="Connect YouTube"
-      rightArea={undefined}
+      profileName={channel ? `@${channel.customUrl || channel.title}` : undefined}
+      profileDetail={channel ? `${channel.subscriberCount} subscribers` : undefined}
     />
   );
 });

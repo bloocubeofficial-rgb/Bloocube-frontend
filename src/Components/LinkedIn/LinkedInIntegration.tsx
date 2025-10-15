@@ -65,6 +65,8 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
       onDisconnect={handleDisconnect}
       onRefresh={checkConnectionStatus}
       connectLabel="Connect LinkedIn"
+      profileName={profile ? `@${profile.username || profile.name || `${profile.firstName || ''} ${profile.lastName || ''}`.trim()}` : undefined}
+      profileDetail={profile?.headline || profile?.industry}
     />
   );
 });

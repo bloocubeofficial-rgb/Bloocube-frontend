@@ -7,6 +7,7 @@ export interface InstagramUser {
   media_count?: number;
   profileImageUrl?: string;
   connectedAt?: string;
+  limitations?: string;
 }
 
 export interface InstagramAuthResponse {

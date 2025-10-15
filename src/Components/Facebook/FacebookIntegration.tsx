@@ -79,7 +79,8 @@ export const FacebookIntegration = forwardRef<FacebookIntegrationRef, FacebookIn
       onDisconnect={handleDisconnect}
       onRefresh={checkConnection}
       connectLabel="Connect Facebook"
-      rightArea={undefined}
+      profileName={profile?.name}
+      profileDetail={profile?.email}
     />
   );
 });

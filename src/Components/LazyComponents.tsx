@@ -96,7 +96,10 @@ export const SocialIntegrationCard: React.FC<{
   onRefresh?: () => void;
   connectLabel?: string;
   className?: string;
-}> = ({ icon, title, connected, loading, error, rightArea, onConnect, onDisconnect, onRefresh, connectLabel = 'Connect', className = '' }) => {
+  profileName?: string;
+  profileDetail?: string;
+  profileImage?: string;
+}> = ({ icon, title, connected, loading, error, rightArea, onConnect, onDisconnect, onRefresh, connectLabel = 'Connect', className = '', profileName, profileDetail, profileImage }) => {
   return (
     <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-200 rounded-lg gap-3 ${className}`}>
       <div className="flex items-center space-x-3">
@@ -108,7 +111,22 @@ export const SocialIntegrationCard: React.FC<{
           {loading ? (
             <p className="text-sm text-gray-500">Checking connection...</p>
           ) : connected ? (
-            <p className="text-sm text-green-600">Connected</p>
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+              </div>
+              <div>
+                {profileName && (
+                  <p className="text-sm text-green-600 font-medium">{profileName}</p>
+                )}
+                {profileDetail && (
+                  <p className="text-xs text-gray-500">{profileDetail}</p>
+                )}
+                {!profileName && !profileDetail && (
+                  <p className="text-sm text-green-600">Connected</p>
+                )}
+              </div>
+            </div>
           ) : (
             <p className="text-sm text-gray-500">Not connected</p>
           )}

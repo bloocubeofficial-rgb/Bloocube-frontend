@@ -63,6 +63,8 @@ export const TwitterIntegration = forwardRef<TwitterIntegrationRef, TwitterInteg
       onDisconnect={handleDisconnect}
       onRefresh={checkConnection}
       connectLabel="Connect Twitter"
+      profileName={profile ? `@${profile.username}` : undefined}
+      profileDetail={profile?.name}
     />
   );
 });

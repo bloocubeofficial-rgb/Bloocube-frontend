@@ -62,6 +62,7 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
+  const router = useRouter();
 
   // Derive a safe display name without assuming shape of user
   const displayName = (
@@ -86,6 +87,15 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [userDropdownOpen]);
+
+  const handleLogout = () => {
+    try {
+      authUtils.clearAuth();
+    } finally {
+      setUserDropdownOpen(false);
+      router.push('/login');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -118,7 +128,7 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
       {/* Main Content */}
       <div className="lg:ml-56">
         {/* Mobile Header */}
-        <div className="lg:hidden bg-white/90 backdrop-blur-sm shadow-sm border-b border-gray-200/50 px-3 py-2 flex items-center justify-between sticky top-0 z-30">
+        <div className="lg:hidden bg-white/90 backdrop-blur-sm shadow-sm border-b border-gray-200/50 px-3 py-2 flex items-center justify-between sticky top-0 z-[100]">
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 hover:scale-105"
@@ -138,7 +148,7 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
               
               {/* Mobile Dropdown Menu */}
               {userDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[10000]">
                   <a
                     href="/creator/settings"
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
@@ -164,14 +174,14 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
                     Analytics
                   </a>
                   <hr className="my-1" />
-                  <a
-                    href="/logout"
-                    className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
-                    onClick={() => setUserDropdownOpen(false)}
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="w-full flex items-center px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
                   >
                     <LogOut className="w-4 h-4 mr-3" />
                     Logout
-                  </a>
+                  </button>
                 </div>
               )}
             </div>
@@ -179,7 +189,7 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
         </div>
 
         {/* Enhanced Desktop Header */}
-        <div className="hidden lg:block bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200/50">
+        <div className="hidden lg:block bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200/50 overflow-visible">
           <div className="px-5 py-3">
             <div className="flex justify-between items-center">
               <div className="flex-1">
@@ -220,7 +230,7 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
                   
                   {/* Dropdown Menu */}
                   {userDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200/70 z-50 overflow-hidden">
+                    <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200/70 z-[10000] overflow-visible">
                       {/* Dropdown Header with UserInfo */}
                       <div className="p-4 bg-gradient-to-br from-white via-blue-50/50 to-indigo-50/40 border-b border-gray-200/60">
                         <UserInfo user={user || null} />
@@ -251,14 +261,14 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
                         Analytics
                       </a>
                       <hr className="my-1 border-gray-200/70" />
-                      <a
-                        href="/logout"
-                        className="flex items-center px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150"
-                        onClick={() => setUserDropdownOpen(false)}
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full flex items-center px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 transition-colors duration-150"
                       >
                         <LogOut className="w-4 h-4 mr-3" />
                         Logout
-                      </a>
+                      </button>
                       </div>
                     </div>
                   )}

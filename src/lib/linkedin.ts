@@ -2,10 +2,13 @@
 
 export interface LinkedInUser {
   id: string;
+  username?: string;
   firstName?: string;
   lastName?: string;
   name?: string;
   email?: string;
+  headline?: string;
+  industry?: string;
   connectedAt?: string;
 }
 
