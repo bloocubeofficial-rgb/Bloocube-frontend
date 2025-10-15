@@ -7,15 +7,16 @@ import Footer from "@/Components/layout/Footer"; // adjust path if needed
 
 const About = () => {
   return (
-    <div className="min-h-screen relative overflow-hidden text-white bg-[#0F101F]">
+    <div className="min-h-screen relative overflow-hidden text-white bg-black">
       {/* Navbar */}
       <Navbar />
 
       {/* Floating Gradient Orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-20 -left-20 w-[400px] h-[400px] bg-gradient-to-br from-purple-600 via-blue-500 to-teal-400 opacity-20 md:opacity-30 rounded-full blur-[120px] animate-gradient-60" />
-        <div className="absolute top-[30%] -left-20 w-[400px] h-[400px] bg-gradient-to-br from-purple-600 via-blue-500 to-teal-400 opacity-18 md:opacity-28 rounded-full blur-[120px] animate-gradient-60" />
-        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gradient-to-tr from-indigo-500 via-fuchsia-500 to-pink-500 opacity-16 md:opacity-24 rounded-full blur-[140px] animate-gradient-60" />
+        <div className="absolute -top-20 -left-20 w-[400px] h-[400px] bg-gradient-to-br from-purple-600 via-blue-500 to-teal-400 opacity-20 md:opacity-30 rounded-full blur-[120px] " />
+        <div className="absolute top-[30%] -left-20 w-[400px] h-[400px] bg-gradient-to-br from-purple-600 via-blue-500 to-teal-400 opacity-18 md:opacity-28 rounded-full blur-[120px] " />
+        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gradient-to-tr from-indigo-500 via-fuchsia-500 to-pink-500 opacity-16 md:opacity-24 rounded-full blur-[140px] " />
+        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-gradient-to-tr from-green-400 via-green-500 to-black-400 opacity-10 md:opacity-20 rounded-full blur-[150px]" />
       </div>
 
       {/* Content Section */}

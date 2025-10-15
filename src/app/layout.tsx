@@ -15,10 +15,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body>
+    <html lang="en" suppressHydrationWarning={true}>
+      <body suppressHydrationWarning={true}>
         <RouteProgress />
-        {/* Preload most-hit routes to improve perceived navigation speed */}
         <div className="hidden">
           <Link href="/login" prefetch />
           <Link href="/signup" prefetch />
@@ -26,7 +25,7 @@ export default function RootLayout({
           <Link href="/brand" prefetch />
         </div>
         {children}
-        {process.env.NODE_ENV === 'development' && <PerformanceDebugger />}
+        {process.env.NODE_ENV === "development" && <PerformanceDebugger />}
       </body>
     </html>
   );

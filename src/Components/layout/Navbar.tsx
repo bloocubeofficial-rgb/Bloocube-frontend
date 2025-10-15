@@ -19,129 +19,101 @@ const Navbar = () => {
   const [open, setOpen] = useState(false);
 
   return (
-    <motion.nav
-      initial={false} // disables mount animation
-      className="sticky top-0 z-50 w-full"
-    >
+    <motion.nav initial={false} className="sticky top-0 z-50 w-full">
+      {/* Main Nav Wrapper */}
       <div className="relative w-full">
-        {/* Navbar container */}
-        <div className="relative backdrop-blur-xl bg-black/80 shadow-[0_8px_32px_rgba(0,0,0,0.3)] w-full transition-all duration-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)]">
-          {/* Gradient hover overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-fuchsia-500/20 opacity-0 hover:opacity-100 transition-opacity duration-150" />
-
-          <div className="relative z-10 w-full">
-            <div className="max-w-full mx-auto px-3 sm:px-4 md:px-6">
-              <div className="flex h-14 md:h-16 items-center justify-between w-full">
-                {/* Logo */}
-                <Link href="/" className="group">
-                  <motion.div
-                    whileHover={{ rotate: 6, scale: 1.05 }}
-                    className="relative w-20 h-20 transition-all duration-300 overflow-hidden"
-                  >
-                    <Image
-                      src="/logo.png"
-                      alt="Bloocube Logo"
-                      fill
-                      className="object-contain p-1"
-                      priority
-                    />
-                  </motion.div>
-                </Link>
-
-                {/* Desktop nav */}
-                <div className="hidden md:flex items-center gap-8">
-                  {navItems.map((item) => (
-                    <Link
-                      key={item.label}
-                      href={item.href}
-                      onClick={(e) => {
-                        const isHash =
-                          item.href.startsWith("#") ||
-                          item.href.startsWith("/#");
-                        if (
-                          isHash &&
-                          typeof window !== "undefined" &&
-                          window.location.pathname === "/"
-                        ) {
-                          e.preventDefault();
-                          const hash = item.href.split("#")[1];
-                          const el = hash
-                            ? document.getElementById(hash)
-                            : null;
-                          if (el) {
-                            el.scrollIntoView({
-                              behavior: "smooth",
-                              block: "start",
-                            });
-                            setOpen(false);
-                          }
-                        }
-                      }}
-                      className="group relative text-zinc-300/90 hover:text-white transition-all duration-300 py-2 px-4 rounded-none hover:bg-white/5"
-                    >
-                      <span className="font-medium">{item.label}</span>
-                      <span className="absolute left-4 right-4 -bottom-1 h-px w-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-sky-500 transition-all duration-300 group-hover:w-[calc(100%-2rem)]" />
-                    </Link>
-                  ))}
-                </div>
-
-                {/* CTA Buttons */}
-                <div className="hidden md:flex items-center gap-3">
-                  <Link href="/login">
-                    <Button
-                      variant="outline"
-                      size="md"
-                      className="px-4 py-2 border-white/20 rounded-xl hover:border-white/40 hover:bg-white/5 transition-all duration-300"
-                    >
-                      Sign In
-                    </Button>
-                  </Link>
-                </div>
-
-                {/* Mobile menu toggle */}
-                <button
-                  aria-label="Toggle navigation"
-                  className="md:hidden inline-flex items-center justify-center p-5 text-white hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 hover:scale-105 rounded-none"
-                  onClick={() => setOpen(!open)}
+        <div className="relative bg-black border-b border-white/5 transition-all duration-300 hover:bg-black/90">
+          {/* Nav Content */}
+          <div className="relative z-10 w-full max-w-full mx-auto px-4 sm:px-8 md:px-16">
+            <div className="flex h-18 items-center justify-between">
+              {/* Logo */}
+              <Link href="/" className="group">
+                <motion.div
+                  whileHover={{ scale: 1.08, rotate: 3 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                  className="relative w-20 h-20 overflow-hidden"
                 >
-                  {open ? (
-                    <X className="w-5 h-5" />
-                  ) : (
-                    <Menu className="w-5 h-5" />
-                  )}
-                </button>
+                  <Image
+                    src="/logo.png"
+                    alt="Bloocube Logo"
+                    fill
+                    className="object-contain"
+                    priority
+                  />
+                </motion.div>
+              </Link>
+
+              {/* Desktop Navigation */}
+              <div className="hidden md:flex items-center gap-8">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="group relative text-zinc-300 hover:text-white transition-all duration-300"
+                  >
+                    <span className="font-medium">{item.label}</span>
+                    <span className="absolute left-0 bottom-0 h-[2px] w-0 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 transition-all duration-300 group-hover:w-full rounded-full" />
+                  </Link>
+                ))}
               </div>
+
+              {/* Sign In Button (Desktop) */}
+              <div className="hidden md:flex items-center gap-3">
+                <Link href="/login">
+                  <Button
+                    variant="outline"
+                    size="md"
+                    className="px-5 py-2 rounded-full border border-white/20 bg-black/10 text-white hover:bg-black/20 hover:border-white/40 transition-all duration-300 backdrop-blur-md shadow-[0_0_10px_rgba(255,255,255,0.1)] hover:shadow-[0_0_20px_rgba(255,255,255,0.15)]"
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Mobile Menu Toggle */}
+              <button
+                aria-label="Toggle navigation"
+                className="md:hidden inline-flex items-center justify-center p-3 text-white rounded-xl bg-black/20 border border-white/10 hover:bg-black/30 hover:border-white/20 transition-all duration-300"
+                onClick={() => setOpen(!open)}
+              >
+                {open ? (
+                  <X className="w-5 h-5" />
+                ) : (
+                  <Menu className="w-5 h-5" />
+                )}
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile nav */}
+      {/* Mobile Menu */}
       {open && (
         <motion.div
-          initial={{ opacity: 0, y: -8 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.15 }}
-          className="md:hidden mt-4 border border-white/10 bg-black/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden rounded-none"
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.25 }}
+          className="md:hidden border-t border-white/10 bg-black/80 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
         >
-          <div className="max-w-full mx-auto px-4 py-4 space-y-3">
+          <div className="px-6 py-5 space-y-4">
             {navItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
-                className="block text-zinc-300 hover:text-white transition-all duration-200 py-2 px-3 rounded-none hover:bg-white/5"
                 onClick={() => setOpen(false)}
+                className="block text-zinc-300 hover:text-white transition-all duration-200 py-2 px-3 rounded-lg hover:bg-black/30"
               >
                 {item.label}
               </Link>
             ))}
-            <div className="pt-3 border-t border-white/10 space-y-3">
+
+            <div className="pt-3 border-t border-white/10">
               <Link href="/login" onClick={() => setOpen(false)}>
                 <Button
                   variant="outline"
                   size="md"
-                  className="w-full border-white/20 hover:border-white/40 rounded-3xl"
+                  className="w-full border-white/20 bg-black/10 hover:bg-black/20 text-white rounded-full backdrop-blur-md"
                 >
                   Sign In
                 </Button>
