@@ -2,8 +2,8 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import Navbar from "@/Components/layout/Navbar"; // adjust path if needed
-import Footer from "@/Components/layout/Footer"; // adjust path if needed
+import Navbar from "@/Components/layout/Navbar";
+import Footer from "@/Components/layout/Footer";
 
 const About = () => {
   return (
@@ -109,13 +109,8 @@ const About = () => {
               ),
             },
           ].map((card, index) => (
-            <motion.div
+            <div
               key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ y: -5 }}
               className="group relative rounded-2xl p-6 sm:p-8 
              bg-[#0F101F]/60 border border-white/10 
              backdrop-blur-xl shadow-md 
@@ -141,7 +136,7 @@ const About = () => {
 
               {/* Subtle border glow */}
               <div className="absolute inset-0 rounded-2xl border border-transparent group-hover:border-fuchsia-400/30 transition-all duration-500" />
-            </motion.div>
+            </div>
           ))}
         </div>
       </main>

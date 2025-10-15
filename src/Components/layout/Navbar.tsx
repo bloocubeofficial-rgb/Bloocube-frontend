@@ -19,7 +19,7 @@ const Navbar = () => {
   const [open, setOpen] = useState(false);
 
   return (
-    <motion.nav initial={false} className="sticky top-0 z-50 w-full">
+    <nav className="sticky top-0 z-50 w-full">
       {/* Main Nav Wrapper */}
       <div className="relative w-full">
         <div className="relative bg-black border-b border-white/5 transition-all duration-300 hover:bg-black/90">
@@ -122,7 +122,7 @@ const Navbar = () => {
           </div>
         </motion.div>
       )}
-    </motion.nav>
+    </nav>
   );
 };
 
