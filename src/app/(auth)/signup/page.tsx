@@ -182,7 +182,7 @@ const SignupForm: React.FC = () => {
           {searchParams.get("email") && (
             <div className="mt-3 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
               <p className="text-sm text-emerald-300">
-                ✨ Email pre-filled from landing page
+                Email pre-filled from landing page
               </p>
             </div>
           )}
