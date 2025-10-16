@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Briefcase, Home, Settings, Users, Store, BarChart3, User, LogOut, Search, Menu } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
+import { useAuthSync } from '@/hooks/useAuthSync';
 
 export default function BrandLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -11,7 +12,7 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [notifications] = useState(3); // Mock notification count
-  const [isAuthed, setIsAuthed] = useState<boolean>(false);
+  const { isAuthenticated, user } = useAuthSync();
   
   const nav = [
     { name: 'Overview', href: '/brand', icon: Home, color: 'blue' },
@@ -29,22 +30,21 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
   }, [pathname]);
   // Require auth for brand routes
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-    let isBrand = false;
-    try { isBrand = !!userStr && JSON.parse(userStr)?.role === 'brand'; } catch {}
-    if (!token || !isBrand) {
+    if (typeof window === 'undefined') return;
+    
+    const isBrand = user?.role === 'brand';
+    if (!isAuthenticated || !isBrand) {
       router.replace('/login');
-    } else {
-      setIsAuthed(true);
     }
-  }, [router]);
+  }, [isAuthenticated, user, router]);
 
   const onLogout = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
+      // Trigger auth sync across tabs
+      window.dispatchEvent(new CustomEvent('authChange'));
     }
     router.replace('/login');
   };
@@ -60,7 +60,7 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
     return () => document.removeEventListener('keydown', handleEscape);
   }, [sidebarOpen]);
 
-  if (!isAuthed) {
+  if (!isAuthenticated || user?.role !== 'brand') {
     return null;
   }
 

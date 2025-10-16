@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { authUtils } from '@/lib/auth';
 
 export function useAuthStore() {
@@ -16,6 +16,22 @@ export function useAuthStore() {
     isAuthenticated: !!token
   }), [token]);
 
+  // Listen for auth changes from other tabs
+  useEffect(() => {
+    const handleAuthChange = () => {
+      const currentToken = authUtils.getToken();
+      setToken(currentToken);
+    };
+
+    window.addEventListener('authChange', handleAuthChange);
+    window.addEventListener('storage', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('authChange', handleAuthChange);
+      window.removeEventListener('storage', handleAuthChange);
+    };
+  }, []);
+
   // Optimized setToken with localStorage sync
   const updateToken = useCallback((newToken: string | null) => {
     setToken(newToken);
@@ -25,6 +41,8 @@ export function useAuthStore() {
       localStorage.removeItem('token');
       authUtils.clearCache(); // Clear auth cache when token is removed
     }
+    // Trigger sync across tabs
+    authUtils.triggerAuthSync();
   }, []);
 
   return { 

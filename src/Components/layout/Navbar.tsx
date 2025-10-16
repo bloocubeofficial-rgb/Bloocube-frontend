@@ -35,9 +35,9 @@ const Navbar = () => {
     >
       <div className="relative">
         {/* Elevated container with rounded sides */}
-        <div className="relative rounded-2xl border border-white/10 backdrop-blur-xl bg-black/80 shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] transition-all duration-500 hover:border-white/20">
+        <div className="relative r border border-white/10 backdrop-blur-3xl  shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] transition-all duration-500 hover:border-white/20 bg-gradient-to-r from-fuchsia-500/40 via-indigo-500/20 to-indigo-500/20">
           {/* Premium gradient border */}
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-fuchsia-500/20 opacity-0 hover:opacity-100 transition-opacity duration-500" />
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-bl from-fuchsia-500/20 via-purple-500/20 to-indigo-500/20 opacity-0 hover:opacity-100 transition-opacity duration-500" />
           
           {/* Content */}
           <div className="relative z-10">

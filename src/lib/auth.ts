@@ -91,6 +91,9 @@ export const authUtils = {
     // Clear cache
     authCache = null;
     console.log('🧹 Auth data cleared');
+
+    // Trigger auth sync across tabs
+    this.triggerAuthSync();
   },
 
   // Set authentication data
@@ -105,6 +108,9 @@ export const authUtils = {
       user,
       timestamp: Date.now()
     };
+
+    // Trigger auth sync across tabs
+    this.triggerAuthSync();
   },
 
   // Set token only (useful for auto-login scenarios)
@@ -118,6 +124,9 @@ export const authUtils = {
       user: authCache?.user || null,
       timestamp: Date.now()
     };
+
+    // Trigger auth sync across tabs
+    this.triggerAuthSync();
   },
 
   // Clear cache (useful for testing or forced refresh)
@@ -141,6 +150,23 @@ export const authUtils = {
     };
     
     return token;
+  },
+
+  // Trigger auth sync across tabs
+  triggerAuthSync(): void {
+    if (typeof window === 'undefined') return;
+    
+    // Dispatch custom event for same-tab updates
+    window.dispatchEvent(new CustomEvent('authChange'));
+    
+    // For cross-tab sync, we need to modify localStorage
+    // This will trigger the storage event in other tabs
+    const currentToken = localStorage.getItem('token');
+    if (currentToken) {
+      localStorage.setItem('token', currentToken);
+    } else {
+      localStorage.removeItem('token');
+    }
   },
 
   // Debug function to check authentication state
