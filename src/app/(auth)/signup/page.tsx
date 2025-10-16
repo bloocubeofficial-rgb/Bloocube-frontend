@@ -175,7 +175,8 @@ const SignupForm: React.FC = () => {
       }
     } catch (err) {
       console.error("Signup error:", err);
-      setError("Network error. Please try again later.");
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
