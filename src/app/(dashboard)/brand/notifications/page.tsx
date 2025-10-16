@@ -147,19 +147,19 @@ export default function BrandNotificationsPage() {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-blue-200 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               >
                 Mark all as read
               </button>
             )}
-            <div className="relative">
-              <BellIcon className="w-6 h-6 text-gray-600" />
+            {/* <div className="relative">
+              <BellIcon className="w-6 h-6 text-gray-200" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                   {unreadCount}
                 </span>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
