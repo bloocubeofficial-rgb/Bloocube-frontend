@@ -31,6 +31,8 @@ const SignupForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [emailExists, setEmailExists] = useState<boolean | null>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   // ✅ Handles Google signup redirect
   const handleGoogle = async () => {
@@ -71,6 +73,33 @@ const SignupForm: React.FC = () => {
     if (emailParam) setEmail(decodeURIComponent(emailParam));
   }, [searchParams]);
 
+  // Debounced email existence check
+  useEffect(() => {
+    if (!email) {
+      setEmailExists(null);
+      return;
+    }
+    const controller = new AbortController();
+    const t = setTimeout(async () => {
+      try {
+        setCheckingEmail(true);
+        const qs = new URLSearchParams({ email });
+        const res = await fetch(`/api/auth/check-email?${qs.toString()}`, { signal: controller.signal });
+        const data = await res.json();
+        if (data?.success) setEmailExists(!!data.data?.exists);
+        else setEmailExists(null);
+      } catch {
+        setEmailExists(null);
+      } finally {
+        setCheckingEmail(false);
+      }
+    }, 400);
+    return () => {
+      controller.abort();
+      clearTimeout(t);
+    };
+  }, [email]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -95,6 +124,11 @@ const SignupForm: React.FC = () => {
     }
 
     try {
+      if (emailExists) {
+        setError('Email already exists. Please log in or use a different email.');
+        setIsLoading(false);
+        return;
+      }
       const data = await apiRequest<{
         success: boolean;
         data: {
@@ -218,6 +252,17 @@ const SignupForm: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-zinc-500 rounded-xl focus:ring-2 focus:ring-indigo-500/30"
               />
+              {email && (
+                <div className="mt-2 text-xs">
+                  {checkingEmail && <span className="text-zinc-400">Checking email…</span>}
+                  {!checkingEmail && emailExists === true && (
+                    <span className="text-red-400">Email already exists. Try logging in.</span>
+                  )}
+                  {!checkingEmail && emailExists === false && (
+                    <span className="text-emerald-400">Email is available.</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
