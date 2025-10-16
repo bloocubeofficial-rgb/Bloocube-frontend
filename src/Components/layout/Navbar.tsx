@@ -29,7 +29,7 @@ const Navbar = () => {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
       className={clsx(
-        "sticky top-4 z-50 mx-4 md:mx-8 lg:mx-16 xl:mx-24 transition duration-500",
+        "sticky top-0 z-50 w-full transition duration-500",
         isVisible ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"
       )}
     >

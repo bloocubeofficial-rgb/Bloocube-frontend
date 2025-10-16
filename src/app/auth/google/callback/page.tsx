@@ -3,21 +3,25 @@
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getApiBase } from "@/lib/config";
+import { authUtils } from "@/lib/auth";
 
 function GoogleCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const code = searchParams.get("code");
-    const state = searchParams.get("state");
+    const storedState = typeof window !== "undefined" ? localStorage.getItem("google_state") : null;
+    const success = searchParams.get("google");
+    const token = searchParams.get("token");
+    const message = searchParams.get("message");
     const error = searchParams.get("error");
     const error_description = searchParams.get("error_description");
 
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!token) {
-      const next = typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/auth/google/callback`";
-      router.replace(`/login?next=${encodeURIComponent(next)}`);
+    // Handle direct success with session token from backend
+    if (success === "success" && token) {
+      authUtils.setToken(token);
+      // Optionally fetch user profile here to populate user state
+      router.replace("/creator/dashboard");
       return;
     }
 
@@ -26,8 +30,16 @@ function GoogleCallbackContent() {
       return;
     }
 
+    // Handle OAuth callback flow by forwarding to backend
+    const code = searchParams.get("code");
+    const state = searchParams.get("state");
     if (!code || !state) {
       router.replace(`/login?google=error&message=Missing+code+or+state`);
+      return;
+    }
+
+    if (!storedState || storedState !== state) {
+      router.replace(`/login?google=error&message=Invalid+state`);
       return;
     }
 
