@@ -20,7 +20,14 @@ export function useAuthStore() {
   useEffect(() => {
     const handleAuthChange = () => {
       const currentToken = authUtils.getToken();
-      setToken(currentToken);
+      // Only update if token actually changed
+      setToken(prev => {
+        if (prev !== currentToken) {
+          console.log('🔄 Token changed in auth store:', { was: prev ? 'exists' : 'null', now: currentToken ? 'exists' : 'null' });
+          return currentToken;
+        }
+        return prev;
+      });
     };
 
     window.addEventListener('authChange', handleAuthChange);

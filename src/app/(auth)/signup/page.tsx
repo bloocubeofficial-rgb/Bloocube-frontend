@@ -28,6 +28,7 @@ const SignupForm: React.FC = () => {
   const [confirm, setConfirm] = useState("");
   const [role, setRole] = useState("creator");
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -103,6 +104,7 @@ const SignupForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setMessage(null);
     setIsLoading(true);
 
     if (!name || !email || !password || !confirm) {
@@ -132,7 +134,7 @@ const SignupForm: React.FC = () => {
       const data = await apiRequest<{
         success: boolean;
         data: {
-          tokens?: { accessToken: string; refreshToken?: string };
+          requiresOTP?: boolean;
           user?: { role: string };
         };
         message?: string;
@@ -142,13 +144,14 @@ const SignupForm: React.FC = () => {
         body: JSON.stringify({ name, email, password, role }),
       });
 
-      if (data?.data?.tokens?.accessToken && data?.data?.user) {
-        localStorage.setItem("token", data.data.tokens.accessToken);
-        localStorage.setItem("user", JSON.stringify(data.data.user));
-        const role = data.data.user?.role;
-        router.push(role === "brand" ? "/brand" : "/creator");
+      if (data?.data?.requiresOTP) {
+        // Show success message and redirect to OTP verification
+        setMessage("Registration successful! Please check your email for the verification code.");
+        setTimeout(() => {
+          router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
+        }, 2000);
       } else {
-        // fallback: auto-login
+        // Fallback: try auto-login (for backward compatibility)
         const loginResp = await apiRequest<{
           success: boolean;
           data: {
@@ -342,6 +345,12 @@ const SignupForm: React.FC = () => {
           {error && (
             <Alert className="bg-red-500/10 border-red-500/20 rounded-xl">
               <AlertDescription className="text-red-400 text-sm">{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {message && (
+            <Alert className="bg-emerald-500/10 border-emerald-500/20 rounded-xl">
+              <AlertDescription className="text-emerald-400 text-sm">{message}</AlertDescription>
             </Alert>
           )}
 

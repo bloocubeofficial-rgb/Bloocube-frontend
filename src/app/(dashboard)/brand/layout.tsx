@@ -12,7 +12,7 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [notifications] = useState(3); // Mock notification count
-  const { isAuthenticated, user } = useAuthSync();
+  const { isAuthenticated, user, isLoading } = useAuthSync();
   
   const nav = [
     { name: 'Overview', href: '/brand', icon: Home, color: 'blue' },
@@ -28,15 +28,16 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
-  // Require auth for brand routes
+  // Require auth for brand routes - only check when not loading
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || isLoading) return;
     
     const isBrand = user?.role === 'brand';
     if (!isAuthenticated || !isBrand) {
+      console.log('🚫 Auth check failed, redirecting to login', { isAuthenticated, isBrand, userRole: user?.role });
       router.replace('/login');
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, router, isLoading]);
 
   const onLogout = () => {
     if (typeof window !== 'undefined') {
@@ -60,6 +61,19 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
     return () => document.removeEventListener('keydown', handleEscape);
   }, [sidebarOpen]);
 
+  // Show loading state while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated or not a brand user
   if (!isAuthenticated || user?.role !== 'brand') {
     return null;
   }

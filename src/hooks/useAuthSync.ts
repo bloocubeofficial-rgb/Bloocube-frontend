@@ -1,26 +1,45 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { authUtils } from '@/lib/auth';
 
 export function useAuthSync() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<Record<string, unknown> | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Memoized auth check to prevent unnecessary re-renders
+  const checkAuth = useCallback(() => {
+    const token = authUtils.getToken();
+    const userData = authUtils.getUser();
+    const newIsAuthenticated = !!token;
+    
+    // Only update state if values actually changed
+    setIsAuthenticated(prev => {
+      if (prev !== newIsAuthenticated) {
+        console.log('🔄 Auth state changed:', { was: prev, now: newIsAuthenticated });
+        return newIsAuthenticated;
+      }
+      return prev;
+    });
+    
+    setUser(prev => {
+      if (JSON.stringify(prev) !== JSON.stringify(userData)) {
+        console.log('🔄 User data changed:', { was: prev, now: userData });
+        return userData;
+      }
+      return prev;
+    });
+    
+    setIsLoading(false);
+  }, []);
 
   useEffect(() => {
     // Initial check
-    const checkAuth = () => {
-      const token = authUtils.getToken();
-      const userData = authUtils.getUser();
-      setIsAuthenticated(!!token);
-      setUser(userData);
-    };
-
-    // Check auth on mount
     checkAuth();
 
     // Listen for storage changes from other tabs
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'token' || e.key === 'user') {
-        console.log('🔄 Auth sync: Storage changed in another tab', { key: e.key, newValue: e.newValue });
+        console.log('🔄 Auth sync: Storage changed in another tab', { key: e.key });
         checkAuth();
       }
     };
@@ -40,9 +59,14 @@ export function useAuthSync() {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('authChange', handleAuthChange);
     };
-  }, []);
+  }, [checkAuth]);
 
-  return { isAuthenticated, user };
+  // Memoize the return value to prevent unnecessary re-renders
+  return useMemo(() => ({
+    isAuthenticated,
+    user,
+    isLoading
+  }), [isAuthenticated, user, isLoading]);
 }
 
 // Helper function to trigger auth sync across tabs

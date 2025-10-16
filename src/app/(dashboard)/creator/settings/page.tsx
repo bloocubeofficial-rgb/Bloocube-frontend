@@ -15,6 +15,7 @@ import type { InstagramIntegrationRef } from "@/Components/Instagram/InstagramIn
 import type { FacebookIntegrationRef } from "@/Components/Facebook/FacebookIntegration";
 import { useRef } from "react";
 import { profileApi, UserProfile, ProfileUpdateData, ChangePasswordData, formatPhoneNumber, parsePhoneNumber, getProfileCompletenessColor, getProfileCompletenessMessage } from '@/lib/profile';
+import { useTextPersistence } from '@/hooks/useTextPersistence';
 
 interface NotificationState {
   type: 'success' | 'error' | 'warning' | null;
@@ -63,6 +64,11 @@ function SettingsPageContent() {
   const [smsNotifications, setSmsNotifications] = useState(false);
   
   // Form data
+  // Use persistence for profile data
+  const { value: profileName, setValue: setProfileName } = useTextPersistence({ key: 'settings_profile_name' });
+  const { value: profileEmail, setValue: setProfileEmail } = useTextPersistence({ key: 'settings_profile_email' });
+  const { value: profilePhone, setValue: setProfilePhone } = useTextPersistence({ key: 'settings_profile_phone' });
+  
   const [profileData, setProfileData] = useState<ProfileUpdateData>({});
   const [passwordData, setPasswordData] = useState<ChangePasswordData>({
     currentPassword: '',
@@ -211,23 +217,26 @@ function SettingsPageContent() {
   // Handle form input changes
   const handleInputChange = (field: string, value: string) => {
     if (field === 'name') {
+      setProfileName(value);
       setProfileData(prev => ({ ...prev, name: value }));
     } else if (field === 'email') {
+      setProfileEmail(value);
       setProfileData(prev => ({ ...prev, email: value }));
     } else if (field === 'currentPassword') {
       setPasswordData(prev => ({ ...prev, currentPassword: value }));
     } else if (field === 'newPassword') {
       setPasswordData(prev => ({ ...prev, newPassword: value }));
     } else if (field === 'phone') {
+      setProfilePhone(value);
       handleProfileChange('phone', value);
     }
   };
 
   // Get form data for display
   const formData = {
-    name: profileData.name || user?.name || '',
-    email: profileData.email || user?.email || '',
-    phone: profileData.profile?.phone || user?.profile?.phone || '',
+    name: profileName || profileData.name || user?.name || '',
+    email: profileEmail || profileData.email || user?.email || '',
+    phone: profilePhone || profileData.profile?.phone || user?.profile?.phone || '',
     currentPassword: passwordData.currentPassword,
     newPassword: passwordData.newPassword
   };
@@ -571,13 +580,26 @@ function SettingsPageContent() {
                 </div>
               </div>
 
-              <button
-                onClick={saveProfile}
-                disabled={saving}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? 'Saving...' : 'Save Changes'}
-              </button>
+              <div className="flex space-x-3">
+                <button
+                  onClick={saveProfile}
+                  disabled={saving}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button
+                  onClick={() => {
+                    setProfileName('');
+                    setProfileEmail('');
+                    setProfilePhone('');
+                    setProfileData({});
+                  }}
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  Clear Form
+                </button>
+              </div>
             </div>
           </section>
 

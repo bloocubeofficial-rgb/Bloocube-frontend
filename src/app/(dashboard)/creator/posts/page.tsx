@@ -34,6 +34,7 @@ import {
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 import { apiRequest } from '@/lib/apiClient';
 import { authUtils } from '@/lib/auth';
+import { usePostFormPersistence } from '@/hooks/usePostFormPersistence';
 
 // Platform configurations
 const PLATFORM_CONFIGS = {
@@ -350,11 +351,25 @@ const TwitterPostForm = ({ postData, onFieldChange, selectedPostType }: {
 };
 
 export default function PostsPage() {
+  // Use persistence hook for form data
+  const {
+    selectedPlatform,
+    setSelectedPlatform,
+    selectedPostType,
+    setSelectedPostType,
+    postData,
+    setPostData,
+    mediaFiles,
+    setMediaFiles,
+    pollOptions,
+    setPollOptions,
+    threadTweets,
+    setThreadTweets,
+    clearFormData
+  } = usePostFormPersistence();
+
+  // Regular state for non-form data
   const [activeTab, setActiveTab] = useState<'create' | 'drafts' | 'scheduled' | 'published'>('create');
-  const [selectedPlatform, setSelectedPlatform] = useState<string>('');
-  const [selectedPostType, setSelectedPostType] = useState<string>('');
-  const [postData, setPostData] = useState<any>({});
-  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
@@ -365,6 +380,98 @@ export default function PostsPage() {
   const [openMenuPublishedId, setOpenMenuPublishedId] = useState<string | null>(null);
   const [youtubeConnected, setYoutubeConnected] = useState<boolean>(false);
   const [checkingConnection, setCheckingConnection] = useState<boolean>(false);
+  
+  // Platform connection status - simple array approach
+  const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
+  const [checkingConnections, setCheckingConnections] = useState(false);
+  const [lastCheckTime, setLastCheckTime] = useState(0);
+
+  // Refresh user data from server
+  const refreshUserData = async () => {
+    try {
+      const response = await apiRequest('/api/profile/me') as any;
+      if (response?.user) {
+        authUtils.setAuth(authUtils.getToken() || '', response.user);
+        return response.user;
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    }
+    return null;
+  };
+
+  // Check platform connections - simple token-based approach
+  const checkPlatformConnections = async () => {
+    // Debounce: prevent calls more than once every 2 seconds
+    const now = Date.now();
+    if (now - lastCheckTime < 2000) {
+      console.log('Skipping connection check - too soon');
+      return;
+    }
+    
+    try {
+      setCheckingConnections(true);
+      setLastCheckTime(now);
+      
+      const user = authUtils.getUser();
+      console.log('User data:', user);
+      
+      if (!user?.socialAccounts) {
+        console.log('No social accounts found');
+        setConnectedPlatforms([]);
+        return;
+      }
+
+      const socialAccounts = user.socialAccounts as any;
+      console.log('Social accounts data:', socialAccounts);
+      const connected: string[] = [];
+      
+      // Check which platforms have access tokens
+      if (socialAccounts.instagram?.accessToken) {
+        connected.push('instagram');
+        console.log('Instagram connected');
+      }
+      if (socialAccounts.facebook?.accessToken) {
+        connected.push('facebook');
+        console.log('Facebook connected');
+      }
+      if (socialAccounts.twitter?.accessToken) {
+        connected.push('twitter');
+        console.log('Twitter connected');
+      }
+      if (socialAccounts.linkedin?.accessToken) {
+        connected.push('linkedin');
+        console.log('LinkedIn connected');
+      }
+      if (socialAccounts.youtube?.accessToken) {
+        connected.push('youtube');
+        console.log('YouTube connected');
+      }
+
+      console.log('Final connected platforms array:', connected);
+      setConnectedPlatforms(connected);
+    } catch (error) {
+      console.error('Error checking platform connections:', error);
+      setConnectedPlatforms([]);
+    } finally {
+      setCheckingConnections(false);
+    }
+  };
+
+  // Handle platform selection
+  const handlePlatformSelect = (platform: string) => {
+    setSelectedPlatform(platform);
+    setSelectedPostType('');
+    setPostData({});
+    setMediaFiles([]);
+    setError('');
+    setSuccess('');
+
+    // Check YouTube connection when YouTube is selected
+    if (platform === 'youtube') {
+      checkYouTubeConnection();
+    }
+  };
 
   // Load a draft into the form for editing/publishing
   const loadDraftIntoForm = async (post: Post) => {
@@ -425,6 +532,25 @@ export default function PostsPage() {
   useEffect(() => {
     loadPosts();
     checkYouTubeConnection();
+    checkPlatformConnections();
+  }, []);
+
+  // Refresh connections when window regains focus (user returns from settings) - with debounce
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    const handleFocus = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        checkPlatformConnections();
+      }, 1000); // 1 second debounce
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const checkYouTubeConnection = async () => {
@@ -456,19 +582,6 @@ export default function PostsPage() {
     }
   };
 
-  const handlePlatformSelect = (platform: string) => {
-    setSelectedPlatform(platform);
-    setSelectedPostType('');
-    setPostData({});
-    setMediaFiles([]);
-    setError('');
-    setSuccess('');
-
-    // Check YouTube connection when YouTube is selected
-    if (platform === 'youtube') {
-      checkYouTubeConnection();
-    }
-  };
 
   const handlePostTypeSelect = (postType: string) => {
     setSelectedPostType(postType);
@@ -1051,25 +1164,104 @@ const createTwitterPostPayload = (postData: any, selectedPostType: string, media
           </div>
 
           <div className="p-6 space-y-6">
-            {/* Platform Selection */}
+            {/* Clear Form Button */}
+            <div className="flex justify-end">
+              <button
+                onClick={clearFormData}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Clear Form
+              </button>
+            </div>
+
+            {/* Debug Info */}
+            <div className="bg-gray-50 p-3 rounded-lg text-xs text-gray-600">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div>Connected Platforms: {connectedPlatforms.join(', ') || 'None'}</div>
+                  <div>Selected Platform: {selectedPlatform || 'None'}</div>
+                  <div>Checking Connections: {checkingConnections ? 'Yes' : 'No'}</div>
+                </div>
+                <button
+                  onClick={checkPlatformConnections}
+                  className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                >
+                  Test Check
+                </button>
+              </div>
+            </div>
+
+            {/* Platform Status */}
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Select Platform</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-gray-700">Platform Status</h3>
+                <button
+                  onClick={checkPlatformConnections}
+                  disabled={checkingConnections}
+                  className="px-3 py-1 text-xs text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                >
+                  {checkingConnections ? (
+                    <>
+                      <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                      <span>Checking...</span>
+                    </>
+                  ) : (
+                    <span>Refresh</span>
+                  )}
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {Object.entries(PLATFORM_CONFIGS).map(([platform, config]) => {
                   const IconComponent = config.icon;
+                  const isConnected = connectedPlatforms.includes(platform);
+                  const isSelected = selectedPlatform === platform;
+                  
                   return (
-                    <button
-                      key={platform}
-                      onClick={() => handlePlatformSelect(platform)}
-                      className={`p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center space-y-2 ${
-                        selectedPlatform === platform
-                          ? `border-${config.color}-500 bg-${config.color}-50 shadow-md`
-                          : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-                      }`}
-                    >
-                      <IconComponent size={24} className={`text-${config.color}-600`} />
-                      <span className="text-xs font-medium text-gray-700">{config.name}</span>
-                    </button>
+                    <div key={platform} className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                      isSelected 
+                        ? `border-${config.color}-500 bg-${config.color}-50 shadow-md` 
+                        : 'border-gray-200 bg-gray-50'
+                    }`}>
+                      <div className="flex items-center space-x-3">
+                        <div className="relative">
+                          <IconComponent size={24} className={`text-${config.color}-600`} />
+                          {checkingConnections ? (
+                            <div className="absolute -top-1 -right-1 w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                          ) : isConnected ? (
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                          ) : null}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-gray-900">{config.name}</h4>
+                          <div className="mt-1">
+                            {isConnected ? (
+                              <div className="flex items-center space-x-2">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  ✓ Connected
+                                </span>
+                                <button
+                                  onClick={() => handlePlatformSelect(platform)}
+                                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                                >
+                                  Select
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center space-x-2">
+                                <span className="text-xs text-red-600 font-medium">No account connected</span>
+                                <button
+                                  onClick={() => window.location.href = '/creator/settings'}
+                                  className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                                >
+                                  Connect
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -1212,6 +1404,14 @@ const createTwitterPostPayload = (postData: any, selectedPostType: string, media
             )}
 
             {/* Action Buttons */}
+            
+              <button
+                onClick={clearFormData}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors inline-block"
+              >
+                Clear Form
+              </button>
+        
             {selectedPlatform && selectedPostType && (
               <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
                 <button
