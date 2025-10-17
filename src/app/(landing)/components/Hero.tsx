@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
@@ -12,7 +11,6 @@ import {
   FaLinkedinIn,
   FaYoutube,
 } from "react-icons/fa";
-
 import img2 from "@/assets/img2.png";
 
 import img3 from "@/assets/img3.png";
@@ -180,7 +178,11 @@ const Hero = React.memo(() => {
                 willChange: "transform",
               }}
               animate={prefersReducedMotion ? { rotate: 0 } : { rotate: 360 }}
-              transition={prefersReducedMotion ? undefined : { repeat: Infinity, duration: 40, ease: "linear" }}
+              transition={
+                prefersReducedMotion
+                  ? undefined
+                  : { repeat: Infinity, duration: 40, ease: "linear" }
+              }
             >
               {orbit1Items.map((item, i) => {
                 const angle = (i / 4) * 2 * Math.PI;
@@ -233,7 +235,11 @@ const Hero = React.memo(() => {
                 willChange: "transform",
               }}
               animate={prefersReducedMotion ? { rotate: 0 } : { rotate: -360 }}
-              transition={prefersReducedMotion ? undefined : { repeat: Infinity, duration: 70, ease: "linear" }}
+              transition={
+                prefersReducedMotion
+                  ? undefined
+                  : { repeat: Infinity, duration: 70, ease: "linear" }
+              }
             >
               {orbit2Items.map((item, i) => {
                 const angle = (i / 4) * 2 * Math.PI;
@@ -282,4 +288,4 @@ const Hero = React.memo(() => {
   );
 });
 
-export default Hero;
+export default Hero;
