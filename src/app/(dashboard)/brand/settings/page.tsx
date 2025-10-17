@@ -1,25 +1,32 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   UserIcon, 
   BuildingOfficeIcon, 
   BellIcon, 
   ShieldCheckIcon, 
   CreditCardIcon,
-  GlobeAltIcon,
   KeyIcon,
-  TrashIcon
+  TrashIcon,
+  CheckIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { profileApi, type UserProfile } from '@/lib/profile';
 
 export default function BrandSettingsPage() {
+  const { user, isLoading } = useAuth();
+  const { profile, loading: profileLoading, refreshProfile } = useUserProfile();
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
-    companyName: 'Bloocube Brand',
-    email: 'brand@bloocube.com',
-    phone: '+91 98765 43210',
-    website: 'https://bloocube.com',
-    description: 'Leading brand in digital marketing and creator partnerships',
-    address: '123 Business Street, Mumbai, India',
+    name: '',
+    email: '',
+    phone: '',
+    website: '',
+    bio: '',
+    location: '',
+    address: '',
     notifications: {
       email: true,
       push: true,
@@ -27,15 +34,146 @@ export default function BrandSettingsPage() {
       marketing: true
     }
   });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+  } | null>(null);
 
   const tabs = [
     { id: 'profile', name: 'Profile', icon: UserIcon },
     { id: 'company', name: 'Company', icon: BuildingOfficeIcon },
     { id: 'notifications', name: 'Notifications', icon: BellIcon },
     { id: 'security', name: 'Security', icon: ShieldCheckIcon },
-    { id: 'billing', name: 'Billing', icon: CreditCardIcon },
-    { id: 'integrations', name: 'Integrations', icon: GlobeAltIcon }
+    { id: 'billing', name: 'Billing', icon: CreditCardIcon }
   ];
+
+  // Load profile data when component mounts or profile changes
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        name: profile.name || '',
+        email: profile.email || '',
+        phone: profile.profile?.phone || '',
+        website: profile.profile?.website || '',
+        bio: profile.profile?.bio || '',
+        location: profile.profile?.location || '',
+        address: profile.profile?.address || '',
+        notifications: {
+          email: profile.profile?.preferences?.emailNotifications ?? true,
+          push: profile.profile?.preferences?.pushNotifications ?? true,
+          sms: profile.profile?.preferences?.smsNotifications ?? false,
+          marketing: profile.profile?.preferences?.marketingEmails ?? true
+        }
+      });
+    }
+  }, [profile]);
+
+  // Save profile changes
+  const saveProfile = async () => {
+    if (!profile) return;
+    
+    setSaving(true);
+    setNotification(null);
+    
+    try {
+      // Build profile object, only including fields that have values
+      const profileData: any = {
+        bio: formData.bio,
+        phone: formData.phone,
+        website: formData.website,
+        preferences: {
+          emailNotifications: formData.notifications.email,
+          pushNotifications: formData.notifications.push,
+          smsNotifications: formData.notifications.sms,
+          marketingEmails: formData.notifications.marketing
+        }
+      };
+
+      // Only add location and address if they have values
+      if (formData.location && formData.location.trim()) {
+        profileData.location = formData.location;
+      }
+      if (formData.address && formData.address.trim()) {
+        profileData.address = formData.address;
+      }
+
+      const updateData = {
+        name: formData.name,
+        profile: profileData
+      };
+
+      const response = await profileApi.updateProfile(updateData);
+      
+      if (response.success) {
+        setNotification({
+          type: 'success',
+          message: 'Your profile has been updated successfully! All changes have been saved.'
+        });
+        await refreshProfile();
+      } else {
+        throw new Error('Failed to update profile');
+      }
+    } catch (error: any) {
+      console.error('Profile update error:', error);
+      
+      let errorMessage = 'Failed to update profile. Please try again.';
+      
+      if (error.message) {
+        if (error.message.includes('validation')) {
+          errorMessage = 'Please check your input and try again. Some fields may have invalid values.';
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (error.message.includes('unauthorized') || error.message.includes('401')) {
+          errorMessage = 'Your session has expired. Please log in again.';
+        } else if (error.message.includes('forbidden') || error.message.includes('403')) {
+          errorMessage = 'You do not have permission to update this profile.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      setNotification({
+        type: 'error',
+        message: errorMessage
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Clear notification after 5 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  if (isLoading || profileLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || user.role !== 'brand') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+          <h1 className="text-lg font-semibold text-gray-900 mb-2">Brand access required</h1>
+          <p className="text-sm text-gray-600 mb-4">Please sign in with a brand account to access settings.</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
@@ -65,13 +203,14 @@ export default function BrandSettingsPage() {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-2">
-            <label htmlFor="companyName" className="block text-sm font-semibold text-gray-700 mb-3">Company Name</label>
+            <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-3">Name</label>
             <input
-              id="companyName"
+              id="name"
               type="text"
-              value={formData.companyName}
-              onChange={(e) => handleInputChange('companyName', e.target.value)}
+              value={formData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
               className="w-full text-gray-900 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
+              placeholder="Enter your name"
             />
           </div>
           <div className="space-y-2">
@@ -82,6 +221,7 @@ export default function BrandSettingsPage() {
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
               className="w-full text-gray-900 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
+              placeholder="Enter your email"
             />
           </div>
           <div className="space-y-2">
@@ -92,6 +232,7 @@ export default function BrandSettingsPage() {
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
               className="w-full text-gray-900 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
+              placeholder="Enter your phone number"
             />
           </div>
           <div className="space-y-2">
@@ -102,18 +243,19 @@ export default function BrandSettingsPage() {
               value={formData.website}
               onChange={(e) => handleInputChange('website', e.target.value)}
               className="w-full text-gray-900 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
+              placeholder="Enter your website URL"
             />
           </div>
         </div>
         <div className="mt-8 space-y-2">
-          <label htmlFor="description" className="block text-sm font-semibold text-gray-700 mb-3">Description</label>
+          <label htmlFor="bio" className="block text-sm font-semibold text-gray-700 mb-3">Bio</label>
           <textarea
-            id="description"
+            id="bio"
             rows={4}
-            value={formData.description}
-            onChange={(e) => handleInputChange('description', e.target.value)}
+            value={formData.bio}
+            onChange={(e) => handleInputChange('bio', e.target.value)}
             className="w-full text-gray-900 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm hover:shadow-md resize-none"
-            placeholder="Tell us about your brand..."
+            placeholder="Tell us about yourself..."
           />
         </div>
       </div>
@@ -131,14 +273,25 @@ export default function BrandSettingsPage() {
         </h3>
         <div className="space-y-6">
           <div className="space-y-2">
-            <label htmlFor="address" className="block text-sm font-semibold text-gray-700 mb-3">Address</label>
+            <label htmlFor="location" className="block text-sm font-semibold text-gray-700 mb-3">Location</label>
+            <input
+              id="location"
+              type="text"
+              value={formData.location}
+              onChange={(e) => handleInputChange('location', e.target.value)}
+              className="w-full text-gray-900 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-100 focus:border-green-500 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
+              placeholder="Enter your city, state, country..."
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="address" className="block text-sm font-semibold text-gray-700 mb-3">Company Address</label>
             <textarea
               id="address"
               rows={4}
               value={formData.address}
               onChange={(e) => handleInputChange('address', e.target.value)}
               className="w-full text-gray-900 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-100 focus:border-green-500 transition-all duration-200 bg-white shadow-sm hover:shadow-md resize-none"
-              placeholder="Enter your company address..."
+              placeholder="Enter your complete company address..."
             />
           </div>
         </div>
@@ -202,43 +355,11 @@ export default function BrandSettingsPage() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900 text-lg">Change Password</h4>
-                  <p className="text-sm text-gray-600">Update your account password</p>
+                  <p className="text-sm text-gray-600">Update your account password to keep your account secure</p>
                 </div>
               </div>
               <button className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
-                Change
-              </button>
-            </div>
-          </div>
-          <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <ShieldCheckIcon className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900 text-lg">Two-Factor Authentication</h4>
-                  <p className="text-sm text-gray-600">Add an extra layer of security</p>
-                </div>
-              </div>
-              <button className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
-                Enable
-              </button>
-            </div>
-          </div>
-          <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-gray-100 rounded-lg">
-                  <KeyIcon className="w-6 h-6 text-gray-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900 text-lg">API Keys</h4>
-                  <p className="text-sm text-gray-600">Manage your API access keys</p>
-                </div>
-              </div>
-              <button className="px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
-                Manage
+                Change Password
               </button>
             </div>
           </div>
@@ -290,52 +411,6 @@ export default function BrandSettingsPage() {
     </div>
   );
 
-  const renderIntegrationsTab = () => (
-    <div className="space-y-8">
-      <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl p-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg">
-            <GlobeAltIcon className="w-6 h-6 text-white" />
-          </div>
-          Integrations
-        </h3>
-        <div className="space-y-6">
-          <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <GlobeAltIcon className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900 text-lg">Google Analytics</h4>
-                  <p className="text-sm text-gray-600">Track campaign performance</p>
-                </div>
-              </div>
-              <button className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
-                Connect
-              </button>
-            </div>
-          </div>
-          <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <KeyIcon className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900 text-lg">Social Media APIs</h4>
-                  <p className="text-sm text-gray-600">Connect your social accounts</p>
-                </div>
-              </div>
-              <button className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
-                Connect
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -349,8 +424,6 @@ export default function BrandSettingsPage() {
         return renderSecurityTab();
       case 'billing':
         return renderBillingTab();
-      case 'integrations':
-        return renderIntegrationsTab();
       default:
         return renderProfileTab();
     }
@@ -358,6 +431,53 @@ export default function BrandSettingsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Enhanced Notification Banner */}
+      {notification && (
+        <div className={`mb-6 p-6 rounded-2xl shadow-lg border-2 flex items-center gap-4 animate-in slide-in-from-top-2 duration-300 ${
+          notification.type === 'success' 
+            ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-300 text-green-800' 
+            : notification.type === 'error'
+            ? 'bg-gradient-to-r from-red-50 to-rose-50 border-red-300 text-red-800'
+            : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-300 text-blue-800'
+        }`}>
+          <div className={`p-2 rounded-full ${
+            notification.type === 'success' 
+              ? 'bg-green-100' 
+              : notification.type === 'error'
+              ? 'bg-red-100'
+              : 'bg-blue-100'
+          }`}>
+            {notification.type === 'success' ? (
+              <CheckIcon className="w-6 h-6 text-green-600" />
+            ) : notification.type === 'error' ? (
+              <ExclamationTriangleIcon className="w-6 h-6 text-red-600" />
+            ) : (
+              <ExclamationTriangleIcon className="w-6 h-6 text-blue-600" />
+            )}
+          </div>
+          <div className="flex-1">
+            <h3 className="font-bold text-lg mb-1">
+              {notification.type === 'success' ? 'Success!' : notification.type === 'error' ? 'Error!' : 'Info'}
+            </h3>
+            <p className="text-sm font-medium">{notification.message}</p>
+          </div>
+          <button
+            onClick={() => setNotification(null)}
+            className={`p-2 rounded-full hover:bg-opacity-20 transition-colors ${
+              notification.type === 'success' 
+                ? 'hover:bg-green-600' 
+                : notification.type === 'error'
+                ? 'hover:bg-red-600'
+                : 'hover:bg-blue-600'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-8">
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
@@ -395,19 +515,70 @@ export default function BrandSettingsPage() {
             {/* Save Button */}
             <div className="mt-10 pt-8 border-t border-gray-200">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <button className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105">
+                <button 
+                  className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  disabled={saving}
+                >
                   <TrashIcon className="w-4 h-4" />
                   Delete Account
                 </button>
                 <div className="flex gap-4">
-                  <button className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium">
-                    Cancel
+                  <button 
+                    className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={saving}
+                    onClick={() => {
+                      // Reset form to original values
+                      if (profile) {
+                        setFormData({
+                          name: profile.name || '',
+                          email: profile.email || '',
+                          phone: profile.profile?.phone || '',
+                          website: profile.profile?.website || '',
+                          bio: profile.profile?.bio || '',
+                          location: profile.profile?.location || '',
+                          address: profile.profile?.address || '',
+                          notifications: {
+                            email: profile.profile?.preferences?.emailNotifications ?? true,
+                            push: profile.profile?.preferences?.pushNotifications ?? true,
+                            sms: profile.profile?.preferences?.smsNotifications ?? false,
+                            marketing: profile.profile?.preferences?.marketingEmails ?? true
+                          }
+                        });
+                        setNotification(null);
+                      }
+                    }}
+                  >
+                    Reset
                   </button>
-                  <button className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
+                  <button 
+                    onClick={saveProfile}
+                    disabled={saving}
+                    className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2"
+                  >
+                    {saving ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Saving Changes...
+                      </>
+                    ) : (
+                      <>
+                        <CheckIcon className="w-4 h-4" />
                     Save Changes
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
+              
+              {/* Status indicator */}
+              {saving && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                    <span className="text-blue-800 font-medium">Updating your profile...</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

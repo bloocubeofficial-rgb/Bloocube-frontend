@@ -5,23 +5,24 @@ export interface Notification {
   _id: string;
   title: string;
   message: string;
-  type: 'system' | 'campaign_update' | 'bid_status' | 'post_status' | 'alert' | 'info' | 'warning';
+  type: 'campaign_created' | 'bid_received' | 'bid_accepted' | 'bid_rejected' | 'campaign_deadline' | 'payment_received' | 'analytics_update' | 'ai_suggestion' | 'system_alert' | 'user_activity';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   isRead: boolean;
   readAt?: string;
   createdAt: string;
-  timeAgo: string;
+  updatedAt: string;
   data?: any;
   relatedResource?: {
-    type: string;
+    type: 'campaign' | 'bid' | 'user' | 'post' | 'analytics';
     id: string;
   };
   actions?: Array<{
     label: string;
     action: string;
     url?: string;
-    style: string;
+    style: 'primary' | 'secondary' | 'success' | 'warning' | 'danger';
   }>;
+  expiresAt?: string;
 }
 
 export interface NotificationListResponse {

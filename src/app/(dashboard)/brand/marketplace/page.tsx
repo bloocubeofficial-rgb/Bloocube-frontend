@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { userService, type CreatorUser } from '@/lib/userService';
 import { Search, Filter, Users, Star, MapPin, Eye, MessageCircle, Plus, Zap, ChevronDownIcon, CheckIcon } from 'lucide-react';
 import { useCampaigns } from '@/hooks/useCampaigns';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Creator {
   id: string;
@@ -45,6 +46,7 @@ interface Creator {
 }
 
 export default function BrandMarketplacePage() {
+  const { user, isLoading: authLoading } = useAuth();
   const [creators, setCreators] = useState<Creator[]>([]);
   const [loading, setLoading] = useState(true);
   const { data: campaigns } = useCampaigns({ limit: 24 });
@@ -181,6 +183,29 @@ export default function BrandMarketplacePage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Auth check
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || user.role !== 'brand') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+          <h1 className="text-lg font-semibold text-gray-900 mb-2">Brand access required</h1>
+          <p className="text-sm text-gray-600 mb-4">Please sign in with a brand account to access the marketplace.</p>
+        </div>
+      </div>
+    );
+  }
+
   const platformOptions = [
     { value: 'all', label: 'All Platforms', icon: '🌐' },
     { value: 'instagram', label: 'Instagram', icon: '📷' },
@@ -208,6 +233,17 @@ export default function BrandMarketplacePage() {
     { value: 'price-low', label: 'Price: Low to High', icon: '💰' },
     { value: 'price-high', label: 'Price: High to Low', icon: '💎' }
   ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading creators...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

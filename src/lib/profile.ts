@@ -16,6 +16,7 @@ export interface UserProfile {
     avatar_url: string;
     phone: string;
     location: string;
+    address?: string;
     website: string;
     dateOfBirth?: string;
     gender: 'male' | 'female' | 'other' | 'prefer_not_to_say';
@@ -49,6 +50,7 @@ export interface ProfileUpdateData {
     avatar_url?: string;
     phone?: string;
     location?: string;
+    address?: string;
     website?: string;
     dateOfBirth?: string;
     gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';

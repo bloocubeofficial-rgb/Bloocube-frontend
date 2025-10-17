@@ -10,12 +10,16 @@ import {
   CheckCircle, 
   AlertTriangle,
   Filter,
-  Search
+  Search,
+  Clock
 } from 'lucide-react';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function CreatorNotificationsPage() {
+  const { user, isLoading } = useAuth();
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -27,27 +31,86 @@ export default function CreatorNotificationsPage() {
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    getPriorityIcon,
-    getPriorityColor,
-    getTypeIcon
-  } = useNotifications({ autoRefresh: true });
+    refreshNotifications,
+    hasMore,
+    loadMore
+  } = useNotifications({ 
+    unreadOnly: filter === 'unread',
+    autoRefresh: true,
+    refreshInterval: 30000
+  });
 
   const getTypeIconComponent = (type: string) => {
     switch (type) {
-      case 'system':
-        return <AlertCircle className="w-5 h-5 text-blue-600" />;
-      case 'campaign_update':
+      case 'bid_accepted':
+      case 'payment_received':
         return <CheckCircle className="w-5 h-5 text-green-600" />;
-      case 'bid_status':
-        return <Info className="w-5 h-5 text-purple-600" />;
-      case 'post_status':
-        return <CheckCircle className="w-5 h-5 text-indigo-600" />;
-      case 'alert':
-        return <AlertTriangle className="w-5 h-5 text-red-600" />;
-      case 'warning':
+      case 'campaign_deadline':
+      case 'system_alert':
         return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
+      case 'bid_rejected':
+        return <AlertCircle className="w-5 h-5 text-red-600" />;
+      case 'bid_received':
+      case 'campaign_created':
+        return <Info className="w-5 h-5 text-blue-600" />;
+      case 'analytics_update':
+        return <CheckCircle className="w-5 h-5 text-purple-600" />;
+      case 'ai_suggestion':
+        return <CheckCircle className="w-5 h-5 text-indigo-600" />;
+      case 'user_activity':
+        return <Info className="w-5 h-5 text-gray-600" />;
       default:
         return <Info className="w-5 h-5 text-gray-600" />;
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent':
+        return 'bg-red-100 text-red-800';
+      case 'high':
+        return 'bg-orange-100 text-orange-800';
+      case 'medium':
+        return 'bg-blue-100 text-blue-800';
+      case 'low':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case 'urgent':
+        return '🔴';
+      case 'high':
+        return '🟠';
+      case 'medium':
+        return '🔵';
+      case 'low':
+        return '⚪';
+      default:
+        return '⚪';
+    }
+  };
+
+  const formatTimeAgo = (createdAt: string) => {
+    const now = new Date();
+    const notificationDate = new Date(createdAt);
+    const diffInSeconds = Math.floor((now.getTime() - notificationDate.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    return notificationDate.toLocaleDateString();
+  };
+
+  const handleRefresh = async () => {
+    try {
+      await refreshNotifications();
+    } catch (error) {
+      console.error('Error refreshing notifications:', error);
     }
   };
 
@@ -62,6 +125,38 @@ export default function CreatorNotificationsPage() {
     
     return matchesFilter && matchesSearch;
   });
+
+  if (isLoading) {
+    return (
+      <CreatorLayout 
+        title="Notifications" 
+        subtitle="Stay updated with your latest activities and important updates"
+      >
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+          <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </CreatorLayout>
+    );
+  }
+
+  if (!user || user.role !== 'creator') {
+    return (
+      <CreatorLayout 
+        title="Notifications" 
+        subtitle="Stay updated with your latest activities and important updates"
+      >
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+          <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+            <h1 className="text-lg font-semibold text-gray-900 mb-2">Creator access required</h1>
+            <p className="text-sm text-gray-600 mb-4">Please sign in with a creator account to view notifications.</p>
+          </div>
+        </div>
+      </CreatorLayout>
+    );
+  }
 
   return (
     <CreatorLayout 
@@ -87,15 +182,24 @@ export default function CreatorNotificationsPage() {
               </div>
             </div>
             
-            {unreadCount > 0 && (
+            <div className="flex items-center gap-3">
               <button
-                onClick={markAllAsRead}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
+                onClick={handleRefresh}
+                disabled={loading}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
               >
-                <Check className="w-4 h-4" />
-                <span>Mark all read</span>
+                <ArrowPathIcon className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
               </button>
-            )}
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllAsRead}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Mark all read</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Filters and Search */}
@@ -195,8 +299,9 @@ export default function CreatorNotificationsPage() {
                   {/* Time and Actions */}
                   <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center space-x-4">
-                      <span className="text-sm text-gray-500">
-                        {notification.timeAgo}
+                      <span className="text-sm text-gray-500 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {formatTimeAgo(notification.createdAt)}
                       </span>
                       {!notification.isRead && (
                         <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
@@ -257,6 +362,19 @@ export default function CreatorNotificationsPage() {
             </div>
           ))}
         </div>
+        
+        {/* Load More Button */}
+        {hasMore && (
+          <div className="text-center pt-6">
+            <button
+              onClick={loadMore}
+              disabled={loading}
+              className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Loading...' : 'Load More'}
+            </button>
+          </div>
+        )}
       </div>
     </CreatorLayout>
   );

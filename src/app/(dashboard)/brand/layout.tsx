@@ -4,15 +4,17 @@ import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Briefcase, Home, Settings, Users, Store, BarChart3, User, LogOut, Search, Menu } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import { useAuthSync } from '@/hooks/useAuthSync';
+import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import NotificationDropdown from '@/Components/Brand/NotificationDropdown';
 
 export default function BrandLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [notifications] = useState(3); // Mock notification count
-  const { isAuthenticated, user, isLoading } = useAuthSync();
+  const { isAuthenticated, user, isLoading } = useAuth();
+  const { profile, loading: profileLoading, error: profileError } = useUserProfile();
   
   const nav = [
     { name: 'Overview', href: '/brand', icon: Home, color: 'blue' },
@@ -95,7 +97,7 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30">
+    <div className="min-h-screen bg-gradient-to-br from-purple-300 via-indigo-500/30 to-purple-400">
       <div className="flex h-screen">
         {/* Sidebar */}
         <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-80 bg-white/95 backdrop-blur-2xl shadow-2xl border-r border-gray-200/30 flex flex-col transition-all duration-700 ease-out`}>
@@ -152,14 +154,48 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
           <div className="p-6 border-t border-gray-200/30 bg-gradient-to-r from-gray-50/30 to-blue-50/20">
             <div className="flex items-center gap-4 p-5 rounded-2xl bg-white/90 backdrop-blur-sm shadow-xl border border-gray-200/30 hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] group">
               <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                  <User className="w-6 h-6 text-white" />
-                </div>
+                {profileLoading ? (
+                  <div className="w-12 h-12 bg-gray-200 rounded-2xl flex items-center justify-center animate-pulse">
+                    <User className="w-6 h-6 text-gray-400" />
+                  </div>
+                ) : profile?.profile?.avatar_url ? (
+                  <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300">
+                    <Image
+                      src={profile.profile.avatar_url}
+                      alt={profile.name || 'User Avatar'}
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+                    <User className="w-6 h-6 text-white" />
+                  </div>
+                )}
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-sm"></div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 truncate">Brand Account</p>
-                <p className="text-xs text-gray-500 truncate font-medium">brand@bloocube.com</p>
+                {profileLoading ? (
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-3 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                  </div>
+                ) : profileError ? (
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-gray-900 truncate">Brand Account</p>
+                    <p className="text-xs text-red-500 truncate font-medium">Error loading profile</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-gray-900 truncate">
+                      {profile?.name || 'Brand Account'}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate font-medium">
+                      {profile?.email || 'brand@bloocube.com'}
+                    </p>
+                  </div>
+                )}
               </div>
               <button onClick={onLogout} className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-300 hover:scale-110 group">
                 <LogOut className="w-5 h-5" />
@@ -191,7 +227,15 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
                     <Menu className="w-6 h-6" />
                   </button>
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Brand Dashboard</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {profileLoading ? (
+                        <div className="h-8 bg-gray-200 rounded animate-pulse w-48"></div>
+                      ) : profileError ? (
+                        'Brand Dashboard'
+                      ) : (
+                        `Welcome back, ${profile?.name?.split(' ')[0] || 'Brand'}!`
+                      )}
+                    </h2>
                     <p className="text-sm text-gray-600 font-medium">Manage campaigns and connect with creators</p>
                   </div>
                 </div>
@@ -210,14 +254,7 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
                   </div>
                   
                   {/* Notifications */}
-                  <Link href="/brand/notifications" className="relative p-3 text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 rounded-2xl transition-all duration-300 hover:scale-105 group">
-                    <Bell className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
-                    {notifications > 0 && (
-                      <span className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full flex items-center justify-center font-bold animate-pulse shadow-lg">
-                        {notifications}
-                      </span>
-                    )}
-                  </Link>
+                  <NotificationDropdown />
                 </div>
               </div>
             </div>

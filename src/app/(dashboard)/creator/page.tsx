@@ -65,7 +65,7 @@ const Dashboard = () => {
     try {
       setError(null);
       const user = authUtils.getUser() as { id?: string; _id?: string; userId?: string } | null;
-      const userId = user?.id || user?._id || user?.userId || (authUtils as unknown as { getUserId?: () => string }).getUserId?.();
+      const userId = user?.id || user?.userId || (authUtils as unknown as { getUserId?: () => string }).getUserId?.();
       if (!userId) throw new Error('Not authenticated');
       // Optionally sync from linked social accounts before fetching
       if (options?.sync) {

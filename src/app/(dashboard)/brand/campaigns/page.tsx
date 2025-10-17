@@ -4,42 +4,17 @@ import { createCampaign, updateCampaignApi } from '@/hooks/useCampaigns';
 import type { Campaign } from '@/types/campaign';
 import { acceptBidApi, rejectBidApi } from '@/hooks/useBids';
 import { campaignService } from '@/lib/campaignService';
-import { authUtils } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 import { ChevronDownIcon, PlusIcon, EyeIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
 type PlatformType = "instagram" | "youtube" | "twitter" | "linkedin" | "facebook";
 
 export default function BrandCampaignsPage() {
-  const currentUser = authUtils.getUser?.();
-  if (!currentUser || (currentUser.role !== 'brand' && currentUser.role !== 'admin')) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-          <h1 className="text-lg font-semibold text-gray-900 mb-2">Brand access required</h1>
-          <p className="text-sm text-gray-600 mb-4">Please sign in with a brand account to manage campaigns.</p>
-        </div>
-      </div>
-    );
-  }
+  const { user, isLoading } = useAuth();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const refetch = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const brandId = currentUser?._id || (currentUser as any)?.id;
-      if (!brandId) throw new Error('Brand not authenticated');
-      const res = await campaignService.listByBrand(String(brandId), { limit: 20 });
-      setCampaigns(res.data.campaigns || []);
-    } catch (e: unknown) {
-      setError((e as Error)?.message || 'Failed to load campaigns');
-      setCampaigns([]);
-    } finally {
-      setLoading(false);
-    }
-  };
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deadlineDate, setDeadlineDate] = useState("");
@@ -59,6 +34,22 @@ export default function BrandCampaignsPage() {
   const [bidsError, setBidsError] = useState<string | null>(null);
   const [bids, setBids] = useState<import('@/types/bid').Bid[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const refetch = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const brandId = user?.id;
+      if (!brandId) throw new Error('Brand not authenticated');
+      const res = await campaignService.listByBrand(String(brandId), { limit: 20 });
+      setCampaigns(res.data.campaigns || []);
+    } catch (e: unknown) {
+      setError((e as Error)?.message || 'Failed to load campaigns');
+      setCampaigns([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     refetch();
@@ -115,6 +106,28 @@ export default function BrandCampaignsPage() {
     if (!(deadlineDate && deadlineTime && new Date(`${deadlineDate}T${deadlineTime}:00`) > new Date())) reasons.push('Choose a future deadline date and time');
     return reasons;
   }, [draft, deadlineDate, deadlineTime]);
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || user.role !== 'brand') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+          <h1 className="text-lg font-semibold text-gray-900 mb-2">Brand access required</h1>
+          <p className="text-sm text-gray-600 mb-4">Please sign in with a brand account to manage campaigns.</p>
+        </div>
+      </div>
+    );
+  }
 
   const onCreate = async () => {
     try {
@@ -167,7 +180,7 @@ export default function BrandCampaignsPage() {
     }
   };
 
-  const user = (authUtils.getUser?.() as Record<string, unknown>) || null;
+  const userData = user as Record<string, unknown> | null;
 
   const onAccept = async (campaignId: string, bidId: string) => {
     await acceptBidApi(campaignId, bidId);
@@ -228,7 +241,7 @@ export default function BrandCampaignsPage() {
             <h2 className="text-xl font-semibold text-gray-900">Launch Your Next Campaign</h2>
           </div>
 
-          {user && (user.role as string) !== 'brand' && (
+          {userData && (userData.role as string) !== 'brand' && (
             <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -238,7 +251,7 @@ export default function BrandCampaignsPage() {
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-amber-800">
-                    You are logged in as a <span className="font-medium">{user.role as string}</span>. Only brand users can create campaigns.
+                    You are logged in as a <span className="font-medium">{userData.role as string}</span>. Only brand users can create campaigns.
                   </p>
                 </div>
           </div>
@@ -481,6 +494,13 @@ export default function BrandCampaignsPage() {
                   <p className="text-sm text-red-800">{error}</p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {loading && (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading campaigns...</p>
             </div>
           )}
 

@@ -73,7 +73,6 @@ const AnalyticsDashboard: React.FC = () => {
       const user = authUtils.getUser() as { id?: string; _id?: string; userId?: string } | null;
       const userId =
         user?.id ||
-        user?._id ||
         user?.userId ||
         (authUtils as unknown as { getUserId?: () => string }).getUserId?.();
       if (!userId) throw new Error('Not authenticated');

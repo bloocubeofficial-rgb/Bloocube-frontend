@@ -1,66 +1,106 @@
-// src/hooks/useNotifications.ts
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { notificationService, type Notification } from '@/lib/notificationService';
 
 interface UseNotificationsOptions {
+  page?: number;
+  limit?: number;
+  unreadOnly?: boolean;
+  type?: string;
+  priority?: string;
   autoRefresh?: boolean;
   refreshInterval?: number;
-  initialLimit?: number;
 }
 
-export function useNotifications(options: UseNotificationsOptions = {}) {
+interface UseNotificationsReturn {
+  notifications: Notification[];
+  loading: boolean;
+  error: string | null;
+  unreadCount: number;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+  markAsRead: (notificationId: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  deleteNotification: (notificationId: string) => Promise<void>;
+  refreshNotifications: () => Promise<void>;
+  hasMore: boolean;
+  loadMore: () => Promise<void>;
+}
+
+export function useNotifications(options: UseNotificationsOptions = {}): UseNotificationsReturn {
   const {
+    page = 1,
+    limit = 20,
+    unreadOnly = false,
+    type,
+    priority,
     autoRefresh = true,
-    refreshInterval = 30000, // 30 seconds
-    initialLimit = 10
+    refreshInterval = 30000 // 30 seconds
   } = options;
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showDropdown, setShowDropdown] = useState(false);
-  
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    pages: 0
+  });
+  const [currentPage, setCurrentPage] = useState(page);
 
-  // Load notifications
-  const loadNotifications = useCallback(async (limit = initialLimit) => {
+  const fetchNotifications = useCallback(async (pageNum: number = currentPage, append: boolean = false) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await notificationService.getNotifications({
-        page: 1,
+        page: pageNum,
         limit,
-        unreadOnly: false
+        unreadOnly,
+        type,
+        priority
       });
-      
+
       if (response.success) {
-        setNotifications(response.data.notifications);
+        const newNotifications = response.data.notifications;
+        
+        if (append) {
+          setNotifications(prev => [...prev, ...newNotifications]);
+        } else {
+          setNotifications(newNotifications);
+        }
+        
         setUnreadCount(response.data.unreadCount);
+        setPagination(response.data.pagination);
+        setCurrentPage(pageNum);
+      } else {
+        throw new Error('Failed to fetch notifications');
       }
     } catch (err) {
-      console.error('Failed to load notifications:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load notifications');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch notifications';
+      setError(errorMessage);
+      console.error('Error fetching notifications:', err);
     } finally {
       setLoading(false);
     }
-  }, [initialLimit]);
+  }, [currentPage, limit, unreadOnly, type, priority]);
 
-  // Load unread count only
-  const loadUnreadCount = useCallback(async () => {
+  const fetchUnreadCount = useCallback(async () => {
     try {
       const response = await notificationService.getUnreadCount();
       if (response.success) {
         setUnreadCount(response.data.unreadCount);
       }
     } catch (err) {
-      console.error('Failed to load unread count:', err);
+      console.error('Error fetching unread count:', err);
     }
   }, []);
 
-  // Mark notification as read
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
       await notificationService.markAsRead(notificationId);
@@ -75,182 +115,92 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
       
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {
-      console.error('Failed to mark notification as read:', err);
-      setError(err instanceof Error ? err.message : 'Failed to mark as read');
+      console.error('Error marking notification as read:', err);
+      throw err;
     }
   }, []);
 
-  // Mark all notifications as read
   const markAllAsRead = useCallback(async () => {
     try {
       await notificationService.markAllAsRead();
       
       setNotifications(prev => 
-        prev.map(notification => ({ 
-          ...notification, 
-          isRead: true, 
-          readAt: new Date().toISOString() 
+        prev.map(notification => ({
+          ...notification,
+          isRead: true,
+          readAt: new Date().toISOString()
         }))
       );
       
       setUnreadCount(0);
     } catch (err) {
-      console.error('Failed to mark all notifications as read:', err);
-      setError(err instanceof Error ? err.message : 'Failed to mark all as read');
+      console.error('Error marking all notifications as read:', err);
+      throw err;
     }
   }, []);
 
-  // Delete notification
   const deleteNotification = useCallback(async (notificationId: string) => {
     try {
       await notificationService.deleteNotification(notificationId);
       
-      setNotifications(prev => {
-        const notification = prev.find(n => n._id === notificationId);
-        const wasUnread = notification && !notification.isRead;
-        
-        if (wasUnread) {
-          setUnreadCount(prev => Math.max(0, prev - 1));
-        }
-        
-        return prev.filter(n => n._id !== notificationId);
-      });
-    } catch (err) {
-      console.error('Failed to delete notification:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete notification');
-    }
-  }, []);
-
-  // Toggle dropdown
-  const toggleDropdown = useCallback(() => {
-    setShowDropdown(prev => !prev);
-  }, []);
-
-  // Close dropdown
-  const closeDropdown = useCallback(() => {
-    setShowDropdown(false);
-  }, []);
-
-  // Handle click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        closeDropdown();
-      }
-    };
-
-    if (showDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showDropdown, closeDropdown]);
-
-  // Load notifications when dropdown opens
-  useEffect(() => {
-    if (showDropdown && notifications.length === 0) {
-      loadNotifications();
-    }
-  }, [showDropdown, notifications.length, loadNotifications]);
-
-  // Auto-refresh unread count
-  useEffect(() => {
-    if (autoRefresh) {
-      // Load initial unread count
-      loadUnreadCount();
+      setNotifications(prev => 
+        prev.filter(notification => notification._id !== notificationId)
+      );
       
-      // Set up interval for auto-refresh
-      intervalRef.current = setInterval(() => {
-        loadUnreadCount();
-      }, refreshInterval);
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+      // Update unread count if the deleted notification was unread
+      const deletedNotification = notifications.find(n => n._id === notificationId);
+      if (deletedNotification && !deletedNotification.isRead) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
       }
-    };
-  }, [autoRefresh, refreshInterval, loadUnreadCount]);
-
-  // Get priority icon
-  const getPriorityIcon = useCallback((priority: string) => {
-    switch (priority) {
-      case 'urgent':
-        return '🔴';
-      case 'high':
-        return '🟠';
-      case 'medium':
-        return '🟡';
-      case 'low':
-        return '🟢';
-      default:
-        return '🔵';
+    } catch (err) {
+      console.error('Error deleting notification:', err);
+      throw err;
     }
-  }, []);
+  }, [notifications]);
 
-  // Get priority color
-  const getPriorityColor = useCallback((priority: string) => {
-    switch (priority) {
-      case 'urgent':
-        return 'text-red-600 bg-red-50';
-      case 'high':
-        return 'text-orange-600 bg-orange-50';
-      case 'medium':
-        return 'text-yellow-600 bg-yellow-50';
-      case 'low':
-        return 'text-green-600 bg-green-50';
-      default:
-        return 'text-blue-600 bg-blue-50';
-    }
-  }, []);
+  const refreshNotifications = useCallback(async () => {
+    await fetchNotifications(1, false);
+  }, [fetchNotifications]);
 
-  // Get type icon
-  const getTypeIcon = useCallback((type: string) => {
-    switch (type) {
-      case 'system':
-        return '⚙️';
-      case 'campaign_update':
-        return '📢';
-      case 'bid_status':
-        return '💰';
-      case 'post_status':
-        return '📝';
-      case 'alert':
-        return '⚠️';
-      case 'info':
-        return 'ℹ️';
-      case 'warning':
-        return '⚠️';
-      default:
-        return '📄';
+  const loadMore = useCallback(async () => {
+    if (currentPage < pagination.pages) {
+      await fetchNotifications(currentPage + 1, true);
     }
-  }, []);
+  }, [currentPage, pagination.pages, fetchNotifications]);
+
+  // Initial load
+  useEffect(() => {
+    fetchNotifications(1, false);
+  }, [fetchNotifications]);
+
+  // Auto refresh
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(() => {
+      fetchUnreadCount();
+      // Only refresh notifications if not currently loading
+      if (!loading) {
+        fetchNotifications(1, false);
+      }
+    }, refreshInterval);
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, refreshInterval, fetchUnreadCount, fetchNotifications, loading]);
+
+  const hasMore = currentPage < pagination.pages;
 
   return {
-    // State
     notifications,
-    unreadCount,
     loading,
     error,
-    showDropdown,
-    
-    // Actions
-    loadNotifications,
-    loadUnreadCount,
+    unreadCount,
+    pagination,
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    toggleDropdown,
-    closeDropdown,
-    
-    // Utilities
-    getPriorityIcon,
-    getPriorityColor,
-    getTypeIcon,
-    
-    // Refs
-    dropdownRef
+    refreshNotifications,
+    hasMore,
+    loadMore
   };
 }

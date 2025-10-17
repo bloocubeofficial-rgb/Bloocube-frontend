@@ -1,24 +1,14 @@
 "use client";
 import { useEffect, useMemo, useState } from 'react';
 import { campaignService } from '@/lib/campaignService';
-import { authUtils } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 import type { Bid } from '@/types/bid';
 import { ChevronDownIcon, CheckIcon, EyeIcon, ChatBubbleLeftRightIcon, CalendarIcon, CurrencyDollarIcon, TagIcon } from '@heroicons/react/24/outline';
 import { acceptBidApi, rejectBidApi } from '@/hooks/useBids';
 
 export default function BrandBidsPage() {
-  const currentUser = useMemo(() => authUtils.getUser?.(), []);
+  const { user, isLoading } = useAuth();
   const [selectedBid, setSelectedBid] = useState<Bid | null>(null);
-  if (!currentUser || (currentUser.role !== 'brand' && currentUser.role !== 'admin')) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-          <h1 className="text-lg font-semibold text-gray-900 mb-2">Brand access required</h1>
-          <p className="text-sm text-gray-600 mb-4">Please sign in with a brand account to review bids.</p>
-        </div>
-      </div>
-    );
-  }
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,9 +17,8 @@ export default function BrandBidsPage() {
   const [processing, setProcessing] = useState<{ id: string; action: 'accept' | 'reject' } | null>(null);
 
   const brandId = useMemo(() => {
-    const user = authUtils.getUser?.();
-    return user?._id || user?.id || null;
-  }, []);
+    return user?.id || null;
+  }, [user]);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,6 +81,28 @@ export default function BrandBidsPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || user.role !== 'brand') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+          <h1 className="text-lg font-semibold text-gray-900 mb-2">Brand access required</h1>
+          <p className="text-sm text-gray-600 mb-4">Please sign in with a brand account to review bids.</p>
+        </div>
+      </div>
+    );
+  }
 
   const statusOptions = [
     { value: '', label: 'All Bids', icon: '📋', color: 'gray' },

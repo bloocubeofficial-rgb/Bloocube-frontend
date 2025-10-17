@@ -6,10 +6,34 @@ import {
   ArrowDownIcon
 } from '@heroicons/react/24/outline';
 import { TrendingUp, Eye, Heart, CircleDollarSign as CurrencyDollarIcon, Users as UsersIcon } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function BrandAnalyticsPage() {
+  const { user, isLoading } = useAuth();
   const [timeRange, setTimeRange] = useState('30d');
   const [activeTab, setActiveTab] = useState('overview');
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || user.role !== 'brand') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+          <h1 className="text-lg font-semibold text-gray-900 mb-2">Brand access required</h1>
+          <p className="text-sm text-gray-600 mb-4">Please sign in with a brand account to view analytics.</p>
+        </div>
+      </div>
+    );
+  }
 
   const timeRanges = [
     { value: '7d', label: 'Last 7 days' },

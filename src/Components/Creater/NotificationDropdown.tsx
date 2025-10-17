@@ -1,7 +1,7 @@
 // src/Components/Creater/NotificationDropdown.tsx
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Bell, 
   Check, 
@@ -19,43 +19,90 @@ interface NotificationDropdownProps {
 }
 
 const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className = '' }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  
   const {
     notifications,
     unreadCount,
     loading,
     error,
-    showDropdown,
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    toggleDropdown,
-    closeDropdown,
-    getPriorityIcon,
-    getPriorityColor,
-    dropdownRef
+    refreshNotifications
   } = useNotifications();
 
   const getTypeIconComponent = (type: string) => {
     switch (type) {
-      case 'system':
-        return <AlertCircle className="w-4 h-4 text-blue-600" />;
-      case 'campaign_update':
+      case 'bid_accepted':
+      case 'payment_received':
         return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'bid_status':
-        return <Info className="w-4 h-4 text-purple-600" />;
-      case 'post_status':
-        return <CheckCircle className="w-4 h-4 text-indigo-600" />;
-      case 'alert':
-        return <AlertTriangle className="w-4 h-4 text-red-600" />;
-      case 'warning':
+      case 'campaign_deadline':
+      case 'system_alert':
         return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
+      case 'bid_rejected':
+        return <AlertCircle className="w-4 h-4 text-red-600" />;
+      case 'bid_received':
+      case 'campaign_created':
+        return <Info className="w-4 h-4 text-blue-600" />;
+      case 'analytics_update':
+        return <CheckCircle className="w-4 h-4 text-purple-600" />;
+      case 'ai_suggestion':
+        return <CheckCircle className="w-4 h-4 text-indigo-600" />;
+      case 'user_activity':
+        return <Info className="w-4 h-4 text-gray-600" />;
       default:
         return <Info className="w-4 h-4 text-gray-600" />;
     }
   };
 
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent':
+        return 'bg-red-100 text-red-800';
+      case 'high':
+        return 'bg-orange-100 text-orange-800';
+      case 'medium':
+        return 'bg-blue-100 text-blue-800';
+      case 'low':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case 'urgent':
+        return '🔴';
+      case 'high':
+        return '🟠';
+      case 'medium':
+        return '🔵';
+      case 'low':
+        return '⚪';
+      default:
+        return '⚪';
+    }
+  };
+
+  const formatTimeAgo = (createdAt: string) => {
+    const now = new Date();
+    const notificationDate = new Date(createdAt);
+    const diffInSeconds = Math.floor((now.getTime() - notificationDate.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    return notificationDate.toLocaleDateString();
+  };
+
+  const toggleDropdown = () => setIsOpen(!isOpen);
+  const closeDropdown = () => setIsOpen(false);
+
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
+    <div className={`relative ${className}`}>
       {/* Notification Bell Button */}
       <button
         onClick={toggleDropdown}
@@ -70,7 +117,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
       </button>
 
       {/* Dropdown Menu */}
-      {showDropdown && (
+      {isOpen && (
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
@@ -156,7 +203,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
                         {/* Time and Actions */}
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-xs text-gray-500">
-                            {notification.timeAgo}
+                            {formatTimeAgo(notification.createdAt)}
                           </span>
                           
                           <div className="flex items-center space-x-1">
