@@ -189,7 +189,7 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
         </div>
 
         {/* Enhanced Desktop Header */}
-        <div className="hidden lg:block bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200/50 overflow-visible">
+        <div className="hidden lg:block bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200/50 overflow-visible relative z-[9999]">
           <div className="px-5 py-3">
             <div className="flex justify-between items-center">
               <div className="flex-1">
@@ -286,8 +286,8 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
         </div>
 
         {/* Page Content */}
-        <div className="p-4 lg:p-5">
-          <div className="max-w-7xl mx-auto">
+        <div className="p-4 lg:p-5 relative">
+          <div className="max-w-7xl mx-auto ">
             {children}
           </div>
         </div>

@@ -34,7 +34,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ enabled, onToggle, disabled
     disabled={disabled}
     type="button"
     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-      enabled ? "bg-blue-600" : "bg-gray-300"
+      enabled ? "bg-blue-600" : "bg-gray-700"
     } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
   >
     <span
@@ -409,7 +409,7 @@ function SettingsPageContent() {
             </div>
             <button
               onClick={() => setNotification({ type: null, message: '' })}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-800 hover:text-gray-600 transition-colors"
             >
               ×
             </button>
@@ -442,8 +442,8 @@ function SettingsPageContent() {
         </div>
       )}
 
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50">
-        <div className="p-6 border-b border-gray-200">
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-600/50">
+        <div className="p-6 border-b border-gray-600">
           <h1 className="hidden md:block text-2xl font-semibold text-gray-900">Settings</h1>
           <p className="hidden md:block text-gray-600 mt-1">
             Manage your account preferences and integrations
@@ -468,7 +468,7 @@ function SettingsPageContent() {
                   Account Details
                 </h3>
                 <div className="pl-4 space-y-4">
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-900">
                     Change basic account details
                   </p>
 
@@ -480,7 +480,7 @@ function SettingsPageContent() {
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleInputChange("email", e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
 
@@ -494,12 +494,12 @@ function SettingsPageContent() {
                         value={formData.currentPassword}
                         onChange={(e) => handleInputChange("currentPassword", e.target.value)}
                         placeholder="••••••••••••"
-                        className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 pr-20 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-800 hover:text-gray-600"
                       >
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
@@ -516,17 +516,17 @@ function SettingsPageContent() {
                         value={formData.newPassword}
                         onChange={(e) => handleInputChange("newPassword", e.target.value)}
                         placeholder="••••••••••••"
-                        className="w-full px-3 py-2 pr-12 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 pr-12 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-800 hover:text-gray-600"
                       >
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+                    <p className="text-xs text-gray-900 mt-1">Minimum 8 characters</p>
                   </div>
 
                   <button
@@ -546,7 +546,7 @@ function SettingsPageContent() {
                   Basic Info
                 </h3>
                 <div className="pl-4 space-y-4">
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-900">
                     Update your personal information below
                   </p>
 
@@ -558,7 +558,7 @@ function SettingsPageContent() {
                       type="text"
                       value={formData.name}
                       onChange={(e) => handleInputChange("name", e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
 
@@ -570,11 +570,11 @@ function SettingsPageContent() {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => handleInputChange("phone", e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
 
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-900">
                     Update your phone number below in your account.
                   </p>
                 </div>
@@ -595,7 +595,7 @@ function SettingsPageContent() {
                     setProfilePhone('');
                     setProfileData({});
                   }}
-                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                 >
                   Clear Form
                 </button>
@@ -626,7 +626,7 @@ function SettingsPageContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-gray-900">Marketing Emails</p>
-                  <p className="text-sm text-gray-500">Receive product news, feature updates and special offers via email</p>
+                  <p className="text-sm text-gray-900">Receive product news, feature updates and special offers via email</p>
                 </div>
                 <ToggleSwitch 
                   enabled={marketingEmails} 
@@ -641,7 +641,7 @@ function SettingsPageContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-gray-900">Email Notifications</p>
-                  <p className="text-sm text-gray-500">Get email alerts about your tasks, posts and activity</p>
+                  <p className="text-sm text-gray-900">Get email alerts about your tasks, posts and activity</p>
                 </div>
                 <ToggleSwitch 
                   enabled={emailNotifications} 
@@ -656,7 +656,7 @@ function SettingsPageContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-gray-900">Push Notifications</p>
-                  <p className="text-sm text-gray-500">Get push notifications on your mobile device and browser</p>
+                  <p className="text-sm text-gray-900">Get push notifications on your mobile device and browser</p>
                 </div>
                 <ToggleSwitch 
                   enabled={pushNotifications} 
@@ -671,7 +671,7 @@ function SettingsPageContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-gray-900">SMS Notifications</p>
-                  <p className="text-sm text-gray-500">Receive SMS reminders for upcoming posts or urgent deadlines</p>
+                  <p className="text-sm text-gray-900">Receive SMS reminders for upcoming posts or urgent deadlines</p>
                 </div>
                 <ToggleSwitch 
                   enabled={smsNotifications} 
@@ -731,14 +731,14 @@ function SettingsPageContent() {
                 type="password"
                 value={deleteData.password}
                 onChange={(e) => setDeleteData({ password: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                 placeholder="••••••••••••"
               />
             </div>
             <div className="flex space-x-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors"
+                className="flex-1 bg-gray-700 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-800 transition-colors"
               >
                 Cancel
               </button>
