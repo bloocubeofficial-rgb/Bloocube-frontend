@@ -19,6 +19,7 @@ export default function AuthLayout({
           <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gradient-to-tr from-indigo-500 via-fuchsia-500 to-pink-500 opacity-16 md:opacity-24 rounded-full blur-[140px] animate-gradient-60" />
 
           {/* Fine noise layer for texture */}
+
           <div
             className="hidden md:block absolute inset-0 opacity-[0.03] mix-blend-soft-light"
             style={{
