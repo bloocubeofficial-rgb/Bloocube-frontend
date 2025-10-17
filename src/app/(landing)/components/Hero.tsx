@@ -289,3 +289,5 @@ const Hero = React.memo(() => {
 });
 
 export default Hero;
+
+//  hero section complete
