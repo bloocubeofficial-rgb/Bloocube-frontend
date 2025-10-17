@@ -2,14 +2,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import {
-  User,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  ArrowRight,
-} from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import Button from "@/Components/ui/Button";
 import { Input } from "@/Components/ui/Input";
 import { Label } from "@/Components/ui/Label";
@@ -38,7 +31,8 @@ const SignupForm: React.FC = () => {
   // ✅ Handles Google signup redirect
   const handleGoogle = async () => {
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
       if (!token) localStorage.setItem("token", "guest");
 
       const callbackUrl = `${window.location.origin}/auth/google/callback`;
@@ -58,12 +52,15 @@ const SignupForm: React.FC = () => {
       });
 
       if (!data.success || !data.authURL)
-        return setError(data.message || data.error || "Failed to start Google auth");
+        return setError(
+          data.message || data.error || "Failed to start Google auth"
+        );
 
       localStorage.setItem("google_state", data.state || "");
       window.location.href = data.authURL;
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Failed to start Google auth";
+      const message =
+        e instanceof Error ? e.message : "Failed to start Google auth";
       setError(message);
     }
   };
@@ -85,7 +82,9 @@ const SignupForm: React.FC = () => {
       try {
         setCheckingEmail(true);
         const qs = new URLSearchParams({ email });
-        const res = await fetch(`/api/auth/check-email?${qs.toString()}`, { signal: controller.signal });
+        const res = await fetch(`/api/auth/check-email?${qs.toString()}`, {
+          signal: controller.signal,
+        });
         const data = await res.json();
         if (data?.success) setEmailExists(!!data.data?.exists);
         else setEmailExists(null);
@@ -127,7 +126,9 @@ const SignupForm: React.FC = () => {
 
     try {
       if (emailExists) {
-        setError('Email already exists. Please log in or use a different email.');
+        setError(
+          "Email already exists. Please log in or use a different email."
+        );
         setIsLoading(false);
         return;
       }
@@ -146,7 +147,9 @@ const SignupForm: React.FC = () => {
 
       if (data?.data?.requiresOTP) {
         // Show success message and redirect to OTP verification
-        setMessage("Registration successful! Please check your email for the verification code.");
+        setMessage(
+          "Registration successful! Please check your email for the verification code."
+        );
         setTimeout(() => {
           router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
         }, 2000);
@@ -178,7 +181,7 @@ const SignupForm: React.FC = () => {
       }
     } catch (err) {
       console.error("Signup error:", err);
-      const message = err instanceof Error ? err.message : 'An error occurred';
+      const message = err instanceof Error ? err.message : "An error occurred";
       setError(message);
     } finally {
       setIsLoading(false);
@@ -258,12 +261,18 @@ const SignupForm: React.FC = () => {
               />
               {email && (
                 <div className="mt-2 text-xs">
-                  {checkingEmail && <span className="text-zinc-400">Checking email…</span>}
+                  {checkingEmail && (
+                    <span className="text-zinc-400">Checking email…</span>
+                  )}
                   {!checkingEmail && emailExists === true && (
-                    <span className="text-red-400">Email already exists. Try logging in.</span>
+                    <span className="text-red-400">
+                      Email already exists. Try logging in.
+                    </span>
                   )}
                   {!checkingEmail && emailExists === false && (
-                    <span className="text-emerald-400">Email is available.</span>
+                    <span className="text-emerald-400">
+                      Email is available.
+                    </span>
                   )}
                 </div>
               )}
@@ -273,7 +282,10 @@ const SignupForm: React.FC = () => {
           {/* Password + Confirm */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
-              <Label htmlFor="password" className="text-zinc-300 text-sm mb-2 block">
+              <Label
+                htmlFor="password"
+                className="text-zinc-300 text-sm mb-2 block"
+              >
                 Password
               </Label>
               <Lock className="absolute left-3 top-[38px] w-5 h-5 text-zinc-400" />
@@ -290,12 +302,19 @@ const SignupForm: React.FC = () => {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-[38px] text-zinc-400 hover:text-white"
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
               </button>
             </div>
 
             <div className="relative">
-              <Label htmlFor="confirm" className="text-zinc-300 text-sm mb-2 block">
+              <Label
+                htmlFor="confirm"
+                className="text-zinc-300 text-sm mb-2 block"
+              >
                 Confirm Password
               </Label>
               <Lock className="absolute left-3 top-[38px] w-5 h-5 text-zinc-400" />
@@ -312,13 +331,17 @@ const SignupForm: React.FC = () => {
                 onClick={() => setShowConfirm(!showConfirm)}
                 className="absolute right-3 top-[38px] text-zinc-400 hover:text-white"
               >
-                {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showConfirm ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
               </button>
             </div>
           </div>
 
-        {/* Role */}
-        <div>
+          {/* Role */}
+          <div>
             <Label htmlFor="role" className="text-zinc-300 text-sm mb-2 block">
               Select Role
             </Label>
@@ -344,13 +367,17 @@ const SignupForm: React.FC = () => {
 
           {error && (
             <Alert className="bg-red-500/10 border-red-500/20 rounded-xl">
-              <AlertDescription className="text-red-400 text-sm">{error}</AlertDescription>
+              <AlertDescription className="text-red-400 text-sm">
+                {error}
+              </AlertDescription>
             </Alert>
           )}
 
           {message && (
             <Alert className="bg-emerald-500/10 border-emerald-500/20 rounded-xl">
-              <AlertDescription className="text-emerald-400 text-sm">{message}</AlertDescription>
+              <AlertDescription className="text-emerald-400 text-sm">
+                {message}
+              </AlertDescription>
             </Alert>
           )}
 
@@ -378,7 +405,7 @@ const SignupForm: React.FC = () => {
               <div className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-[#050510] text-zinc-400">Or continue with</span>
+              <span className="px-4  text-zinc-400">Or continue with</span>
             </div>
           </div>
 
@@ -395,13 +422,22 @@ const SignupForm: React.FC = () => {
             >
               <path
                 fill="#FFC107"
-                d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36C16.8 36 11 30.2 11 23S16.8 10 24 10c3.2 0 6.1 1.2 8.3 3.2l5.7-5.7C34.6 4.2 29.6 2 24 2C11.8 2 2 11.8 2 24s9.8 22 22 22c12.1 0 21.6-8.8 21.6-22 0-1.2-.1-2.3-.3-3.5z"
+                d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36 16.8 36 11 30.2 11 23S16.8 10 24 10c3.2 0 6.1 1.2 8.3 3.2l5.7-5.7C34.6 4.2 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c12.1 0 21.6-8.8 21.6-22 0-1.2-.1-2.3-.3-3.5z"
+              />
+              <path
+                fill="#FF3D00"
+                d="M6.3 14.7l6.6 4.8C14.9 16.3 19.1 14 24 14c3.2 0 6.1 1.2 8.3 3.2l5.7-5.7C34.6 4.2 29.6 2 24 2 15 2 7.5 7.2 6.3 14.7z"
               />
               <path
                 fill="#4CAF50"
                 d="M24 46c5.2 0 10-1.9 13.6-5.2l-6.3-5.2C29.1 37.2 26.7 38 24 38c-5.3 0-9.7-3.1-11.5-7.6l-6.6 5.1C7.5 40.8 15 46 24 46z"
               />
+              <path
+                fill="#1976D2"
+                d="M43.6 20.5H42V20H24v8h11.3c-1.1 2.6-3.1 4.7-5.7 6.1l6.3 5.2C38.9 36.5 42 30.9 42 24c0-1.2-.1-2.3-.4-3.5z"
+              />
             </svg>
+
             <span className="text-sm font-medium">Sign up with Google</span>
           </button>
 
@@ -421,7 +457,13 @@ const SignupForm: React.FC = () => {
 };
 
 const SignupPage: React.FC = () => (
-  <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-white">Loading...</div>}>
+  <Suspense
+    fallback={
+      <div className="min-h-screen flex items-center justify-center text-white">
+        Loading...
+      </div>
+    }
+  >
     <SignupForm />
   </Suspense>
 );

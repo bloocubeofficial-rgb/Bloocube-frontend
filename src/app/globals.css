@@ -189,7 +189,7 @@ body {
   }
 }
 
-/* @keyframes marquee {
+@keyframes marquee {
   0% {
     transform: translateX(0);
   }
@@ -205,7 +205,7 @@ body {
   100% {
     transform: translateX(0);
   }
-} */
+}
 
 
 .animate-orbit {
@@ -228,9 +228,9 @@ body {
   animation: pulse-glow 3s ease-in-out infinite;
 }
 
-/* .animate-marquee {
+.animate-marquee {
   animation: marquee 20s linear infinite;
-} */
+}
 
 .animate-marquee2 {
   animation: marquee2 20s linear infinite;

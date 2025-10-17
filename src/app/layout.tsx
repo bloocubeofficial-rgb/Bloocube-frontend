@@ -26,7 +26,7 @@ export default function RootLayout({
           <Link href="/brand" prefetch />
         </div>
         {children}
-        {process.env.NODE_ENV === 'development' && <PerformanceDebugger />}
+        {process.env.NODE_ENV === "development" && <PerformanceDebugger />}
       </body>
     </html>
   );

@@ -72,11 +72,16 @@ const LoginPage: React.FC = () => {
       const role = data.data.user?.role;
       router.push(role === "brand" ? "/brand" : "/creator");
     } catch (err: unknown) {
-      const apiErr = err as { status?: number; retryAfter?: number; message?: string };
+      const apiErr = err as {
+        status?: number;
+        retryAfter?: number;
+        message?: string;
+      };
       if (apiErr?.status === 429) {
         const retryAfter = apiErr.retryAfter ? `${apiErr.retryAfter}s` : "";
         setError(`Too many attempts. Try again in ${retryAfter}`);
-      } else setError(apiErr?.message || "Network error. Please try again later.");
+      } else
+        setError(apiErr?.message || "Network error. Please try again later.");
     } finally {
       setIsSubmitting(false);
     }
@@ -85,26 +90,33 @@ const LoginPage: React.FC = () => {
   // ✅ Handles Google login redirect
   const handleGoogle = async () => {
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
       if (!token) localStorage.setItem("token", "guest");
 
       const callbackUrl = `${window.location.origin}/auth/google/callback`;
-      const data = await apiRequest<GoogleAuthResponse>("/api/google/auth-url", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token") || "guest"}`,
-        },
-        body: JSON.stringify({ redirectUri: callbackUrl }),
-      });
+      const data = await apiRequest<GoogleAuthResponse>(
+        "/api/google/auth-url",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token") || "guest"}`,
+          },
+          body: JSON.stringify({ redirectUri: callbackUrl }),
+        }
+      );
 
       if (!data.success || !data.authURL)
-        return setError(data.message || data.error || "Failed to start Google auth");
+        return setError(
+          data.message || data.error || "Failed to start Google auth"
+        );
 
       localStorage.setItem("google_state", data.state || "");
       window.location.href = data.authURL;
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Failed to start Google auth";
+      const message =
+        e instanceof Error ? e.message : "Failed to start Google auth";
       setError(message);
     }
   };
@@ -142,14 +154,19 @@ const LoginPage: React.FC = () => {
             <h2 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
               Login
             </h2>
-            <p className="text-gray-400 text-sm mt-3">Sign in to continue to your account</p>
+            <p className="text-gray-400 text-sm mt-3">
+              Sign in to continue to your account
+            </p>
           </div>
 
           {/* Form */}
           <div className="space-y-4">
             {/* Email */}
             <div>
-              <Label htmlFor="email" className="text-gray-300 text-sm mb-2 block">
+              <Label
+                htmlFor="email"
+                className="text-gray-300 text-sm mb-2 block"
+              >
                 Email Address
               </Label>
               <div className="relative">
@@ -159,7 +176,9 @@ const LoginPage: React.FC = () => {
                   type="email"
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setEmail(e.target.value)
+                  }
                   className="pl-10 h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
@@ -167,7 +186,10 @@ const LoginPage: React.FC = () => {
 
             {/* Password */}
             <div>
-              <Label htmlFor="password" className="text-gray-300 text-sm mb-2 block">
+              <Label
+                htmlFor="password"
+                className="text-gray-300 text-sm mb-2 block"
+              >
                 Password
               </Label>
               <div className="relative">
@@ -177,7 +199,9 @@ const LoginPage: React.FC = () => {
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setPassword(e.target.value)
+                  }
                   className="pl-10 pr-10 h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
                 />
                 <button
@@ -185,7 +209,11 @@ const LoginPage: React.FC = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -196,14 +224,22 @@ const LoginPage: React.FC = () => {
                 <Checkbox
                   id="remember"
                   checked={rememberMe}
-                  onCheckedChange={(checked: boolean) => setRememberMe(Boolean(checked))}
+                  onCheckedChange={(checked: boolean) =>
+                    setRememberMe(Boolean(checked))
+                  }
                   className="border-white/20 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
                 />
-                <label htmlFor="remember" className="text-sm text-gray-300 cursor-pointer">
+                <label
+                  htmlFor="remember"
+                  className="text-sm text-gray-300 cursor-pointer"
+                >
                   Remember me
                 </label>
               </div>
-              <a href="/forgot-password" className="text-sm text-indigo-400 hover:text-indigo-300">
+              <a
+                href="/forgot-password"
+                className="text-sm text-indigo-400 hover:text-indigo-300"
+              >
                 Forgot password?
               </a>
             </div>
@@ -211,7 +247,9 @@ const LoginPage: React.FC = () => {
             {/* Error */}
             {error && (
               <Alert className="bg-red-500/10 border-red-500/20 rounded-xl">
-                <AlertDescription className="text-red-400 text-sm">{error}</AlertDescription>
+                <AlertDescription className="text-red-400 text-sm">
+                  {error}
+                </AlertDescription>
               </Alert>
             )}
 
@@ -248,20 +286,32 @@ const LoginPage: React.FC = () => {
               >
                 <path
                   fill="#FFC107"
-                  d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36C16.8 36 11 30.2 11 23S16.8 10 24 10c3.2 0 6.1 1.2 8.3 3.2l5.7-5.7C34.6 4.2 29.6 2 24 2C11.8 2 2 11.8 2 24s9.8 22 22 22c12.1 0 21.6-8.8 21.6-22 0-1.2-.1-2.3-.3-3.5z"
+                  d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36 16.8 36 11 30.2 11 23S16.8 10 24 10c3.2 0 6.1 1.2 8.3 3.2l5.7-5.7C34.6 4.2 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c12.1 0 21.6-8.8 21.6-22 0-1.2-.1-2.3-.3-3.5z"
+                />
+                <path
+                  fill="#FF3D00"
+                  d="M6.3 14.7l6.6 4.8C14.9 16.3 19.1 14 24 14c3.2 0 6.1 1.2 8.3 3.2l5.7-5.7C34.6 4.2 29.6 2 24 2 15 2 7.5 7.2 6.3 14.7z"
                 />
                 <path
                   fill="#4CAF50"
                   d="M24 46c5.2 0 10-1.9 13.6-5.2l-6.3-5.2C29.1 37.2 26.7 38 24 38c-5.3 0-9.7-3.1-11.5-7.6l-6.6 5.1C7.5 40.8 15 46 24 46z"
                 />
+                <path
+                  fill="#1976D2"
+                  d="M43.6 20.5H42V20H24v8h11.3c-1.1 2.6-3.1 4.7-5.7 6.1l6.3 5.2C38.9 36.5 42 30.9 42 24c0-1.2-.1-2.3-.4-3.5z"
+                />
               </svg>
+
               <span className="text-sm font-medium">Login with Google</span>
             </button>
 
             {/* Sign up */}
             <p className="mt-4 text-center text-gray-400 text-sm">
               Don’t have an account?{" "}
-              <a href="/signup" className="text-indigo-400 hover:text-indigo-300 font-semibold">
+              <a
+                href="/signup"
+                className="text-indigo-400 hover:text-indigo-300 font-semibold"
+              >
                 Sign up for free
               </a>
             </p>
