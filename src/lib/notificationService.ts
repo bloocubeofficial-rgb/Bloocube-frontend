@@ -93,10 +93,11 @@ class NotificationService {
   }
 
   /**
-   * Get unread notification count
+   * Get unread notification count with custom retry strategy for rate limiting
    */
   async getUnreadCount(): Promise<NotificationUnreadCountResponse> {
-    return apiRequest<NotificationUnreadCountResponse>('/api/notifications/unread-count');
+    // Use higher retry count and longer backoff for unread count requests
+    return apiRequest<NotificationUnreadCountResponse>('/api/notifications/unread-count', {}, 3);
   }
 
   /**

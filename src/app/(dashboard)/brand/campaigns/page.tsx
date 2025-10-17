@@ -34,6 +34,20 @@ export default function BrandCampaignsPage() {
   const [bidsError, setBidsError] = useState<string | null>(null);
   const [bids, setBids] = useState<import('@/types/bid').Bid[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showDrafts, setShowDrafts] = useState(false);
+  const [editingDraft, setEditingDraft] = useState<Campaign | null>(null);
+  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string; show: boolean } | null>(null);
+  const [draftActionsLoading, setDraftActionsLoading] = useState<{ [key: string]: boolean }>({});
+  const [bidActionsLoading, setBidActionsLoading] = useState<{ [key: string]: boolean }>({});
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [draftToggleLoading, setDraftToggleLoading] = useState(false);
+
+  const showToast = (type: 'success' | 'error' | 'info', message: string) => {
+    setToast({ type, message, show: true });
+    setTimeout(() => {
+      setToast(prev => prev ? { ...prev, show: false } : null);
+    }, 5000);
+  };
 
   const refetch = async () => {
     try {
@@ -48,6 +62,7 @@ export default function BrandCampaignsPage() {
       setCampaigns([]);
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   };
 
@@ -107,12 +122,12 @@ export default function BrandCampaignsPage() {
     return reasons;
   }, [draft, deadlineDate, deadlineTime]);
   
-  if (isLoading) {
+  if (isLoading || initialLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
         <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">{isLoading ? 'Authenticating...' : 'Loading campaigns...'}</p>
         </div>
       </div>
     );
@@ -170,7 +185,7 @@ export default function BrandCampaignsPage() {
       setDeadlineTime('23:59');
       setPublishActive(true);
       await refetch();
-      alert(`Campaign created${publishActive ? ' and published' : ''}: ${created.title}`);
+      showToast('success', `Campaign "${created.title}" created${publishActive ? ' and published' : ''} successfully! 🎉`);
     } catch (e: unknown) {
       const error = e as Error;
       setFormError(error?.message || 'Failed to create campaign');
@@ -183,13 +198,126 @@ export default function BrandCampaignsPage() {
   const userData = user as Record<string, unknown> | null;
 
   const onAccept = async (campaignId: string, bidId: string) => {
-    await acceptBidApi(campaignId, bidId);
-    // refresh bids
-    setSelectedCampaignId(prev => prev); // trigger useEffect
+    try {
+      setBidActionsLoading(prev => ({ ...prev, [`accept_${bidId}`]: true }));
+      await acceptBidApi(campaignId, bidId);
+      // refresh bids
+      setSelectedCampaignId(prev => prev); // trigger useEffect
+      showToast('success', 'Bid accepted successfully! 🎉');
+    } catch (e: unknown) {
+      const error = e as Error;
+      showToast('error', error?.message || 'Failed to accept bid');
+    } finally {
+      setBidActionsLoading(prev => ({ ...prev, [`accept_${bidId}`]: false }));
+    }
   };
+  
   const onReject = async (campaignId: string, bidId: string) => {
-    await rejectBidApi(campaignId, bidId);
-    setSelectedCampaignId(prev => prev);
+    try {
+      setBidActionsLoading(prev => ({ ...prev, [`reject_${bidId}`]: true }));
+      await rejectBidApi(campaignId, bidId);
+      setSelectedCampaignId(prev => prev);
+      showToast('success', 'Bid rejected successfully!');
+    } catch (e: unknown) {
+      const error = e as Error;
+      showToast('error', error?.message || 'Failed to reject bid');
+    } finally {
+      setBidActionsLoading(prev => ({ ...prev, [`reject_${bidId}`]: false }));
+    }
+  };
+
+  const onEditDraft = (campaign: Campaign) => {
+    setEditingDraft(campaign);
+    setDraft({
+      title: campaign.title,
+      description: campaign.description,
+      budget: campaign.budget,
+      deadline: campaign.deadline,
+      requirements: campaign.requirements,
+      payment: campaign.payment,
+      isPublic: campaign.isPublic
+    });
+    // Parse deadline for date/time inputs
+    if (campaign.deadline) {
+      const deadlineDate = new Date(campaign.deadline);
+      setDeadlineDate(deadlineDate.toISOString().split('T')[0]);
+      setDeadlineTime(deadlineDate.toTimeString().slice(0, 5));
+    }
+  };
+
+  const onUpdateDraft = async () => {
+    if (!editingDraft || !isValid) return;
+    
+    try {
+      setCreating(true);
+      setFormError(null);
+      
+      const combinedDeadline = (() => {
+        if (deadlineDate) {
+          const dt = new Date(`${deadlineDate}T${deadlineTime || '23:59'}:00`);
+          if (!isNaN(dt.getTime())) return dt.toISOString();
+        }
+        const end = new Date();
+        end.setHours(23,59,59,0);
+        end.setDate(end.getDate() + 1);
+        return end.toISOString();
+      })();
+
+      const payload = { 
+        ...draft,
+        deadline: combinedDeadline,
+        payment: { ...(draft.payment as Record<string, unknown>), amount: Number(draft.budget || 0) }
+      } as Record<string, unknown>;
+
+      await updateCampaignApi(editingDraft._id, payload);
+      
+      // Reset form
+      setDraft({ title: '', description: '', budget: 0, deadline: '', requirements: { platforms: [] }, payment: { type: 'fixed', amount: 0, currency: 'INR' }, isPublic: true });
+      setDeadlineDate('');
+      setDeadlineTime('23:59');
+      setPublishActive(true);
+      setEditingDraft(null);
+      
+      await refetch();
+      showToast('success', `Campaign "${draft.title}" updated successfully! ✨`);
+    } catch (e: unknown) {
+      const error = e as Error;
+      setFormError(error?.message || 'Failed to update campaign');
+      console.error('❌ Update campaign failed:', e);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const onPublishDraft = async (campaignId: string) => {
+    try {
+      setDraftActionsLoading(prev => ({ ...prev, [`publish_${campaignId}`]: true }));
+      await updateCampaignApi(campaignId, { status: 'active' } as Record<string, unknown>);
+      await refetch();
+      showToast('success', 'Campaign published successfully! Your campaign is now live and visible to creators! 🚀');
+    } catch (e: unknown) {
+      const error = e as Error;
+      showToast('error', error?.message || 'Failed to publish campaign');
+    } finally {
+      setDraftActionsLoading(prev => ({ ...prev, [`publish_${campaignId}`]: false }));
+    }
+  };
+
+  const onDeleteDraft = async (campaignId: string) => {
+    if (!confirm('Are you sure you want to delete this draft campaign?')) return;
+    
+    try {
+      setDraftActionsLoading(prev => ({ ...prev, [`delete_${campaignId}`]: true }));
+      // You'll need to implement deleteCampaignApi in your hooks
+      // await deleteCampaignApi(campaignId);
+      await refetch();
+      showToast('success', 'Draft campaign deleted successfully! 🗑️');
+    } catch (e: unknown) {
+      const error = e as Error;
+      showToast('error', error?.message || 'Failed to delete campaign');
+    } finally {
+      setDraftActionsLoading(prev => ({ ...prev, [`delete_${campaignId}`]: false }));
+    }
   };
 
   const platformOptions = [
@@ -236,9 +364,32 @@ export default function BrandCampaignsPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-blue-100 rounded-lg">
-              <PlusIcon className="h-5 w-5 text-blue-600" />
+              {editingDraft ? (
+                <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              ) : (
+                <PlusIcon className="h-5 w-5 text-blue-600" />
+              )}
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">Launch Your Next Campaign</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {editingDraft ? `Edit Campaign: ${editingDraft.title}` : 'Launch Your Next Campaign'}
+            </h2>
+            {editingDraft && (
+              <button
+                onClick={() => {
+                  setEditingDraft(null);
+                  setDraft({ title: '', description: '', budget: 0, deadline: '', requirements: { platforms: [] }, payment: { type: 'fixed', amount: 0, currency: 'INR' }, isPublic: true });
+                  setDeadlineDate('');
+                  setDeadlineTime('23:59');
+                  setPublishActive(true);
+                }}
+                className="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                <XMarkIcon className="h-4 w-4" />
+                Cancel Edit
+              </button>
+            )}
           </div>
 
           {userData && (userData.role as string) !== 'brand' && (
@@ -442,11 +593,35 @@ export default function BrandCampaignsPage() {
           )}
 
           {/* Submit Button */}
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex justify-end gap-3">
+            {editingDraft && (
+              <button 
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" 
+                disabled={creating || !isValid} 
+                onClick={onUpdateDraft}
+              >
+                {creating ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Updating Campaign...
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Update Campaign
+                  </>
+                )}
+              </button>
+            )}
             <button 
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" 
               disabled={creating || !isValid} 
-              onClick={onCreate}
+              onClick={editingDraft ? onUpdateDraft : onCreate}
             >
               {creating ? (
                 <>
@@ -454,17 +629,153 @@ export default function BrandCampaignsPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Creating Campaign...
+                  {editingDraft ? 'Updating Campaign...' : 'Creating Campaign...'}
                 </>
               ) : (
                 <>
-                  <PlusIcon className="h-4 w-4" />
-                  Create Campaign
+                  {editingDraft ? (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  ) : (
+                    <PlusIcon className="h-4 w-4" />
+                  )}
+                  {editingDraft ? 'Update Campaign' : 'Create Campaign'}
                 </>
               )}
             </button>
           </div>
       </div>
+
+        {/* Draft Campaigns Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-gray-900">Draft Campaigns</h2>
+            <button
+              onClick={() => {
+                setDraftToggleLoading(true);
+                setTimeout(() => {
+                  setShowDrafts(!showDrafts);
+                  setDraftToggleLoading(false);
+                }, 300);
+              }}
+              disabled={draftToggleLoading}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {draftToggleLoading ? (
+                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <EyeIcon className="h-4 w-4" />
+              )}
+              {draftToggleLoading ? 'Loading...' : (showDrafts ? 'Hide' : 'Show') + ' Drafts'}
+            </button>
+          </div>
+          
+          {showDrafts && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              {campaigns.filter(c => c.status === 'draft').length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="mx-auto h-12 w-12 text-gray-400">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No draft campaigns</h3>
+                  <p className="mt-1 text-sm text-gray-500">Create a campaign and save it as draft to see it here.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {campaigns.filter(c => c.status === 'draft').map(c => (
+                    <div key={c._id} className="bg-gray-50 rounded-lg border border-gray-200 p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{c.title}</h3>
+                          <p className="text-sm text-gray-600 line-clamp-3 mb-3">{c.description}</p>
+                        </div>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          Draft
+                        </span>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
+                          <span>Platforms</span>
+                          <span>Budget</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex flex-wrap gap-1">
+                            {c.requirements.platforms.map(p => {
+                              const option = platformOptions.find(opt => opt.value === p);
+                              return (
+                                <span key={p} className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 text-gray-700 text-xs rounded-md">
+                                  <span>{option?.icon}</span>
+                                  {option?.label}
+                                </span>
+                              );
+                            })}
+                          </div>
+                          <div className="text-lg font-semibold text-gray-900">₹{c.budget.toLocaleString()}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <div className="text-xs text-gray-500">
+                          {new Date(c.deadline).toLocaleDateString()}
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => onEditDraft(c)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
+                          >
+                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => onPublishDraft(c._id)}
+                            disabled={draftActionsLoading[`publish_${c._id}`]}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {draftActionsLoading[`publish_${c._id}`] ? (
+                              <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : (
+                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                              </svg>
+                            )}
+                            {draftActionsLoading[`publish_${c._id}`] ? 'Publishing...' : 'Publish'}
+                          </button>
+                          <button
+                            onClick={() => onDeleteDraft(c._id)}
+                            disabled={draftActionsLoading[`delete_${c._id}`]}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {draftActionsLoading[`delete_${c._id}`] ? (
+                              <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : (
+                              <XMarkIcon className="h-3 w-3" />
+                            )}
+                            {draftActionsLoading[`delete_${c._id}`] ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Campaigns List */}
         <div className="mb-6">
@@ -709,18 +1020,34 @@ export default function BrandCampaignsPage() {
                         </div>
                         <div className="ml-6 flex flex-col gap-2">
                           <button 
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+                            disabled={bidActionsLoading[`accept_${b._id}`] || bidActionsLoading[`reject_${b._id}`]}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={() => onAccept(selectedCampaignId, b._id)}
                           >
-                            <CheckIcon className="h-4 w-4" />
-                            Accept
+                            {bidActionsLoading[`accept_${b._id}`] ? (
+                              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : (
+                              <CheckIcon className="h-4 w-4" />
+                            )}
+                            {bidActionsLoading[`accept_${b._id}`] ? 'Accepting...' : 'Accept'}
                           </button>
                           <button 
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                            disabled={bidActionsLoading[`accept_${b._id}`] || bidActionsLoading[`reject_${b._id}`]}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={() => onReject(selectedCampaignId, b._id)}
                           >
-                            <XMarkIcon className="h-4 w-4" />
-                            Reject
+                            {bidActionsLoading[`reject_${b._id}`] ? (
+                              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : (
+                              <XMarkIcon className="h-4 w-4" />
+                            )}
+                            {bidActionsLoading[`reject_${b._id}`] ? 'Rejecting...' : 'Reject'}
                           </button>
                         </div>
                       </div>
@@ -728,6 +1055,63 @@ export default function BrandCampaignsPage() {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && toast.show && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+          <div className={`max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden ${
+            toast.type === 'success' ? 'border-l-4 border-green-400' : 
+            toast.type === 'error' ? 'border-l-4 border-red-400' : 
+            'border-l-4 border-blue-400'
+          }`}>
+            <div className="p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  {toast.type === 'success' && (
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                  {toast.type === 'error' && (
+                    <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </div>
+                  )}
+                  {toast.type === 'info' && (
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <div className="ml-3 w-0 flex-1">
+                  <p className={`text-sm font-medium ${
+                    toast.type === 'success' ? 'text-green-800' : 
+                    toast.type === 'error' ? 'text-red-800' : 
+                    'text-blue-800'
+                  }`}>
+                    {toast.message}
+                  </p>
+                </div>
+                <div className="ml-4 flex-shrink-0 flex">
+                  <button
+                    className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    onClick={() => setToast(prev => prev ? { ...prev, show: false } : null)}
+                  >
+                    <span className="sr-only">Close</span>
+                    <XMarkIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

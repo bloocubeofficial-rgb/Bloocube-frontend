@@ -16,6 +16,7 @@ interface UseNotificationsReturn {
   loading: boolean;
   error: string | null;
   unreadCount: number;
+  unreadCountError: string | null;
   pagination: {
     page: number;
     limit: number;
@@ -26,6 +27,7 @@ interface UseNotificationsReturn {
   markAllAsRead: () => Promise<void>;
   deleteNotification: (notificationId: string) => Promise<void>;
   refreshNotifications: () => Promise<void>;
+  refreshUnreadCount: () => Promise<void>;
   hasMore: boolean;
   loadMore: () => Promise<void>;
 }
@@ -52,6 +54,11 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
     pages: 0
   });
   const [currentPage, setCurrentPage] = useState(page);
+  
+  // Rate limiting state for unread count
+  const [lastUnreadCountFetch, setLastUnreadCountFetch] = useState<number>(0);
+  const [unreadCountError, setUnreadCountError] = useState<string | null>(null);
+  const [isFetchingUnreadCount, setIsFetchingUnreadCount] = useState(false);
 
   const fetchNotifications = useCallback(async (pageNum: number = currentPage, append: boolean = false) => {
     try {
@@ -90,16 +97,48 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
     }
   }, [currentPage, limit, unreadOnly, type, priority]);
 
-  const fetchUnreadCount = useCallback(async () => {
+  const fetchUnreadCount = useCallback(async (force: boolean = false) => {
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastUnreadCountFetch;
+    const minInterval = 10000; // 10 seconds minimum between requests
+    
+    // Rate limiting: don't fetch if we've fetched recently and it's not forced
+    if (!force && timeSinceLastFetch < minInterval) {
+      console.log('⏳ Rate limiting: Skipping unread count fetch (too soon)');
+      return;
+    }
+    
+    // Don't fetch if already fetching
+    if (isFetchingUnreadCount) {
+      console.log('⏳ Rate limiting: Skipping unread count fetch (already fetching)');
+      return;
+    }
+    
     try {
+      setIsFetchingUnreadCount(true);
+      setUnreadCountError(null);
+      
       const response = await notificationService.getUnreadCount();
       if (response.success) {
         setUnreadCount(response.data.unreadCount);
+        setLastUnreadCountFetch(now);
+        console.log('✅ Unread count updated:', response.data.unreadCount);
       }
     } catch (err) {
-      console.error('Error fetching unread count:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch unread count';
+      console.error('❌ Error fetching unread count:', err);
+      
+      // Handle rate limiting specifically
+      if (errorMessage.includes('429') || errorMessage.includes('Too Many Requests')) {
+        setUnreadCountError('Rate limited - will retry later');
+        console.log('🚫 Rate limited on unread count fetch, backing off');
+      } else {
+        setUnreadCountError(errorMessage);
+      }
+    } finally {
+      setIsFetchingUnreadCount(false);
     }
-  }, []);
+  }, [lastUnreadCountFetch, isFetchingUnreadCount]);
 
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
@@ -160,7 +199,9 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
 
   const refreshNotifications = useCallback(async () => {
     await fetchNotifications(1, false);
-  }, [fetchNotifications]);
+    // Force fetch unread count on manual refresh
+    await fetchUnreadCount(true);
+  }, [fetchNotifications, fetchUnreadCount]);
 
   const loadMore = useCallback(async () => {
     if (currentPage < pagination.pages) {
@@ -178,7 +219,9 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
     if (!autoRefresh) return;
 
     const interval = setInterval(() => {
-      fetchUnreadCount();
+      // Fetch unread count with rate limiting
+      fetchUnreadCount(false);
+      
       // Only refresh notifications if not currently loading
       if (!loading) {
         fetchNotifications(1, false);
@@ -188,6 +231,10 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
     return () => clearInterval(interval);
   }, [autoRefresh, refreshInterval, fetchUnreadCount, fetchNotifications, loading]);
 
+  const refreshUnreadCount = useCallback(async () => {
+    await fetchUnreadCount(true);
+  }, [fetchUnreadCount]);
+
   const hasMore = currentPage < pagination.pages;
 
   return {
@@ -195,11 +242,13 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
     loading,
     error,
     unreadCount,
+    unreadCountError,
     pagination,
     markAsRead,
     markAllAsRead,
     deleteNotification,
     refreshNotifications,
+    refreshUnreadCount,
     hasMore,
     loadMore
   };
