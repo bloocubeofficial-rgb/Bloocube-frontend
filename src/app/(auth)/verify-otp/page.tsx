@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, ArrowLeft, RefreshCw } from "lucide-react";
@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/Components/ui/Alert";
 import Link from "next/link";
 import { apiRequest } from "@/lib/apiClient";
 
-const VerifyOTPPage: React.FC = () => {
+const VerifyOTPForm: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
@@ -248,5 +248,20 @@ const VerifyOTPPage: React.FC = () => {
     </section>
   );
 };
+
+const LoadingFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-[#050510]">
+    <div className="text-white text-center">
+      <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4" />
+      <p>Loading verification page...</p>
+    </div>
+  </div>
+);
+
+const VerifyOTPPage: React.FC = () => (
+  <Suspense fallback={<LoadingFallback />}>
+    <VerifyOTPForm />
+  </Suspense>
+);
 
 export default VerifyOTPPage;

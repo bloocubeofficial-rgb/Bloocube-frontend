@@ -16,8 +16,8 @@ interface PostFormPersistenceOptions {
 
 export function usePostFormPersistence(options: PostFormPersistenceOptions = {}) {
   const { debounceMs = 1000, autoSave = true } = options;
-  const timeoutRef = useRef<NodeJS.Timeout>();
-  const isInitialized = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const isInitialized = useRef<boolean>(false);
 
   // Form state
   const [selectedPlatform, setSelectedPlatform] = useState<string>('');

@@ -13,8 +13,8 @@ export function useFormState<T extends Record<string, any>>(
   options: FormStateOptions
 ) {
   const { key, debounceMs = 1000, excludeFields = [], autoSave = true } = options;
-  const timeoutRef = useRef<NodeJS.Timeout>();
-  const isInitialized = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const isInitialized = useRef<boolean>(false);
   const lastSavedData = useRef<string>('');
 
   // Save form data to localStorage with debouncing

@@ -27,7 +27,7 @@ export function PostFormWithPersistence() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   const handleInputChange = (field: string, value: any) => {
-    setPostData(prev => ({
+    setPostData((prev: any) => ({
       ...prev,
       [field]: value
     }));
@@ -35,7 +35,7 @@ export function PostFormWithPersistence() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setMediaFiles(prev => [...prev, ...files]);
+    setMediaFiles((prev: File[]) => [...prev, ...files]);
   };
 
   const handleClearForm = () => {

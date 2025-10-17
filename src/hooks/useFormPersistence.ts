@@ -11,8 +11,8 @@ export function useFormPersistence<T extends Record<string, any>>(
   options: FormPersistenceOptions
 ) {
   const { key, debounceMs = 500, excludeFields = [] } = options;
-  const timeoutRef = useRef<NodeJS.Timeout>();
-  const isInitialized = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const isInitialized = useRef<boolean>(false);
 
   // Save form data to localStorage with debouncing
   const saveFormData = useCallback((data: T) => {
@@ -25,10 +25,10 @@ export function useFormPersistence<T extends Record<string, any>>(
         // Filter out excluded fields
         const filteredData = Object.keys(data).reduce((acc, field) => {
           if (!excludeFields.includes(field)) {
-            acc[field] = data[field];
+            (acc as any)[field] = (data as any)[field];
           }
           return acc;
-        }, {} as T);
+        }, {} as Partial<T>);
 
         localStorage.setItem(`form_${key}`, JSON.stringify(filteredData));
         console.log('💾 Form data saved:', { key, data: filteredData });

@@ -10,7 +10,7 @@ export function useTextPersistence(options: TextPersistenceOptions) {
   const { key, debounceMs = 500, defaultValue = '' } = options;
   const [value, setValue] = useState<string>(defaultValue);
   const [isLoading, setIsLoading] = useState(true);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Load text from localStorage on mount
   useEffect(() => {
