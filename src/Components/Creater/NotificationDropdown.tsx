@@ -1,24 +1,26 @@
 // src/Components/Creater/NotificationDropdown.tsx
-'use client';
+"use client";
 
-import React from 'react';
-import { 
-  Bell, 
-  Check, 
-  Trash2, 
-  AlertCircle, 
-  Info, 
-  CheckCircle, 
+import React from "react";
+import {
+  Bell,
+  Check,
+  Trash2,
+  AlertCircle,
+  Info,
+  CheckCircle,
   AlertTriangle,
-  X
-} from 'lucide-react';
-import { useNotifications } from '@/hooks/useNotifications';
+  X,
+} from "lucide-react";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface NotificationDropdownProps {
   className?: string;
 }
 
-const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className = '' }) => {
+const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
+  className = "",
+}) => {
   const {
     notifications,
     unreadCount,
@@ -32,22 +34,22 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
     closeDropdown,
     getPriorityIcon,
     getPriorityColor,
-    dropdownRef
+    dropdownRef,
   } = useNotifications();
 
   const getTypeIconComponent = (type: string) => {
     switch (type) {
-      case 'system':
+      case "system":
         return <AlertCircle className="w-4 h-4 text-blue-600" />;
-      case 'campaign_update':
+      case "campaign_update":
         return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'bid_status':
+      case "bid_status":
         return <Info className="w-4 h-4 text-purple-600" />;
-      case 'post_status':
+      case "post_status":
         return <CheckCircle className="w-4 h-4 text-indigo-600" />;
-      case 'alert':
+      case "alert":
         return <AlertTriangle className="w-4 h-4 text-red-600" />;
-      case 'warning':
+      case "warning":
         return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
       default:
         return <Info className="w-4 h-4 text-gray-600" />;
@@ -59,23 +61,25 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
       {/* Notification Bell Button */}
       <button
         onClick={toggleDropdown}
-        className="relative p-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 hover:scale-105"
+        className="relative p-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 "
       >
         <Bell className="w-4 h-4" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full text-xs text-white flex items-center justify-center font-medium">
-            {unreadCount > 99 ? '99+' : unreadCount}
+          <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full text-[9px] text-white flex items-center justify-center font-semibold leading-none">
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
 
       {/* Dropdown Menu */}
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-[10000] max-h-96 overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+              <h3 className="text-sm font-semibold text-gray-900">
+                Notifications
+              </h3>
               <div className="flex items-center space-x-2">
                 {unreadCount > 0 && (
                   <button
@@ -100,7 +104,9 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
             {loading && (
               <div className="p-4 text-center">
                 <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent mx-auto"></div>
-                <p className="text-sm text-gray-500 mt-2">Loading notifications...</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Loading notifications...
+                </p>
               </div>
             )}
 
@@ -126,7 +132,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
                   <div
                     key={notification._id}
                     className={`p-4 hover:bg-gray-50 transition-colors duration-200 ${
-                      !notification.isRead ? 'bg-blue-50/50' : ''
+                      !notification.isRead ? "bg-blue-50/50" : ""
                     }`}
                   >
                     <div className="flex items-start space-x-3">
@@ -146,9 +152,13 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
                               {notification.message}
                             </p>
                           </div>
-                          
+
                           {/* Priority Badge */}
-                          <div className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(notification.priority)}`}>
+                          <div
+                            className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(
+                              notification.priority
+                            )}`}
+                          >
                             {getPriorityIcon(notification.priority)}
                           </div>
                         </div>
@@ -158,7 +168,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
                           <span className="text-xs text-gray-500">
                             {notification.timeAgo}
                           </span>
-                          
+
                           <div className="flex items-center space-x-1">
                             {!notification.isRead && (
                               <button
@@ -169,9 +179,11 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
                                 <Check className="w-3 h-3" />
                               </button>
                             )}
-                            
+
                             <button
-                              onClick={() => deleteNotification(notification._id)}
+                              onClick={() =>
+                                deleteNotification(notification._id)
+                              }
                               className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors duration-200"
                               title="Delete notification"
                             >
@@ -181,30 +193,31 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
                         </div>
 
                         {/* Action Buttons */}
-                        {notification.actions && notification.actions.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {notification.actions.map((action, index) => (
-                              <a
-                                key={index}
-                                href={action.url}
-                                className={`text-xs px-2 py-1 rounded-md font-medium transition-colors duration-200 ${
-                                  action.style === 'primary' 
-                                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                                    : action.style === 'success'
-                                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                    : action.style === 'warning'
-                                    ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                                    : action.style === 'danger'
-                                    ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
-                                onClick={closeDropdown}
-                              >
-                                {action.label}
-                              </a>
-                            ))}
-                          </div>
-                        )}
+                        {notification.actions &&
+                          notification.actions.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {notification.actions.map((action, index) => (
+                                <a
+                                  key={index}
+                                  href={action.url}
+                                  className={`text-xs px-2 py-1 rounded-md font-medium transition-colors duration-200 ${
+                                    action.style === "primary"
+                                      ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                      : action.style === "success"
+                                      ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                      : action.style === "warning"
+                                      ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                                      : action.style === "danger"
+                                      ? "bg-red-100 text-red-700 hover:bg-red-200"
+                                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                  }`}
+                                  onClick={closeDropdown}
+                                >
+                                  {action.label}
+                                </a>
+                              ))}
+                            </div>
+                          )}
                       </div>
                     </div>
                   </div>

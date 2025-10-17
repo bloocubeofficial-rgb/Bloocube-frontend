@@ -1,18 +1,18 @@
-'use client';
-import React, { useEffect, useMemo, useState } from 'react';
-import { 
-  BarChart, 
-  Bar, 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+"use client";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   Legend,
   Brush,
-  ResponsiveContainer 
-} from 'recharts';
+  ResponsiveContainer,
+} from "recharts";
 import {
   Plus,
   Eye,
@@ -26,20 +26,20 @@ import {
   RefreshCw,
   ThumbsUp,
   MessageSquare,
-  Share2
-} from 'lucide-react';
-import CreatorLayout from '@/Components/Creater/CreatorLayout';
-import { apiRequest } from '@/lib/apiClient';
-import { authUtils } from '@/lib/auth';
+  Share2,
+} from "lucide-react";
+import CreatorLayout from "@/Components/Creater/CreatorLayout";
+import { apiRequest } from "@/lib/apiClient";
+import { authUtils } from "@/lib/auth";
 
 type AnalyticsItem = {
   post_id?: string;
   platform?: string;
   timing?: { posted_at?: string };
-  metrics?: { 
-    likes?: number; 
-    comments?: number; 
-    shares?: number; 
+  metrics?: {
+    likes?: number;
+    comments?: number;
+    shares?: number;
     views?: number;
     reach?: number;
     impressions?: number;
@@ -59,25 +59,43 @@ const Dashboard = () => {
 
   // Formatting helpers
   const formatNumber = (n: number) => n.toLocaleString();
-  const formatCompact = (n: number) => new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+  const formatCompact = (n: number) =>
+    new Intl.NumberFormat("en-IN", {
+      notation: "compact",
+      maximumFractionDigits: 1,
+    }).format(n);
 
   const fetchAnalytics = async (options?: { sync?: boolean }) => {
     try {
       setError(null);
-      const user = authUtils.getUser() as { id?: string; _id?: string; userId?: string } | null;
-      const userId = user?.id || user?._id || user?.userId || (authUtils as unknown as { getUserId?: () => string }).getUserId?.();
-      if (!userId) throw new Error('Not authenticated');
+      const user = authUtils.getUser() as {
+        id?: string;
+        _id?: string;
+        userId?: string;
+      } | null;
+      const userId =
+        user?.id ||
+        user?._id ||
+        user?.userId ||
+        (authUtils as unknown as { getUserId?: () => string }).getUserId?.();
+      if (!userId) throw new Error("Not authenticated");
       // Optionally sync from linked social accounts before fetching
       if (options?.sync) {
         try {
-          await apiRequest<{ success: boolean; data?: { synced: boolean } }>(`/api/analytics/user/${userId}/sync`, { method: 'POST' });
+          await apiRequest<{ success: boolean; data?: { synced: boolean } }>(
+            `/api/analytics/user/${userId}/sync`,
+            { method: "POST" }
+          );
         } catch {}
       }
-      const res = await apiRequest<{ success: boolean; data: { analytics: AnalyticsItem[] } }>(`/api/analytics/user/${userId}`);
+      const res = await apiRequest<{
+        success: boolean;
+        data: { analytics: AnalyticsItem[] };
+      }>(`/api/analytics/user/${userId}`);
       setAnalytics(res?.data?.analytics || []);
       setLastUpdated(Date.now());
     } catch (e) {
-      setError((e as Error).message || 'Failed to load analytics');
+      setError((e as Error).message || "Failed to load analytics");
       setAnalytics([]);
     } finally {
       setLoading(false);
@@ -87,13 +105,19 @@ const Dashboard = () => {
   const fetchPostCounts = async () => {
     try {
       // Get total posts count with minimal payload
-      const totalRes = await apiRequest<{ success: boolean; pagination?: { total?: number } }>(`/api/posts?limit=1`);
-      const scheduledRes = await apiRequest<{ success: boolean; pagination?: { total?: number } }>(`/api/posts?status=scheduled&limit=1`);
+      const totalRes = await apiRequest<{
+        success: boolean;
+        pagination?: { total?: number };
+      }>(`/api/posts?limit=1`);
+      const scheduledRes = await apiRequest<{
+        success: boolean;
+        pagination?: { total?: number };
+      }>(`/api/posts?status=scheduled&limit=1`);
       setTotalPostsCount(totalRes?.pagination?.total || 0);
       setScheduledCount(scheduledRes?.pagination?.total || 0);
     } catch (e) {
       // Non-fatal for dashboard; keep previous values
-      console.warn('Failed to load post counts', e);
+      console.warn("Failed to load post counts", e);
     }
   };
 
@@ -110,9 +134,14 @@ const Dashboard = () => {
   }, []);
 
   const engagementData = useMemo(() => {
-    const byMonth: Record<string, { likes: number; comments: number; shares: number }> = {};
+    const byMonth: Record<
+      string,
+      { likes: number; comments: number; shares: number }
+    > = {};
     analytics.forEach((a) => {
-      const d = a?.timing?.posted_at ? new Date(a.timing.posted_at) : new Date();
+      const d = a?.timing?.posted_at
+        ? new Date(a.timing.posted_at)
+        : new Date();
       const key = `${d.getMonth() + 1}/${String(d.getFullYear()).slice(-2)}`;
       if (!byMonth[key]) byMonth[key] = { likes: 0, comments: 0, shares: 0 };
       byMonth[key].likes += a?.metrics?.likes || 0;
@@ -125,7 +154,9 @@ const Dashboard = () => {
   const viewsByMonth = useMemo(() => {
     const byMonth: Record<string, { views: number }> = {};
     analytics.forEach((a) => {
-      const d = a?.timing?.posted_at ? new Date(a.timing.posted_at) : new Date();
+      const d = a?.timing?.posted_at
+        ? new Date(a.timing.posted_at)
+        : new Date();
       const key = `${d.getMonth() + 1}/${String(d.getFullYear()).slice(-2)}`;
       if (!byMonth[key]) byMonth[key] = { views: 0 };
       byMonth[key].views += a?.metrics?.views || 0;
@@ -135,71 +166,100 @@ const Dashboard = () => {
 
   const platformData = useMemo(() => {
     const colors: Record<string, string> = {
-      instagram: '#E1306C',
-      facebook: '#1877F2',
-      twitter: '#1DA1F2',
-      linkedin: '#0077B5',
-      youtube: '#FF0000',
+      instagram: "#E1306C",
+      facebook: "#1877F2",
+      twitter: "#1DA1F2",
+      linkedin: "#0077B5",
+      youtube: "#FF0000",
     };
     const counts: Record<string, number> = {};
     analytics.forEach((a) => {
-      const p = String(a.platform || '').toLowerCase();
+      const p = String(a.platform || "").toLowerCase();
       counts[p] = (counts[p] || 0) + 1;
     });
-    return Object.entries(counts).map(([name, posts]) => ({ name, posts, color: colors[name] || '#999999' }));
+    return Object.entries(counts).map(([name, posts]) => ({
+      name,
+      posts,
+      color: colors[name] || "#999999",
+    }));
   }, [analytics]);
 
   const topPosts = useMemo(() => {
     return [...analytics]
       .map((a) => ({
-        id: a.post_id || '',
-        thumbnail: a.content?.media_type === 'video' ? '🎥' : '📸',
-        content: a.content?.caption || a.post_id || '',
-        platform: (a.platform || '').toString(),
-        engagement: String((a.metrics?.likes || 0) + (a.metrics?.comments || 0) + (a.metrics?.shares || 0)),
+        id: a.post_id || "",
+        thumbnail: a.content?.media_type === "video" ? "🎥" : "📸",
+        content: a.content?.caption || a.post_id || "",
+        platform: (a.platform || "").toString(),
+        engagement: String(
+          (a.metrics?.likes || 0) +
+            (a.metrics?.comments || 0) +
+            (a.metrics?.shares || 0)
+        ),
         platformColor:
-          a.platform === 'instagram' ? '#E1306C' :
-          a.platform === 'facebook' ? '#1877F2' :
-          a.platform === 'twitter' ? '#1DA1F2' :
-          a.platform === 'linkedin' ? '#0077B5' :
-          a.platform === 'youtube' ? '#FF0000' : '#999999'
+          a.platform === "instagram"
+            ? "#E1306C"
+            : a.platform === "facebook"
+            ? "#1877F2"
+            : a.platform === "twitter"
+            ? "#1DA1F2"
+            : a.platform === "linkedin"
+            ? "#0077B5"
+            : a.platform === "youtube"
+            ? "#FF0000"
+            : "#999999",
       }))
       .sort((p1, p2) => parseInt(p2.engagement) - parseInt(p1.engagement))
       .slice(0, 5);
   }, [analytics]);
 
   const totals = useMemo(() => {
-    const sum = (key: 'likes' | 'comments' | 'shares' | 'views') => analytics.reduce((s, a) => s + (a.metrics?.[key] || 0), 0);
+    const sum = (key: "likes" | "comments" | "shares" | "views") =>
+      analytics.reduce((s, a) => s + (a.metrics?.[key] || 0), 0);
     const sumReach = analytics.reduce((s, a) => s + (a.metrics?.reach || 0), 0);
-    const sumImpressions = analytics.reduce((s, a) => s + (a.metrics?.impressions || 0), 0);
-    const sumFollowers = analytics.reduce((s, a) => s + (a.metrics?.followers || 0), 0);
-    const engagementNumerator = sum('likes') + sum('comments') + sum('shares');
-    const engagementDenominator = Math.max(sum('views') || sumReach || sumImpressions || sumFollowers || 0, 1);
+    const sumImpressions = analytics.reduce(
+      (s, a) => s + (a.metrics?.impressions || 0),
+      0
+    );
+    const sumFollowers = analytics.reduce(
+      (s, a) => s + (a.metrics?.followers || 0),
+      0
+    );
+    const engagementNumerator = sum("likes") + sum("comments") + sum("shares");
+    const engagementDenominator = Math.max(
+      sum("views") || sumReach || sumImpressions || sumFollowers || 0,
+      1
+    );
     return {
       totalPosts: totalPostsCount,
       scheduledPosts: scheduledCount,
-      engagementRate: analytics.length ? ((engagementNumerator / engagementDenominator) * 100).toFixed(1) : '0.0',
-      avgEngagementScore: analytics.length ? Math.round((sum('likes') + sum('comments') * 2 + sum('shares') * 3) / analytics.length) : 0,
+      engagementRate: analytics.length
+        ? ((engagementNumerator / engagementDenominator) * 100).toFixed(1)
+        : "0.0",
+      avgEngagementScore: analytics.length
+        ? Math.round(
+            (sum("likes") + sum("comments") * 2 + sum("shares") * 3) /
+              analytics.length
+          )
+        : 0,
       lastUpdated,
       sums: {
-        views: sum('views'),
-        likes: sum('likes'),
-        comments: sum('comments'),
-        shares: sum('shares')
-      }
+        views: sum("views"),
+        likes: sum("likes"),
+        comments: sum("comments"),
+        shares: sum("shares"),
+      },
     };
   }, [analytics, lastUpdated, totalPostsCount, scheduledCount]);
 
-
-
   const headerActions = (
     <>
-      <button 
+      <button
         onClick={() => fetchAnalytics({ sync: true })}
         disabled={loading}
         className="flex items-center space-x-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
       >
-        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+        <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
         <span className="text-sm">Refresh</span>
       </button>
       <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1.5 rounded-lg flex items-center space-x-2 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow hover:shadow-md text-sm">
@@ -213,8 +273,8 @@ const Dashboard = () => {
   );
 
   return (
-    <CreatorLayout 
-      title="Creator Dashboard" 
+    <CreatorLayout
+      title="Creator Dashboard"
       subtitle="Welcome back! Here's your content overview"
       headerActions={headerActions}
     >
@@ -223,11 +283,13 @@ const Dashboard = () => {
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-gray-200/50 shadow-sm">
           <div className="flex items-center space-x-3">
             <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
-            <span className="text-gray-600 font-medium">Loading your analytics...</span>
+            <span className="text-gray-600 font-medium">
+              Loading your analytics...
+            </span>
           </div>
         </div>
       )}
-      
+
       {!!error && (
         <div className="bg-red-50/80 backdrop-blur-sm text-red-700 rounded-2xl p-6 mb-6 border border-red-200/50 shadow-sm">
           <div className="flex items-center space-x-3">
@@ -238,18 +300,19 @@ const Dashboard = () => {
           </div>
         </div>
       )}
-      
+
       {!loading && !error && (
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-2 text-sm text-gray-500">
             <Calendar className="w-4 h-4" />
-            <span>Last updated: {new Date(totals.lastUpdated).toLocaleTimeString()}</span>
+            <span>
+              Last updated: {new Date(totals.lastUpdated).toLocaleTimeString()}
+            </span>
           </div>
         </div>
       )}
 
-      {/* Enhanced Stats Cards */
-      }
+      {/* Enhanced Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between mb-4">
@@ -261,218 +324,302 @@ const Dashboard = () => {
               <span>+12%</span>
             </div>
           </div>
-          <h3 className="text-sm font-medium text-gray-500 mb-2">Total Posts</h3>
-          <p className="text-3xl font-bold text-gray-900 mb-1">{totals.totalPosts}</p>
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            Total Posts
+          </h3>
+          <p className="text-3xl font-bold text-gray-900 mb-1">
+            {totals.totalPosts}
+          </p>
           <p className="text-xs text-gray-500">From last month</p>
         </div>
 
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-md transition-all duration-200">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex items-center text-blue-600 text-sm font-medium">
-                  <ArrowUpRight className="w-4 h-4 mr-1" />
-                  <span>+5%</span>
-                </div>
-              </div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Scheduled Posts</h3>
-              <p className="text-3xl font-bold text-gray-900 mb-1">{totals.scheduledPosts}</p>
-              <p className="text-xs text-gray-500">From last month</p>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-white" />
             </div>
-
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-md transition-all duration-200">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex items-center text-green-600 text-sm font-medium">
-                  <ArrowUpRight className="w-4 h-4 mr-1" />
-                  <span>+2.1%</span>
-                </div>
-              </div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Engagement Rate</h3>
-              <p className="text-3xl font-bold text-gray-900 mb-1">{totals.engagementRate}%</p>
-              <p className="text-xs text-gray-500">From last month</p>
-            </div>
-
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-md transition-all duration-200">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
-                  <Zap className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex items-center text-red-600 text-sm font-medium">
-                  <ArrowDownRight className="w-4 h-4 mr-1" />
-                  <span>-3%</span>
-                </div>
-              </div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Avg. Engagement Score</h3>
-              <p className="text-3xl font-bold text-gray-900 mb-1">{totals.avgEngagementScore}</p>
-              <p className="text-xs text-gray-500">From last month</p>
+            <div className="flex items-center text-blue-600 text-sm font-medium">
+              <ArrowUpRight className="w-4 h-4 mr-1" />
+              <span>+5%</span>
             </div>
           </div>
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            Scheduled Posts
+          </h3>
+          <p className="text-3xl font-bold text-gray-900 mb-1">
+            {totals.scheduledPosts}
+          </p>
+          <p className="text-xs text-gray-500">From last month</p>
+        </div>
 
-          {/* KPI Cards: Views, Likes, Comments, Shares */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-sm font-medium text-gray-500">Total Views</div>
-                <Eye className="w-4 h-4 text-blue-600" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{formatCompact(totals.sums?.views || 0)}</div>
-              <div className="text-xs text-gray-500 mt-1">{formatNumber(totals.sums?.views || 0)} total</div>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-white" />
             </div>
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-sm font-medium text-gray-500">Total Likes</div>
-                <ThumbsUp className="w-4 h-4 text-green-600" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{formatCompact(totals.sums?.likes || 0)}</div>
-              <div className="text-xs text-gray-500 mt-1">{formatNumber(totals.sums?.likes || 0)} total</div>
-            </div>
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-sm font-medium text-gray-500">Total Comments</div>
-                <MessageSquare className="w-4 h-4 text-purple-600" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{formatCompact(totals.sums?.comments || 0)}</div>
-              <div className="text-xs text-gray-500 mt-1">{formatNumber(totals.sums?.comments || 0)} total</div>
-            </div>
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-sm font-medium text-gray-500">Total Shares</div>
-                <Share2 className="w-4 h-4 text-orange-600" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{formatCompact(totals.sums?.shares || 0)}</div>
-              <div className="text-xs text-gray-500 mt-1">{formatNumber(totals.sums?.shares || 0)} total</div>
+            <div className="flex items-center text-green-600 text-sm font-medium">
+              <ArrowUpRight className="w-4 h-4 mr-1" />
+              <span>+2.1%</span>
             </div>
           </div>
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            Engagement Rate
+          </h3>
+          <p className="text-3xl font-bold text-gray-900 mb-1">
+            {totals.engagementRate}%
+          </p>
+          <p className="text-xs text-gray-500">From last month</p>
+        </div>
 
-          {/* Enhanced Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Engagement Trends */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">Engagement Trends</h3>
-                  <p className="text-sm text-gray-500">Performance over time</p>
-                </div>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+              <Zap className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex items-center text-red-600 text-sm font-medium">
+              <ArrowDownRight className="w-4 h-4 mr-1" />
+              <span>-3%</span>
+            </div>
+          </div>
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            Avg. Engagement Score
+          </h3>
+          <p className="text-3xl font-bold text-gray-900 mb-1">
+            {totals.avgEngagementScore}
+          </p>
+          <p className="text-xs text-gray-500">From last month</p>
+        </div>
+      </div>
+
+      {/* KPI Cards: Views, Likes, Comments, Shares */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-medium text-gray-500">Total Views</div>
+            <Eye className="w-4 h-4 text-blue-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900">
+            {formatCompact(totals.sums?.views || 0)}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            {formatNumber(totals.sums?.views || 0)} total
+          </div>
+        </div>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-medium text-gray-500">Total Likes</div>
+            <ThumbsUp className="w-4 h-4 text-green-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900">
+            {formatCompact(totals.sums?.likes || 0)}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            {formatNumber(totals.sums?.likes || 0)} total
+          </div>
+        </div>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-medium text-gray-500">
+              Total Comments
+            </div>
+            <MessageSquare className="w-4 h-4 text-purple-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900">
+            {formatCompact(totals.sums?.comments || 0)}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            {formatNumber(totals.sums?.comments || 0)} total
+          </div>
+        </div>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-medium text-gray-500">
+              Total Shares
+            </div>
+            <Share2 className="w-4 h-4 text-orange-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900">
+            {formatCompact(totals.sums?.shares || 0)}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            {formatNumber(totals.sums?.shares || 0)} total
+          </div>
+        </div>
+      </div>
+
+      {/* Enhanced Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Engagement Trends */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">
+                Engagement Trends
+              </h3>
+              <p className="text-sm text-gray-500">Performance over time</p>
+            </div>
             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
-              </div>
-              <ResponsiveContainer width="100%" height={320}>
-                <LineChart data={engagementData.length ? engagementData : [{ month: '', likes: 0, comments: 0, shares: 0 }] } margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="month" 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#666' }}
-                  />
-                  <YAxis 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#666' }}
-                    tickFormatter={(v) => new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 }).format(Number(v))}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '12px',
-                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-                    }}
-                    formatter={(value) => [new Intl.NumberFormat('en-IN').format(Number(value)), '']}
-                  />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="likes" 
-                    stroke="#3B82F6" 
-                    strokeWidth={3}
-                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 3 }}
-                    activeDot={{ r: 5 }}
-                    name="Likes"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="comments" 
-                    stroke="#10B981" 
-                    strokeWidth={2}
-                    dot={{ fill: '#10B981', strokeWidth: 2, r: 2.5 }}
-                    activeDot={{ r: 5 }}
-                    name="Comments"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="shares" 
-                    stroke="#EF4444" 
-                    strokeWidth={2}
-                    dot={{ fill: '#EF4444', strokeWidth: 2, r: 2.5 }}
-                    activeDot={{ r: 5 }}
-                    name="Shares"
-                  />
-                  <Brush dataKey="month" height={18} stroke="#cbd5e1" travellerWidth={8} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Views by Month */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">Views by Month</h3>
-                  <p className="text-sm text-gray-500">Total views across content</p>
-                </div>
-                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
-              </div>
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={viewsByMonth.length ? viewsByMonth : [{ month: '', views: 0 }] } margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="month" 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#666' }}
-                  />
-                  <YAxis 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#666' }}
-                    tickFormatter={(v) => new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 }).format(Number(v))}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '12px',
-                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-                    }}
-                    formatter={(value) => [new Intl.NumberFormat('en-IN').format(Number(value)), 'Views']}
-                  />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar 
-                    dataKey="views" 
-                    name="Views"
-                    fill="#60A5FA"
-                    radius={[8, 8, 0, 0]}
-                    isAnimationActive
-                  />
-                  <Brush dataKey="month" height={18} stroke="#cbd5e1" travellerWidth={8} />
-                </BarChart>
-              </ResponsiveContainer>
+              <TrendingUp className="w-5 h-5 text-white" />
             </div>
           </div>
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart
+              data={
+                engagementData.length
+                  ? engagementData
+                  : [{ month: "", likes: 0, comments: 0, shares: 0 }]
+              }
+              margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis
+                dataKey="month"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "#666" }}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "#666" }}
+                tickFormatter={(v) =>
+                  new Intl.NumberFormat("en-IN", {
+                    notation: "compact",
+                    maximumFractionDigits: 1,
+                  }).format(Number(v))
+                }
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "white",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "12px",
+                  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                }}
+                formatter={(value) => [
+                  new Intl.NumberFormat("en-IN").format(Number(value)),
+                  "",
+                ]}
+              />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Line
+                type="monotone"
+                dataKey="likes"
+                stroke="#3B82F6"
+                strokeWidth={3}
+                dot={{ fill: "#3B82F6", strokeWidth: 2, r: 3 }}
+                activeDot={{ r: 5 }}
+                name="Likes"
+              />
+              <Line
+                type="monotone"
+                dataKey="comments"
+                stroke="#10B981"
+                strokeWidth={2}
+                dot={{ fill: "#10B981", strokeWidth: 2, r: 2.5 }}
+                activeDot={{ r: 5 }}
+                name="Comments"
+              />
+              <Line
+                type="monotone"
+                dataKey="shares"
+                stroke="#EF4444"
+                strokeWidth={2}
+                dot={{ fill: "#EF4444", strokeWidth: 2, r: 2.5 }}
+                activeDot={{ r: 5 }}
+                name="Shares"
+              />
+              <Brush
+                dataKey="month"
+                height={18}
+                stroke="#cbd5e1"
+                travellerWidth={8}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Views by Month */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">
+                Views by Month
+              </h3>
+              <p className="text-sm text-gray-500">
+                Total views across content
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart
+              data={
+                viewsByMonth.length ? viewsByMonth : [{ month: "", views: 0 }]
+              }
+              margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis
+                dataKey="month"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "#666" }}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "#666" }}
+                tickFormatter={(v) =>
+                  new Intl.NumberFormat("en-IN", {
+                    notation: "compact",
+                    maximumFractionDigits: 1,
+                  }).format(Number(v))
+                }
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "white",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "12px",
+                  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                }}
+                formatter={(value) => [
+                  new Intl.NumberFormat("en-IN").format(Number(value)),
+                  "Views",
+                ]}
+              />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar
+                dataKey="views"
+                name="Views"
+                fill="#60A5FA"
+                radius={[8, 8, 0, 0]}
+                isAnimationActive
+              />
+              <Brush
+                dataKey="month"
+                height={18}
+                stroke="#cbd5e1"
+                travellerWidth={8}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
 
       {/* Enhanced Top Performing Posts */}
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Top Performing Posts</h3>
-            <p className="text-sm text-gray-500">Your best content this month</p>
+            <h3 className="text-lg font-bold text-gray-900">
+              Top Performing Posts
+            </h3>
+            <p className="text-sm text-gray-500">
+              Your best content this month
+            </p>
           </div>
           <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
             <Zap className="w-5 h-5 text-white" />
@@ -482,27 +629,40 @@ const Dashboard = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left py-4 px-4 font-semibold text-gray-700">Content</th>
-                <th className="text-left py-4 px-4 font-semibold text-gray-700">Platform</th>
-                <th className="text-left py-4 px-4 font-semibold text-gray-700">Engagement</th>
-                <th className="text-left py-4 px-4 font-semibold text-gray-700">Actions</th>
+                <th className="text-left py-4 px-4 font-semibold text-gray-700">
+                  Content
+                </th>
+                <th className="text-left py-4 px-4 font-semibold text-gray-700">
+                  Platform
+                </th>
+                <th className="text-left py-4 px-4 font-semibold text-gray-700">
+                  Engagement
+                </th>
+                <th className="text-left py-4 px-4 font-semibold text-gray-700">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
               {topPosts.map((post) => (
-                <tr key={post.id} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+                <tr
+                  key={post.id}
+                  className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors"
+                >
                   <td className="py-4 px-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl flex items-center justify-center text-2xl">
                         {post.thumbnail}
                       </div>
                       <div className="max-w-md">
-                        <p className="text-sm font-medium text-gray-900 line-clamp-2">{post.content}</p>
+                        <p className="text-sm font-medium text-gray-900 line-clamp-2">
+                          {post.content}
+                        </p>
                       </div>
                     </div>
                   </td>
                   <td className="py-4 px-4">
-                    <span 
+                    <span
                       className="px-3 py-1.5 rounded-full text-xs font-semibold text-white shadow-sm"
                       style={{ backgroundColor: post.platformColor }}
                     >
@@ -511,7 +671,9 @@ const Dashboard = () => {
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex items-center space-x-2">
-                      <span className="font-bold text-gray-900">{post.engagement}</span>
+                      <span className="font-bold text-gray-900">
+                        {post.engagement}
+                      </span>
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     </div>
                   </td>
@@ -526,7 +688,7 @@ const Dashboard = () => {
             </tbody>
           </table>
         </div>
-        </div>
+      </div>
     </CreatorLayout>
   );
 };
