@@ -4,6 +4,7 @@ import { useCampaigns } from '@/hooks/useCampaigns';
 import { campaignService } from '@/lib/campaignService';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useCompetitors } from '@/hooks/useCompetitors';
 import { 
   PlusIcon, 
   EyeIcon, 
@@ -16,8 +17,13 @@ import {
   ArrowPathIcon,
   XMarkIcon,
   ExclamationTriangleIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  UserGroupIcon,
+  HeartIcon,
+  ChatBubbleLeftIcon,
+  ShareIcon
 } from '@heroicons/react/24/outline';
+import { TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 
 export default function BrandDashboard() {
@@ -45,6 +51,18 @@ export default function BrandDashboard() {
     limit: 5,
     autoRefresh: true,
     refreshInterval: 30000
+  });
+
+  // Competitors
+  const {
+    competitors,
+    loading: competitorsLoading,
+    error: competitorsError,
+    refreshCompetitors
+  } = useCompetitors({
+    limit: 5,
+    autoRefresh: true,
+    refreshInterval: 300000 // 5 minutes
   });
 
   const brandId = user?.id;
@@ -231,6 +249,40 @@ export default function BrandDashboard() {
     } catch (error) {
       console.error('Error refreshing notifications:', error);
     }
+  };
+
+  const handleRefreshCompetitors = async () => {
+    try {
+      await refreshCompetitors();
+    } catch (error) {
+      console.error('Error refreshing competitors:', error);
+    }
+  };
+
+  const getPlatformIcon = (platform: string) => {
+    switch (platform.toLowerCase()) {
+      case 'instagram':
+        return '📷';
+      case 'youtube':
+        return '🎥';
+      case 'twitter':
+        return '🐦';
+      case 'linkedin':
+        return '💼';
+      case 'facebook':
+        return '👥';
+      default:
+        return '📱';
+    }
+  };
+
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
   };
 
   return (
@@ -442,6 +494,158 @@ export default function BrandDashboard() {
               </div>
               <h3 className="text-sm font-medium text-gray-900 mb-2">No notifications yet</h3>
               <p className="text-sm text-gray-500">You'll see notifications here when they arrive</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Competitors Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg">
+                <UserGroupIcon className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Competitor Insights</h2>
+                <p className="text-sm text-gray-500">
+                  Track your competitors' performance and engagement
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleRefreshCompetitors}
+                disabled={competitorsLoading}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                title="Refresh competitors data"
+              >
+                <ArrowPathIcon className={`w-4 h-4 ${competitorsLoading ? 'animate-spin' : ''}`} />
+              </button>
+              <Link 
+                href="/creator/competitors"
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              >
+                View all
+              </Link>
+            </div>
+          </div>
+        </div>
+        
+        <div className="p-6">
+          {competitorsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : competitorsError ? (
+            <div className="text-center py-8">
+              <ExclamationTriangleIcon className="w-12 h-12 text-red-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading competitors</h3>
+              <p className="text-gray-500 mb-4">{competitorsError}</p>
+              <button
+                onClick={handleRefreshCompetitors}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : competitors && competitors.length > 0 ? (
+            <div className="space-y-4">
+              {competitors.slice(0, 5).map(competitor => (
+                <div
+                  key={competitor.id}
+                  className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0">
+                        <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                          {competitor.avatar ? (
+                            <img 
+                              src={competitor.avatar} 
+                              alt={competitor.name}
+                              className="w-12 h-12 rounded-full object-cover"
+                            />
+                          ) : (
+                            competitor.name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium text-gray-900 truncate">{competitor.name}</h3>
+                          <span className="text-sm text-gray-500">{competitor.handle}</span>
+                          {competitor.verified && (
+                            <span className="text-blue-500" title="Verified">✓</span>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
+                          <span className="flex items-center gap-1">
+                            <span className="text-lg">{getPlatformIcon(competitor.platform)}</span>
+                            {competitor.platform}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <UsersIcon className="w-4 h-4" />
+                            {formatNumber(competitor.followers)} followers
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <TrendingUp className="w-4 h-4" />
+                            {competitor.engagement.toFixed(1)}% engagement
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-6 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <HeartIcon className="w-3 h-3" />
+                            {formatNumber(competitor.avgLikes)} avg likes
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <ChatBubbleLeftIcon className="w-3 h-3" />
+                            {formatNumber(competitor.avgComments)} avg comments
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <ShareIcon className="w-3 h-3" />
+                            {formatNumber(competitor.avgShares)} avg shares
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      {competitor.profileUrl && (
+                        <a
+                          href={competitor.profileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                          title="View profile"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
+                <UserGroupIcon className="w-12 h-12" />
+              </div>
+              <h3 className="text-sm font-medium text-gray-900 mb-2">No competitors analyzed yet</h3>
+              <p className="text-sm text-gray-500 mb-4">Start analyzing competitors to gain insights into your market.</p>
+              <Link 
+                href="/creator/competitors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <PlusIcon className="w-4 h-4" />
+                Analyze Competitors
+              </Link>
             </div>
           )}
         </div>
