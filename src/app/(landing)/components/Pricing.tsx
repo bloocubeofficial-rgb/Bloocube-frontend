@@ -48,8 +48,7 @@ const Pricing: React.FC = () => {
               <div className="text-center mb-6">
                 <h3 className="text-xl font-bold mb-2 text-white group-hover:text-blue-300 transition-colors duration-300">{plan.name}</h3>
                 <div className="text-3xl font-bold mb-2 text-white group-hover:text-white transition-colors duration-300">
-                  ₹{plan.price.toLocaleString('en-IN')}
-                  <span className="text-sm text-zinc-400 group-hover:text-zinc-300 transition-colors duration-300"> / month</span>
+                  Coming Soon
                 </div>
               </div>
               <ul className="space-y-3 mb-6">

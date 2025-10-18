@@ -35,6 +35,11 @@ import CreatorLayout from "@/Components/Creater/CreatorLayout";
 import { apiRequest } from "@/lib/apiClient";
 import { authUtils } from "@/lib/auth";
 import { usePostFormPersistence } from "@/hooks/usePostFormPersistence";
+import { twitterService } from "@/lib/twitter";
+import { facebookService } from "@/lib/facebook";
+import { instagramService } from "@/lib/instagram";
+import { linkedInService } from "@/lib/linkedin";
+import { youtubeService } from "@/lib/youtube";
 
 // Platform configurations
 const PLATFORM_CONFIGS = {
@@ -477,7 +482,7 @@ export default function PostsPage() {
     return null;
   };
 
-  // Check platform connections - simple token-based approach
+  // Check platform connections - API-based approach (like settings page)
   const checkPlatformConnections = async () => {
     // Debounce: prevent calls more than once every 2 seconds
     const now = Date.now();
@@ -490,37 +495,48 @@ export default function PostsPage() {
       setCheckingConnections(true);
       setLastCheckTime(now);
 
-      const user = authUtils.getUser();
-      console.log("User data:", user);
-
-      if (!user?.socialAccounts) {
-        console.log("No social accounts found");
-        setConnectedPlatforms([]);
-        return;
-      }
-
-      const socialAccounts = user.socialAccounts as any;
-      console.log("Social accounts data:", socialAccounts);
+      console.log("Checking platform connections via API...");
       const connected: string[] = [];
 
-      // Check which platforms have access tokens
-      if (socialAccounts.instagram?.accessToken) {
-        connected.push("instagram");
-        console.log("Instagram connected");
+      // Check each platform individually using their services (same as settings page)
+      const [twitterConnected, facebookConnected, instagramConnected, youtubeConnected] = await Promise.all([
+        twitterService.isConnected(),
+        facebookService.isConnected(), 
+        instagramService.isConnected(),
+        youtubeService.isConnected()
+      ]);
+
+      // Update YouTube connection state for validation and button disabling
+      setYoutubeConnected(youtubeConnected);
+
+      // LinkedIn uses getProfile() to check connection (like the LinkedIn hook)
+      let linkedinConnected = false;
+      try {
+        const linkedinProfile = await linkedInService.getProfile();
+        linkedinConnected = linkedinProfile.success && !!linkedinProfile.profile;
+      } catch (error) {
+        console.log("LinkedIn connection check failed:", error);
+        linkedinConnected = false;
       }
-      if (socialAccounts.facebook?.accessToken) {
-        connected.push("facebook");
-        console.log("Facebook connected");
-      }
-      if (socialAccounts.twitter?.accessToken) {
+
+      // Add connected platforms to array
+      if (twitterConnected) {
         connected.push("twitter");
         console.log("Twitter connected");
       }
-      if (socialAccounts.linkedin?.accessToken) {
+      if (facebookConnected) {
+        connected.push("facebook");
+        console.log("Facebook connected");
+      }
+      if (instagramConnected) {
+        connected.push("instagram");
+        console.log("Instagram connected");
+      }
+      if (linkedinConnected) {
         connected.push("linkedin");
         console.log("LinkedIn connected");
       }
-      if (socialAccounts.youtube?.accessToken) {
+      if (youtubeConnected) {
         connected.push("youtube");
         console.log("YouTube connected");
       }
