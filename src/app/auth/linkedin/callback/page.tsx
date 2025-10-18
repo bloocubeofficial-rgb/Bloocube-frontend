@@ -53,9 +53,6 @@ function LinkedInCallbackContent() {
             return;
           }
           
-          // Store the session token and authenticate user
-          authUtils.setToken(token);
-          
           // Fetch user profile to complete authentication
           const response = await fetch('/api/auth/me', {
             headers: {
@@ -66,8 +63,9 @@ function LinkedInCallbackContent() {
           
           if (response.ok) {
             const userData = await response.json();
+            
+            // Store the session token and user data using authUtils for proper tab sync
             if (userData.success && userData.data) {
-              // Store user data
               authUtils.setAuth(token, userData.data.user);
                setStatus("Successfully logged in! Redirecting...");
                setTimeout(() => {

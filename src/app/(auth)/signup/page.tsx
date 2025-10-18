@@ -168,13 +168,12 @@ const SignupForm: React.FC = () => {
           body: JSON.stringify({ email, password }),
         });
 
-        localStorage.setItem("token", loginResp.data.tokens.accessToken);
-        if (loginResp.data.tokens.refreshToken)
-          localStorage.setItem(
-            "refreshToken",
-            loginResp.data.tokens.refreshToken
-          );
-        localStorage.setItem("user", JSON.stringify(loginResp.data.user));
+        const { authUtils } = await import("@/lib/auth");
+        authUtils.setAuth(loginResp.data.tokens.accessToken, loginResp.data.user);
+        
+        if (loginResp.data.tokens.refreshToken) {
+          localStorage.setItem("refreshToken", loginResp.data.tokens.refreshToken);
+        }
 
         const roleAfterSignup = loginResp.data.user?.role;
         router.push(roleAfterSignup === "brand" ? "/brand" : "/creator");

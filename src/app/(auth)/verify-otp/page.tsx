@@ -76,11 +76,12 @@ const VerifyOTPForm: React.FC = () => {
       });
 
       if (data?.data?.tokens?.accessToken && data?.data?.user) {
-        localStorage.setItem("token", data.data.tokens.accessToken);
+        const { authUtils } = await import("@/lib/auth");
+        authUtils.setAuth(data.data.tokens.accessToken, data.data.user);
+        
         if (data.data.tokens.refreshToken) {
           localStorage.setItem("refreshToken", data.data.tokens.refreshToken);
         }
-        localStorage.setItem("user", JSON.stringify(data.data.user));
 
         setMessage("Email verified successfully! Redirecting...");
         setTimeout(() => {

@@ -19,9 +19,26 @@ function GoogleCallbackContent() {
 
     // Handle direct success with session token from backend
     if (success === "success" && token) {
-      authUtils.setToken(token);
-      // Optionally fetch user profile here to populate user state
-      router.replace("/creator/dashboard");
+      // Fetch user profile to complete authentication
+      fetch('/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(userData => {
+        if (userData.success && userData.data) {
+          authUtils.setAuth(token, userData.data.user);
+        } else {
+          authUtils.setToken(token);
+        }
+        router.replace("/creator/dashboard");
+      })
+      .catch(() => {
+        authUtils.setToken(token);
+        router.replace("/creator/dashboard");
+      });
       return;
     }
 

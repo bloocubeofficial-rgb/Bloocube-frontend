@@ -6,6 +6,7 @@ import { Bell, Briefcase, Home, Settings, Users, Store, BarChart3, User, LogOut,
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { authUtils } from '@/lib/auth';
 import NotificationDropdown from '@/Components/Brand/NotificationDropdown';
 
 export default function BrandLayout({ children }: { children: React.ReactNode }) {
@@ -42,13 +43,7 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
   }, [isAuthenticated, user, router, isLoading]);
 
   const onLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      // Trigger auth sync across tabs
-      window.dispatchEvent(new CustomEvent('authChange'));
-    }
+    authUtils.clearAuth();
     router.replace('/login');
   };
 

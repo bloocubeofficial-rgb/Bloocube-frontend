@@ -43,11 +43,10 @@ async function refreshAppToken(): Promise<string | null> {
     
     const data: { success?: boolean; data?: TokenPair } = await res.json().catch(() => ({}));
     if (data && data.data) {
-      localStorage.setItem('token', data.data.accessToken);
-      localStorage.setItem('refreshToken', data.data.refreshToken);
-      // Clear auth cache to ensure fresh token is used
       const { authUtils } = await import('@/lib/auth');
-      authUtils.clearCache();
+      // Use authUtils to set the new token for proper tab sync
+      authUtils.setToken(data.data.accessToken);
+      localStorage.setItem('refreshToken', data.data.refreshToken);
       return data.data.accessToken;
     }
     return null;
