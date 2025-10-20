@@ -3,14 +3,14 @@
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getApiBase } from "@/lib/config";
-import { authUtils } from "@/lib/auth";
+import { cookieAuthUtils } from "@/lib/cookieAuth";
 
 function GoogleCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const storedState = typeof window !== "undefined" ? localStorage.getItem("google_state") : null;
+    const storedState = typeof window !== "undefined" ? sessionStorage.getItem("google_state") : null;
     const success = searchParams.get("google");
     const token = searchParams.get("token");
     const message = searchParams.get("message");
@@ -29,14 +29,14 @@ function GoogleCallbackContent() {
       .then(response => response.json())
       .then(userData => {
         if (userData.success && userData.data) {
-          authUtils.setAuth(token, userData.data.user);
-        } else {
-          authUtils.setToken(token);
+          // With HttpOnly cookies, tokens are handled server-side
+          // We only need to update user data
+          cookieAuthUtils.updateUserData(userData.data.user);
         }
         router.replace("/creator/dashboard");
       })
       .catch(() => {
-        authUtils.setToken(token);
+        // With HttpOnly cookies, tokens are handled server-side
         router.replace("/creator/dashboard");
       });
       return;

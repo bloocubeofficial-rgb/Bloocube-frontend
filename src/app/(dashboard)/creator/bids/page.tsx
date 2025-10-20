@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useBids } from "@/hooks/useBids";
 import type { Bid } from "@/types/bid";
-import { authUtils } from "@/lib/auth";
+import { cookieAuthUtils } from "@/lib/cookieAuth";
 import CreatorLayout from "@/Components/Creater/CreatorLayout";
 import { IndianRupee, Circle } from "lucide-react";
 
@@ -10,7 +10,7 @@ export default function CreatorBidsPage() {
   const { data: bids, loading, error, refetch, setParams } = useBids({ limit: 20 });
   const [formError, setFormError] = useState<string | null>(null);
 
-  const userId = useMemo(() => authUtils.getUser?.()?._id || null, []);
+  const userId = useMemo(() => cookieAuthUtils.getUser?.()?._id || null, []);
 
   useEffect(() => {
     refetch();

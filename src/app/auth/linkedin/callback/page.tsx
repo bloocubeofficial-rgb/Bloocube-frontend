@@ -2,7 +2,7 @@
 
 import { useEffect, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { authUtils } from "@/lib/auth";
+import { cookieAuthUtils } from "@/lib/cookieAuth";
 
 // Helper function to validate JWT token format
 const isValidJWTFormat = (token: string): boolean => {
@@ -64,9 +64,10 @@ function LinkedInCallbackContent() {
           if (response.ok) {
             const userData = await response.json();
             
-            // Store the session token and user data using authUtils for proper tab sync
+            // With HttpOnly cookies, tokens are handled server-side
+            // We only need to update user data
             if (userData.success && userData.data) {
-              authUtils.setAuth(token, userData.data.user);
+              cookieAuthUtils.updateUserData(userData.data.user);
                setStatus("Successfully logged in! Redirecting...");
                setTimeout(() => {
                  const successMessage = message || "LinkedIn+connected+and+logged+in+successfully";
@@ -116,7 +117,7 @@ function LinkedInCallbackContent() {
       }
 
       // Verify state parameter
-      const storedState = typeof window !== "undefined" ? localStorage.getItem("linkedin_state") : null;
+      const storedState = typeof window !== "undefined" ? sessionStorage.getItem("linkedin_state") : null;
       if (!storedState || storedState !== state) {
         setStatus("Error: Invalid state parameter");
         setTimeout(() => {
@@ -135,9 +136,9 @@ function LinkedInCallbackContent() {
         if (response.ok) {
           const result = await response.json();
           if (result.success && result.data) {
-            // Store LinkedIn data in localStorage
-            localStorage.setItem('linkedin_data', JSON.stringify(result.data));
-            localStorage.removeItem('linkedin_state'); // Clean up state
+            // Store LinkedIn data in sessionStorage
+            sessionStorage.setItem('linkedin_data', JSON.stringify(result.data));
+            sessionStorage.removeItem('linkedin_state'); // Clean up state
             setStatus("LinkedIn connected successfully! Redirecting...");
             setTimeout(() => {
               router.replace("/creator/settings?linkedin=success&message=LinkedIn+connected+successfully");

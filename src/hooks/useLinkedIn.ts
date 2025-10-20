@@ -1,7 +1,7 @@
 // src/hooks/useLinkedIn.ts
 import { useState } from 'react';
 import { linkedInService, LinkedInUser, LinkedInProfileResponse } from '@/lib/linkedin'; // Import LinkedInUser
-import { authUtils } from '@/lib/auth';
+import { cookieAuthUtils } from '@/lib/cookieAuth';
 import { getApiBase } from '@/lib/config'; 
 
 export const useLinkedIn = () => {
@@ -43,7 +43,7 @@ export const useLinkedIn = () => {
       setLoading(true);
       setError(null);
 
-      if (!authUtils.isAuthenticated()) {
+      if (!cookieAuthUtils.isAuthenticated()) {
         const authError = 'Not authenticated';
         setIsConnected(false);
         setProfile(null);

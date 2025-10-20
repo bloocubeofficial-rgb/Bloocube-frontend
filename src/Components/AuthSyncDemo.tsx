@@ -1,19 +1,19 @@
 "use client";
 import { useAuthSync } from '@/hooks/useAuthSync';
-import { authUtils } from '@/lib/auth';
+import { cookieAuthUtils } from '@/lib/cookieAuth';
 
 export function AuthSyncDemo() {
   const { isAuthenticated, user } = useAuthSync();
 
   const handleLogin = () => {
-    // Simulate login
-    const mockToken = 'mock-token-' + Date.now();
-    const mockUser = { id: '1', email: 'test@example.com', role: 'brand' };
-    authUtils.setAuth(mockToken, mockUser);
+    // Simulate login by setting user data cookie
+    const mockUser = { id: '1', email: 'test@example.com', role: 'brand' } as any;
+    cookieAuthUtils.updateUserData(mockUser);
+    cookieAuthUtils.triggerAuthSync();
   };
 
   const handleLogout = () => {
-    authUtils.clearAuth();
+    cookieAuthUtils.clearAuth();
   };
 
   return (

@@ -1,6 +1,5 @@
 // src/lib/facebook.ts
 import { config, getApiBase } from './config';
-import { authUtils } from './auth';
 
 export interface FacebookUser {
   id: string;
@@ -36,18 +35,12 @@ class FacebookService {
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const token = authUtils.getToken();
-    
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
     const response = await fetch(`${this.baseURL}${endpoint}`, {
+      credentials: 'include',
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        ...options.headers,
+        ...(options.headers || {}),
       },
     });
 

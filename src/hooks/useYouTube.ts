@@ -1,7 +1,7 @@
 // src/hooks/useYouTube.ts
 import { useState, useEffect } from "react";
 import { youtubeService, YouTubeChannel } from "@/lib/youtube";
-import { authUtils } from "@/lib/auth";
+import { cookieAuthUtils } from "@/lib/cookieAuth";
 
 export const useYouTube = () => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -12,7 +12,7 @@ export const useYouTube = () => {
   useEffect(() => {
     // Removed automatic checkConnection() to prevent 429 errors
     // Connection status will be checked manually when needed
-    if (!authUtils.isAuthenticated()) {
+    if (!cookieAuthUtils.isAuthenticated()) {
       setLoading(false);
       setIsConnected(false);
       setChannel(null);
@@ -32,7 +32,7 @@ export const useYouTube = () => {
       console.log(`🔍 YouTube checkConnection called (attempt ${retryCount + 1})`);
 
       // First check if user is authenticated
-      if (!authUtils.isAuthenticated()) {
+      if (!cookieAuthUtils.isAuthenticated()) {
         console.log('❌ User not authenticated, skipping YouTube connection check');
         setIsConnected(false);
         setChannel(null);
@@ -86,62 +86,8 @@ export const useYouTube = () => {
       setLoading(true);
       setError(null);
 
-      // Ensure user is authenticated before requesting auth URL
-      const existingToken = authUtils.getToken();
-      const directToken = localStorage.getItem('token');
-      
-      console.log('🔍 YouTube connect - Token check:', {
-        hasToken: !!existingToken,
-        tokenLength: existingToken?.length || 0,
-        localStorageToken: directToken ? 'exists' : 'missing',
-        directTokenLength: directToken?.length || 0,
-        isAuthenticated: authUtils.isAuthenticated(),
-        tokenPreview: existingToken ? existingToken.substring(0, 20) + '...' : 'none',
-        directTokenPreview: directToken ? directToken.substring(0, 20) + '...' : 'none',
-        cacheInfo: 'Auth cache details available via debugAuth()'
-      });
-      
-      // Use direct token if authUtils.getToken() returns null but localStorage has a token
-      let tokenToUse = existingToken || directToken;
-      
-      if (!tokenToUse) {
-        // Try to force refresh the token
-        console.log('🔄 Attempting to force refresh token...');
-        const refreshedToken = authUtils.forceRefreshToken();
-        
-        if (!refreshedToken) {
-          console.error('❌ No token found in localStorage. User needs to log in again.');
-          throw new Error('Please log in to connect YouTube');
-        }
-        
-        console.log('✅ Token refreshed successfully');
-        // Continue with the refreshed token
-        tokenToUse = authUtils.getToken() || localStorage.getItem('token');
-        if (!tokenToUse) {
-          throw new Error('Please log in to connect YouTube');
-        }
-      }
-
-      // Test authentication first
-      try {
-        console.log('🧪 Testing authentication before YouTube connect...');
-        const base = process.env.NEXT_PUBLIC_API_URL as string;
-        const testResponse = await fetch(`${base}/api/health/redis`, {
-          headers: {
-            'Authorization': `Bearer ${tokenToUse}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (!testResponse.ok) {
-          console.error('❌ Authentication test failed:', testResponse.status, testResponse.statusText);
-          throw new Error('Authentication test failed');
-        }
-        
-        const testData = await testResponse.json();
-        console.log('✅ Authentication test passed:', testData);
-      } catch (testError) {
-        console.error('❌ Authentication test error:', testError);
+      // Ensure user is authenticated before requesting auth URL (cookies)
+      if (!cookieAuthUtils.isAuthenticated()) {
         throw new Error('Please log in to connect YouTube');
       }
 
@@ -149,7 +95,7 @@ export const useYouTube = () => {
       const response = await youtubeService.generateAuthURL(callbackUrl);
       
       if (response.success && response.authURL) {
-        localStorage.setItem("youtube_state", response.state || "");
+        sessionStorage.setItem("youtube_state", response.state || "");
         window.location.href = response.authURL;
       } else {
         throw new Error(response.error || "Failed to generate auth URL");

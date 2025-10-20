@@ -75,13 +75,11 @@ const VerifyOTPForm: React.FC = () => {
         body: JSON.stringify({ email, otp }),
       });
 
-      if (data?.data?.tokens?.accessToken && data?.data?.user) {
-        const { authUtils } = await import("@/lib/auth");
-        authUtils.setAuth(data.data.tokens.accessToken, data.data.user);
-        
-        if (data.data.tokens.refreshToken) {
-          localStorage.setItem("refreshToken", data.data.tokens.refreshToken);
-        }
+      if (data?.data?.user) {
+        // With HttpOnly cookies, tokens are automatically set by the server
+        // We only need to update user data in the frontend
+        const { cookieAuthUtils } = await import("@/lib/cookieAuth");
+        cookieAuthUtils.updateUserData(data.data.user);
 
         setMessage("Email verified successfully! Redirecting...");
         setTimeout(() => {

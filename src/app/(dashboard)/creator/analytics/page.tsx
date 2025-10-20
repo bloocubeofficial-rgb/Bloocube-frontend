@@ -16,7 +16,7 @@ import {
 } from 'chart.js';
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 import { apiRequest } from '@/lib/apiClient';
-import { authUtils } from '@/lib/auth';
+import { cookieAuthUtils } from '@/lib/cookieAuth';
 
 ChartJS.register(
   CategoryScale,
@@ -70,11 +70,11 @@ const AnalyticsDashboard: React.FC = () => {
   const fetchAnalytics = async () => {
     try {
       setError(null);
-      const user = authUtils.getUser() as { id?: string; _id?: string; userId?: string } | null;
+      const user = cookieAuthUtils.getUser() as { id?: string; _id?: string; userId?: string } | null;
       const userId =
         user?.id ||
         user?.userId ||
-        (authUtils as unknown as { getUserId?: () => string }).getUserId?.();
+        (cookieAuthUtils as unknown as { getUserId?: () => string }).getUserId?.();
       if (!userId) throw new Error('Not authenticated');
       const res = await apiRequest<{ success: boolean; data: { analytics: AnalyticsItem[] } }>(`/api/analytics/user/${userId}`);
       setAnalytics(res?.data?.analytics || []);

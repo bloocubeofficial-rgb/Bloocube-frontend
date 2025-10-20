@@ -116,9 +116,6 @@ async uploadVideo(
   formData.append('description', description);
   formData.append('tags', tags.join(','));
 
-  const { authUtils } = await import('./auth');
-  const token = authUtils.getToken();
-
   // Increased timeout for large files
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 300000); // 5 minutes
@@ -129,9 +126,6 @@ async uploadVideo(
       method: 'POST',
       credentials: 'include',
       body: formData,
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
       signal: controller.signal
     });
   } catch (err) {

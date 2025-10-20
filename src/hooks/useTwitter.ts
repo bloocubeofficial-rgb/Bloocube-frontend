@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { twitterService, TwitterUser } from "@/lib/twitter";
 import { config } from "@/lib/config";
-import { authUtils } from "@/lib/auth";
+import { cookieAuthUtils } from "@/lib/cookieAuth";
 
 export const useTwitter = () => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -13,7 +13,7 @@ export const useTwitter = () => {
   useEffect(() => {
     // Removed automatic checkConnection() to prevent 429 errors
     // Connection status will be checked manually when needed
-    if (!authUtils.isAuthenticated()) {
+    if (!cookieAuthUtils.isAuthenticated()) {
       setLoading(false);
       setIsConnected(false);
       setProfile(null);
@@ -63,16 +63,7 @@ export const useTwitter = () => {
       setError(null);
 
       // Ensure user is authenticated before requesting auth URL (prevents 401 from backend)
-      const existingToken = authUtils.getToken();
-      const directToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-      if (!existingToken && !directToken) {
-        // Try to force refresh the token cache from localStorage
-        authUtils.forceRefreshToken?.();
-      }
-
-      const tokenToUse = authUtils.getToken() || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
-      if (!tokenToUse) {
+      if (!cookieAuthUtils.isAuthenticated()) {
         throw new Error('Please log in to connect Twitter');
       }
 
@@ -84,7 +75,7 @@ export const useTwitter = () => {
 
 
       if (response.success && response.authURL) {
-        localStorage.setItem("twitter_state", response.state || "");
+        sessionStorage.setItem("twitter_state", response.state || "");
         window.location.href = response.authURL;
       } else {
         throw new Error(response.error || "Failed to generate auth URL");

@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { useCampaigns } from '@/hooks/useCampaigns';
 import { createBidApi } from '@/hooks/useBids';
 import type { Campaign } from '@/types/campaign';
-import { authUtils } from '@/lib/auth';
+import { cookieAuthUtils } from '@/lib/cookieAuth';
 import { Search, Filter, IndianRupee, Calendar, Users, Globe } from 'lucide-react';
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 
@@ -13,7 +13,7 @@ export default function CreatorMarketplacePage() {
   const [proposal, setProposal] = useState('');
   const [amount, setAmount] = useState<number>(0);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
-  const user = (authUtils.getUser?.() as { role?: string } | null) || null;
+  const user = (cookieAuthUtils.getUser?.() as { role?: string } | null) || null;
   const isCreator = user?.role === 'creator';
   const [search, setSearch] = useState('');
 

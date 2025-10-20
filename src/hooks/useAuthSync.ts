@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { authUtils } from '@/lib/auth';
+import { cookieAuthUtils } from '@/lib/cookieAuth';
 
 export function useAuthSync() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -8,9 +8,8 @@ export function useAuthSync() {
 
   // Memoized auth check to prevent unnecessary re-renders
   const checkAuth = useCallback(() => {
-    const token = authUtils.getToken();
-    const userData = authUtils.getUser();
-    const newIsAuthenticated = !!token;
+    const userData = cookieAuthUtils.getUser();
+    const newIsAuthenticated = cookieAuthUtils.isAuthenticated();
     
     // Only update state if values actually changed
     setIsAuthenticated(prev => {
@@ -36,10 +35,10 @@ export function useAuthSync() {
     // Initial check
     checkAuth();
 
-    // Listen for storage changes from other tabs
+    // Listen for storage changes from other tabs (for user data cookie)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'token' || e.key === 'user') {
-        console.log('🔄 Auth sync: Storage changed in another tab', { key: e.key });
+      if (e.key === 'user_data') {
+        console.log('🔄 Auth sync: User data changed in another tab', { key: e.key });
         checkAuth();
       }
     };
@@ -74,12 +73,7 @@ export function triggerAuthSync() {
   // Dispatch custom event for same-tab updates
   window.dispatchEvent(new CustomEvent('authChange'));
   
-  // For cross-tab sync, we need to modify localStorage
-  // This will trigger the storage event in other tabs
-  const currentToken = localStorage.getItem('token');
-  if (currentToken) {
-    localStorage.setItem('token', currentToken);
-  } else {
-    localStorage.removeItem('token');
-  }
+  // For cross-tab sync with cookies, we can't modify HttpOnly cookies
+  // The server will handle cookie synchronization
+  console.log('🔄 Auth sync triggered (server handles cookie sync)');
 }

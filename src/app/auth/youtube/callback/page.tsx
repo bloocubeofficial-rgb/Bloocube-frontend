@@ -17,7 +17,7 @@ function YouTubeCallbackContent() {
       return;
     }
 
-    const storedState = typeof window !== "undefined" ? localStorage.getItem("youtube_state") : null;
+    const storedState = typeof window !== "undefined" ? sessionStorage.getItem("youtube_state") : null;
     if (!storedState || storedState !== state) {
       router.replace("/creator/settings?youtube=error&message=Invalid+state");
       return;
@@ -27,8 +27,10 @@ function YouTubeCallbackContent() {
     console.log("redirectUri", redirectUri);
 
     // Ensure app JWT exists before initiating flow (auth-url is protected)
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!token) {
+    // With HttpOnly cookies, tokens are handled server-side
+    // We only need to check if user is authenticated
+    const isAuthenticated = typeof window !== "undefined" ? document.cookie.includes('user_data') : false;
+    if (!isAuthenticated) {
       const next = typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/auth/youtube/callback";
       router.replace(`/login?next=${encodeURIComponent(next)}`);
       return;

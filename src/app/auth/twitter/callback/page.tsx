@@ -19,7 +19,7 @@ function TwitterCallbackContent() {
       return;
     }
 
-    const storedState = typeof window !== "undefined" ? localStorage.getItem("twitter_state") : null;
+    const storedState = typeof window !== "undefined" ? sessionStorage.getItem("twitter_state") : null;
     // console.log("storedState",storedState)
     if (!storedState || storedState !== state) {
       router.replace("/creator/settings?twitter=error&message=Invalid+state");
@@ -30,9 +30,11 @@ function TwitterCallbackContent() {
     console.log("redirectUri",redirectUri)
 
     // Ensure app JWT exists before initiating flow (auth-url is protected)
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    // With HttpOnly cookies, tokens are handled server-side
+    // We only need to check if user is authenticated
+    const isAuthenticated = typeof window !== "undefined" ? document.cookie.includes('user_data') : false;
     // console.log("token",token)
-    if (!token) {
+    if (!isAuthenticated) {
       const next = typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/auth/twitter/callback";
       router.replace(`/login?next=${encodeURIComponent(next)}`);
       return;

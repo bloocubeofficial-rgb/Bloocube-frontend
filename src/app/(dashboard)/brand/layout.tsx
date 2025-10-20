@@ -6,7 +6,7 @@ import { Bell, Briefcase, Home, Settings, Users, Store, BarChart3, User, LogOut,
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { authUtils } from '@/lib/auth';
+import { cookieAuthUtils } from '@/lib/cookieAuth';
 import NotificationDropdown from '@/Components/Brand/NotificationDropdown';
 
 export default function BrandLayout({ children }: { children: React.ReactNode }) {
@@ -43,7 +43,7 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
   }, [isAuthenticated, user, router, isLoading]);
 
   const onLogout = () => {
-    authUtils.clearAuth();
+    cookieAuthUtils.clearAuth();
     router.replace('/login');
   };
 

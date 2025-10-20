@@ -14,8 +14,16 @@ import { apiRequest } from "@/lib/apiClient";
 interface LoginResponse {
   success: boolean;
   data: {
-    tokens: { accessToken: string; refreshToken?: string };
-    user: { role: string };
+    user: { 
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+      profile?: any;
+      isActive: boolean;
+      isVerified: boolean;
+      lastLogin: string;
+    };
   };
   message?: string;
 }
@@ -61,12 +69,10 @@ const LoginPage: React.FC = () => {
         headers: { "Content-Type": "application/json" },
       });
 
-      const { authUtils } = await import("@/lib/auth");
-      authUtils.setAuth(data.data.tokens.accessToken, data.data.user);
-      
-      if (data.data.tokens.refreshToken) {
-        localStorage.setItem("refreshToken", data.data.tokens.refreshToken);
-      }
+      // With HttpOnly cookies, tokens are automatically set by the server
+      // We only need to update user data in the frontend
+      const { cookieAuthUtils } = await import("@/lib/cookieAuth");
+      cookieAuthUtils.updateUserData(data.data.user);
 
       const role = data.data.user?.role;
       router.push(role === "brand" ? "/brand" : "/creator");
@@ -89,19 +95,17 @@ const LoginPage: React.FC = () => {
   // ✅ Handles Google login redirect
   const handleGoogle = async () => {
     try {
-      const token =
-        typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      if (!token) localStorage.setItem("token", "guest");
+      // With HttpOnly cookies, we don't need to set guest tokens
+      // The server will handle authentication via cookies
 
       const callbackUrl = `${window.location.origin}/auth/google/callback`;
       const data = await apiRequest<GoogleAuthResponse>(
         "/api/google/auth-url",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token") || "guest"}`,
-          },
+        headers: {
+          "Content-Type": "application/json",
+        },
           body: JSON.stringify({ redirectUri: callbackUrl }),
         }
       );
@@ -111,7 +115,10 @@ const LoginPage: React.FC = () => {
           data.message || data.error || "Failed to start Google auth"
         );
 
-      localStorage.setItem("google_state", data.state || "");
+      // Store OAuth state in sessionStorage for security
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("google_state", data.state || "");
+      }
       window.location.href = data.authURL;
     } catch (e: unknown) {
       const message =

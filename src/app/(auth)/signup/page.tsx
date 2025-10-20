@@ -31,9 +31,8 @@ const SignupForm: React.FC = () => {
   // ✅ Handles Google signup redirect
   const handleGoogle = async () => {
     try {
-      const token =
-        typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      if (!token) localStorage.setItem("token", "guest");
+      // With HttpOnly cookies, we don't need to set guest tokens
+      // The server will handle authentication via cookies
 
       const callbackUrl = `${window.location.origin}/auth/google/callback`;
       const data = await apiRequest<{
@@ -46,7 +45,6 @@ const SignupForm: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token") || "guest"}`,
         },
         body: JSON.stringify({ redirectUri: callbackUrl }),
       });
@@ -56,7 +54,10 @@ const SignupForm: React.FC = () => {
           data.message || data.error || "Failed to start Google auth"
         );
 
-      localStorage.setItem("google_state", data.state || "");
+      // Store OAuth state in sessionStorage for security
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("google_state", data.state || "");
+      }
       window.location.href = data.authURL;
     } catch (e: unknown) {
       const message =
@@ -168,12 +169,10 @@ const SignupForm: React.FC = () => {
           body: JSON.stringify({ email, password }),
         });
 
-        const { authUtils } = await import("@/lib/auth");
-        authUtils.setAuth(loginResp.data.tokens.accessToken, loginResp.data.user);
-        
-        if (loginResp.data.tokens.refreshToken) {
-          localStorage.setItem("refreshToken", loginResp.data.tokens.refreshToken);
-        }
+        // With HttpOnly cookies, tokens are automatically set by the server
+        // We only need to update user data in the frontend
+        const { cookieAuthUtils } = await import("@/lib/cookieAuth");
+        cookieAuthUtils.updateUserData(loginResp.data.user);
 
         const roleAfterSignup = loginResp.data.user?.role;
         router.push(roleAfterSignup === "brand" ? "/brand" : "/creator");

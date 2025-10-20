@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import CreatorLayout from "@/Components/Creater/CreatorLayout";
 import { apiRequest } from "@/lib/apiClient";
-import { authUtils } from "@/lib/auth";
+import { cookieAuthUtils } from "@/lib/cookieAuth";
 
 type AnalyticsItem = {
   post_id?: string;
@@ -69,7 +69,7 @@ const Dashboard = () => {
     try {
       setError(null);
 
-      const user = authUtils.getUser() as {
+      const user = cookieAuthUtils.getUser() as {
         id?: string;
         _id?: string;
         userId?: string;
@@ -78,7 +78,7 @@ const Dashboard = () => {
         user?.id ||
         user?._id ||
         user?.userId ||
-        (authUtils as unknown as { getUserId?: () => string }).getUserId?.();
+        (cookieAuthUtils as unknown as { getUserId?: () => string }).getUserId?.();
       if (!userId) throw new Error("Not authenticated");
 
       // Optionally sync from linked social accounts before fetching

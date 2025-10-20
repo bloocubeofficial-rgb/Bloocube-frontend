@@ -28,26 +28,22 @@ async function refreshAppToken(): Promise<string | null> {
 
   refreshPromise = (async () => {
     if (typeof window === 'undefined') return null;
-    const stored = localStorage.getItem('refreshToken');
-    if (!stored) return null;
 
     const base = getApiBase();
     const res = await fetch(`${base}/api/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ refreshToken: stored })
+      credentials: 'include' // This will send the refresh token cookie
     });
     
     if (!res.ok) return null;
     
-    const data: { success?: boolean; data?: TokenPair } = await res.json().catch(() => ({}));
-    if (data && data.data) {
-      const { authUtils } = await import('@/lib/auth');
-      // Use authUtils to set the new token for proper tab sync
-      authUtils.setToken(data.data.accessToken);
-      localStorage.setItem('refreshToken', data.data.refreshToken);
-      return data.data.accessToken;
+    const data: { success?: boolean; data?: { user: Record<string, unknown> } } = await res.json().catch(() => ({}));
+    if (data && data.data && data.data.user) {
+      // Update user data in cookie (tokens are handled by server)
+      const { cookieAuthUtils } = await import('@/lib/cookieAuth');
+      cookieAuthUtils.updateUserData(data.data.user);
+      return 'refreshed'; // Return a success indicator
     }
     return null;
   })();
@@ -98,19 +94,15 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
     return pendingRequests.get(cacheKey)! as Promise<T>;
   }
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  // With HttpOnly cookies, we don't need to manually add Authorization header
+  // The cookies will be sent automatically with credentials: 'include'
   
   console.log(`🌐 API Request: ${method} ${base}${path}`, {
-    hasToken: !!token,
-    tokenLength: token?.length || 0,
     retries,
     cached: false,
     baseUrl: base,
     fullUrl: `${base}${path}`,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
-    }
+    usingCookies: true
   });
 
   // Create request promise with performance monitoring
@@ -122,10 +114,9 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
         ...init,
         headers: {
           'Content-Type': 'application/json',
-          ...(init.headers || {}),
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          ...(init.headers || {})
         },
-        credentials: 'include'
+        credentials: 'include' // This sends HttpOnly cookies automatically
       });
 
       if (res.status === 401 && retries > 0) {
@@ -137,11 +128,9 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
         } else {
           console.log('❌ Token refresh failed, redirecting to login');
           if (typeof window !== 'undefined') {
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            // Clear auth cache to prevent stale data
-            const { authUtils } = await import('@/lib/auth');
-            authUtils.clearCache();
+            // Clear user data cookie
+            const { cookieAuthUtils } = await import('@/lib/cookieAuth');
+            cookieAuthUtils.clearAuth();
             window.location.href = '/login';
           }
           throw new Error('Authentication failed');

@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { LogOut, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { authUtils } from '@/lib/auth';
+import { cookieAuthUtils } from '@/lib/cookieAuth';
+import { apiRequest } from '@/lib/apiClient';
 import Button from './ui/Button';
 
 interface LogoutProps {
@@ -27,18 +28,23 @@ const Logout: React.FC<LogoutProps> = ({
 
   const handleLogout = async () => {
     try {
-      // Clear authentication data
-      authUtils.clearAuth();
+      // Call logout API to clear server-side cookies
+      await apiRequest('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      // Clear client-side user data
+      cookieAuthUtils.clearAuth();
       
       // Redirect to login page
       router.push('/login');
       
-      // Optional: Show success message or toast
       console.log('Logged out successfully');
     } catch (error) {
       console.error('Logout error:', error);
       // Even if there's an error, clear auth and redirect
-      authUtils.clearAuth();
+      cookieAuthUtils.clearAuth();
       router.push('/login');
     }
   };

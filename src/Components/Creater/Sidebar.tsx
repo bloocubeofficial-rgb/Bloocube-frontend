@@ -13,7 +13,7 @@ import {
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { authUtils } from '@/lib/auth';
+import { cookieAuthUtils } from '@/lib/cookieAuth';
 
 const sidebarItems = [
   { name: 'Overview', icon: Home, href: '/creator' },
@@ -73,7 +73,7 @@ const Sidebar = React.memo(() => {
 
   useEffect(() => {
     // Get user information on component mount
-    const userData = authUtils.getUser();
+    const userData = cookieAuthUtils.getUser();
     setUser(userData);
   }, []);
 
@@ -108,7 +108,7 @@ const Sidebar = React.memo(() => {
     )), [isItemActive, handleItemClick]);
 
   const handleLogout = useCallback(() => {
-    authUtils.clearAuth();
+    cookieAuthUtils.clearAuth();
     router.push('/login');
   }, [router]);
 

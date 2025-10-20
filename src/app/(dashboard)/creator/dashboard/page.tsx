@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 import { apiRequest } from '@/lib/apiClient';
-import { authUtils } from '@/lib/auth';
+import { cookieAuthUtils } from '@/lib/cookieAuth';
 
 const Dashboard = () => {
   type AnalyticsItem = {
@@ -34,8 +34,8 @@ const Dashboard = () => {
 
   const fetchAnalytics = async () => {
     try {
-      const user = authUtils.getUser() as { id?: string } | null;
-      const userId = user?.id || (authUtils as unknown as { getUserId?: () => string }).getUserId?.();
+      const user = cookieAuthUtils.getUser() as { id?: string } | null;
+      const userId = user?.id || (cookieAuthUtils as unknown as { getUserId?: () => string }).getUserId?.();
       if (!userId) throw new Error('Not authenticated');
       const res = await apiRequest<{ success: boolean; data: { analytics: AnalyticsItem[] } }>(`/api/analytics/user/${userId}`);
       setAnalytics(res?.data?.analytics || []);

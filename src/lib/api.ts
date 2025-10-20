@@ -8,10 +8,7 @@ export const apiFetch = async (path: string, options: RequestInit = {}) => {
     const base = getApiBase();
     return await fetch(`${base}${path}`, {
     headers: {
-      'Content-Type': 'application/json',
-      ...(typeof window !== 'undefined' && localStorage.getItem('token')
-        ? { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        : {})
+      'Content-Type': 'application/json'
     },
     ...options,
     credentials: 'include'

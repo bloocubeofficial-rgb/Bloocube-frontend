@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { authUtils } from '@/lib/auth';
+import { cookieAuthUtils } from '@/lib/cookieAuth';
 import { useAuth } from '@/hooks/useAuth';
 
 export function AuthMultiTabTest() {
@@ -14,18 +14,15 @@ export function AuthMultiTabTest() {
 
   const testAuthSync = () => {
     addTestResult('Testing auth sync...');
-    
-    // Test setting auth
-    const testToken = 'test-token-' + Date.now();
-    const testUser = { id: 'test-user', name: 'Test User', role: 'creator' };
-    
-    authUtils.setAuth(testToken, testUser);
-    addTestResult('Auth set - check other tabs for sync');
+    const testUser = { id: 'test-user', name: 'Test User', role: 'creator' } as any;
+    cookieAuthUtils.updateUserData(testUser);
+    cookieAuthUtils.triggerAuthSync();
+    addTestResult('User data set - check other tabs for sync');
   };
 
   const testLogout = () => {
     addTestResult('Testing logout...');
-    authUtils.clearAuth();
+    cookieAuthUtils.clearAuth();
     addTestResult('Auth cleared - check other tabs for sync');
   };
 

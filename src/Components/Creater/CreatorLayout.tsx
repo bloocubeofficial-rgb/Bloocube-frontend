@@ -14,7 +14,7 @@ import {
 import Sidebar from "./Sidebar";
 import NotificationDropdown from "./NotificationDropdown";
 import { useRouter } from "next/navigation";
-import { authUtils } from "@/lib/auth";
+import { cookieAuthUtils } from "@/lib/cookieAuth";
 import { useAuth } from "@/hooks/useAuth";
 
 interface CreatorLayoutProps {
@@ -28,7 +28,7 @@ const UserInfo = React.memo(
     const router = useRouter();
 
     const handleLogout = () => {
-      authUtils.clearAuth();
+      cookieAuthUtils.clearAuth();
       router.push("/login");
     };
 
@@ -105,7 +105,7 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
 
   const handleLogout = () => {
     try {
-      authUtils.clearAuth();
+      cookieAuthUtils.clearAuth();
     } finally {
       setUserDropdownOpen(false);
       router.push("/login");

@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import CreatorLayout from "@/Components/Creater/CreatorLayout";
 import { apiRequest } from "@/lib/apiClient";
-import { authUtils } from "@/lib/auth";
+import { cookieAuthUtils } from "@/lib/cookieAuth";
 import { usePostFormPersistence } from "@/hooks/usePostFormPersistence";
 import { twitterService } from "@/lib/twitter";
 import { facebookService } from "@/lib/facebook";
@@ -473,7 +473,7 @@ export default function PostsPage() {
     try {
       const response = (await apiRequest("/api/profile/me")) as any;
       if (response?.user) {
-        authUtils.setAuth(authUtils.getToken() || "", response.user);
+        cookieAuthUtils.updateUserData(response.user);
         return response.user;
       }
     } catch (error) {
@@ -1065,17 +1065,14 @@ export default function PostsPage() {
 
         // Use API base and include auth header to avoid 404/HTML responses
         const { getApiBase } = await import("@/lib/config");
-        const { authUtils } = await import("@/lib/auth");
+        const { cookieAuthUtils } = await import("@/lib/cookieAuth");
         const baseURL = getApiBase();
-        const token = authUtils.getToken();
+        // With HttpOnly cookies, tokens are handled server-side
 
         const res = await fetch(`${baseURL}/api/posts`, {
           method: "POST",
           body: formData,
           credentials: "include",
-          headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
         });
 
         if (!res.ok) {

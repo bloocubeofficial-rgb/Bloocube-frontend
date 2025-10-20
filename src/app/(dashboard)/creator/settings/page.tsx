@@ -163,7 +163,9 @@ function SettingsPageContent() {
       if (response.success) {
         setNotification({ type: 'success', message: 'Account deleted successfully. You will be redirected to login.' });
         setTimeout(() => {
-          localStorage.removeItem('token');
+          // Clear user data and redirect (cookies will be cleared by server)
+          const { cookieAuthUtils } = require('@/lib/cookieAuth');
+          cookieAuthUtils.clearAuth();
           window.location.href = '/auth/login';
         }, 3000);
       }
@@ -323,11 +325,12 @@ function SettingsPageContent() {
     }
   }, [searchParams]);
 
-  // Check for auth token on mount
+  // Check for auth token on mount (using cookie-based auth)
   useEffect(() => {
     try {
-      const t = localStorage.getItem('token');
-      setTokenPresent(!!t);
+      const { cookieAuthUtils } = require('@/lib/cookieAuth');
+      const isAuthenticated = cookieAuthUtils.isAuthenticated();
+      setTokenPresent(isAuthenticated);
     } catch {
       setTokenPresent(false);
     }
@@ -430,8 +433,9 @@ function SettingsPageContent() {
             <button
               onClick={() => {
                 try {
-                  const t = localStorage.getItem('token');
-                  setTokenPresent(!!t);
+                  const { cookieAuthUtils } = require('@/lib/cookieAuth');
+                  const isAuthenticated = cookieAuthUtils.isAuthenticated();
+                  setTokenPresent(isAuthenticated);
                 } catch {}
               }}
               className="text-yellow-700 hover:text-yellow-900 text-sm font-medium px-3 py-1 rounded-lg hover:bg-yellow-100/50 transition-colors"

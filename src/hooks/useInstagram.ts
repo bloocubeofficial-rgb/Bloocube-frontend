@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { instagramService } from "@/lib/instagram";
 import { config, getApiBase } from "@/lib/config";
 import type { InstagramUser, InstagramPostData } from "@/types/instagram";
-import { authUtils } from "@/lib/auth";
+import { cookieAuthUtils } from "@/lib/cookieAuth";
 
 export const useInstagram = () => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -13,7 +13,7 @@ export const useInstagram = () => {
 
   useEffect(() => {
     // Initialize state without making API calls to prevent stuck loading
-    if (!authUtils.isAuthenticated()) {
+    if (!cookieAuthUtils.isAuthenticated()) {
       setLoading(false);
       setIsConnected(false);
       setProfile(null);
@@ -63,16 +63,7 @@ export const useInstagram = () => {
       setError(null);
 
       // Ensure user is authenticated before requesting auth URL (prevents 401 from backend)
-      const existingToken = authUtils.getToken();
-      const directToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-      if (!existingToken && !directToken) {
-        // Try to force refresh the token cache from localStorage
-        authUtils.forceRefreshToken?.();
-      }
-
-      const tokenToUse = authUtils.getToken() || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
-      if (!tokenToUse) {
+      if (!cookieAuthUtils.isAuthenticated()) {
         throw new Error('Please log in to connect Instagram');
       }
 
@@ -82,7 +73,7 @@ export const useInstagram = () => {
       const response = await instagramService.generateAuthURL(callbackUrl);
       
       if (response.success && response.authURL) {
-        localStorage.setItem("instagram_state", response.state || "");
+        sessionStorage.setItem("instagram_state", response.state || "");
         // Don't set loading to false here since we're redirecting
         window.location.href = response.authURL;
       } else {
