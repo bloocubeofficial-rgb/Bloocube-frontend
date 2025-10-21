@@ -95,6 +95,7 @@ export const useYouTube = () => {
       const response = await youtubeService.generateAuthURL(callbackUrl);
       
       if (response.success && response.authURL) {
+        console.log("YouTube auth URL generated, storing state:", response.state);
         sessionStorage.setItem("youtube_state", response.state || "");
         window.location.href = response.authURL;
       } else {

@@ -18,7 +18,9 @@ function YouTubeCallbackContent() {
     }
 
     const storedState = typeof window !== "undefined" ? sessionStorage.getItem("youtube_state") : null;
+    console.log("YouTube callback state check:", { storedState, receivedState: state, match: storedState === state });
     if (!storedState || storedState !== state) {
+      console.error("YouTube state mismatch:", { storedState, receivedState: state });
       router.replace("/creator/settings?youtube=error&message=Invalid+state");
       return;
     }

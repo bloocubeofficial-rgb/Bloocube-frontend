@@ -3,6 +3,7 @@
 import { useEffect, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cookieAuthUtils } from "@/lib/cookieAuth";
+import { getApiBase } from "@/lib/config";
 
 // Helper function to validate JWT token format
 const isValidJWTFormat = (token: string): boolean => {
@@ -113,43 +114,10 @@ function LinkedInCallbackContent() {
         return;
       }
 
-      try {
-        setStatus("Exchanging authorization code for access token...");
-        
-        // Call the callback API endpoint
-        const redirectUri = `${window.location.origin}/auth/linkedin/callback`;
-        const response = await fetch(`/api/linkedin/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}&redirectUri=${encodeURIComponent(redirectUri)}`);
-        
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.data) {
-            // Store LinkedIn data in sessionStorage
-            sessionStorage.setItem('linkedin_data', JSON.stringify(result.data));
-            sessionStorage.removeItem('linkedin_state'); // Clean up state
-            setStatus("LinkedIn connected successfully! Redirecting...");
-            setTimeout(() => {
-              router.replace("/creator/settings?linkedin=success&message=LinkedIn+connected+successfully");
-            }, 1500);
-          } else {
-            setStatus(`Error: ${result.error || 'Failed to connect LinkedIn'}`);
-            setTimeout(() => {
-              router.replace(`/creator/settings?linkedin=error&message=${encodeURIComponent(result.error || 'Failed to connect LinkedIn')}`);
-            }, 2000);
-          }
-        } else {
-          const errorData = await response.json();
-          setStatus(`Error: ${errorData.error || 'Failed to connect LinkedIn'}`);
-          setTimeout(() => {
-            router.replace(`/creator/settings?linkedin=error&message=${encodeURIComponent(errorData.error || 'Failed to connect LinkedIn')}`);
-          }, 2000);
-        }
-      } catch (err) {
-        console.error('LinkedIn callback error:', err);
-        setStatus("Error: Failed to process LinkedIn connection");
-        setTimeout(() => {
-          router.replace("/creator/settings?linkedin=error&message=Failed+to+process+LinkedIn+connection");
-        }, 2000);
-      }
+      // Let backend handle callback via GET redirect (no auth header needed)
+      const redirectUri = `${window.location.origin}/auth/linkedin/callback`;
+      const base = getApiBase();
+      window.location.href = `${base}/api/linkedin/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}&redirectUri=${encodeURIComponent(redirectUri)}`;
     };
 
     processCallback();
