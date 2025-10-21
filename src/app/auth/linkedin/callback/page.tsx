@@ -53,36 +53,23 @@ function LinkedInCallbackContent() {
             return;
           }
           
-          // Fetch user profile to complete authentication
-          const response = await fetch('/api/auth/me', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
+          // With HttpOnly cookies, tokens are handled server-side
+          // We only need to update user data from the token
+          try {
+            // Decode the token to get user data (since it's already verified by backend)
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            if (payload && payload.id) {
+              cookieAuthUtils.updateUserData(payload);
             }
-          });
-          
-          if (response.ok) {
-            const userData = await response.json();
-            
-            // With HttpOnly cookies, tokens are handled server-side
-            // We only need to update user data
-            if (userData.success && userData.data) {
-              cookieAuthUtils.updateUserData(userData.data.user);
-               setStatus("Successfully logged in! Redirecting...");
-               setTimeout(() => {
-                 const successMessage = message || "LinkedIn+connected+and+logged+in+successfully";
-                 router.replace(`/creator/settings?linkedin=success&message=${successMessage}`);
-               }, 1500);
-              return;
-            }
+          } catch (err) {
+            console.warn('Could not decode token, proceeding with redirect');
           }
           
-           // If user fetch fails, still proceed with token
-           setStatus("LinkedIn connected! Redirecting...");
-           setTimeout(() => {
-             const successMessage = message || "LinkedIn+connected+successfully";
-             router.replace(`/creator/settings?linkedin=success&message=${successMessage}`);
-           }, 1500);
+          setStatus("Successfully logged in! Redirecting...");
+          setTimeout(() => {
+            const successMessage = message || "LinkedIn+connected+and+logged+in+successfully";
+            router.replace(`/creator/settings?linkedin=success&message=${successMessage}`);
+          }, 1500);
           
          } catch (err) {
            console.error('Error during auto-login:', err);

@@ -19,26 +19,18 @@ function GoogleCallbackContent() {
 
     // Handle direct success with session token from backend
     if (success === "success" && token) {
-      // Fetch user profile to complete authentication
-      fetch('/api/auth/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      // With HttpOnly cookies, tokens are handled server-side
+      // We only need to update user data from the token
+      try {
+        // Decode the token to get user data (since it's already verified by backend)
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload && payload.id) {
+          cookieAuthUtils.updateUserData(payload);
         }
-      })
-      .then(response => response.json())
-      .then(userData => {
-        if (userData.success && userData.data) {
-          // With HttpOnly cookies, tokens are handled server-side
-          // We only need to update user data
-          cookieAuthUtils.updateUserData(userData.data.user);
-        }
-        router.replace("/creator/dashboard");
-      })
-      .catch(() => {
-        // With HttpOnly cookies, tokens are handled server-side
-        router.replace("/creator/dashboard");
-      });
+      } catch (err) {
+        console.warn('Could not decode token, proceeding with redirect');
+      }
+      router.replace("/creator/dashboard");
       return;
     }
 
