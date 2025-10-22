@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import { apiRequest } from '@/lib/apiClient';
 import type { Bid, BidListResponse, BidResponse } from '@/types/bid';
 
@@ -17,6 +17,7 @@ export function useBids(initialParams: ListParams = {}) {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasFetched, setHasFetched] = useState(false);
 
   const fetchBids = useCallback(async (overrides: ListParams = {}) => {
     setLoading(true);
@@ -30,6 +31,7 @@ export function useBids(initialParams: ListParams = {}) {
       const res = await apiRequest<BidListResponse>(`/api/bids?${query}`);
       setData(res.data.bids);
       setTotal(res.data.pagination.total);
+      setHasFetched(true);
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : 'Failed to load bids';
       setError(errorMessage);
@@ -41,6 +43,13 @@ export function useBids(initialParams: ListParams = {}) {
   const updateParams = useCallback((next: Partial<ListParams>) => {
     setParams(prev => ({ ...prev, ...next }));
   }, []);
+
+  // Auto-fetch on mount
+  useEffect(() => {
+    if (!hasFetched) {
+      fetchBids();
+    }
+  }, [hasFetched, fetchBids]);
 
   return useMemo(() => ({ data, total, loading, error, params, setParams: updateParams, refetch: fetchBids }), [data, total, loading, error, params, updateParams, fetchBids]);
 }

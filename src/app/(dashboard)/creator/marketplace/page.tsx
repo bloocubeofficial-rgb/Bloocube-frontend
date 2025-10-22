@@ -1,21 +1,52 @@
 "use client";
 import { useMemo, useState, useEffect } from 'react';
 import { useCampaigns } from '@/hooks/useCampaigns';
-import { createBidApi } from '@/hooks/useBids';
+import { useBids, createBidApi } from '@/hooks/useBids';
 import type { Campaign } from '@/types/campaign';
 import { cookieAuthUtils } from '@/lib/cookieAuth';
-import { Search, Filter, IndianRupee, Calendar, Users, Globe } from 'lucide-react';
+import { Search, Filter, IndianRupee, Calendar, Users, Globe, CheckCircle, Clock, XCircle } from 'lucide-react';
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 
 export default function CreatorMarketplacePage() {
   const { data: campaigns, loading, error, params, setParams, refetch } = useCampaigns({ status: 'active', limit: 10 });
+  const { data: bids, loading: bidsLoading, refetch: refetchBids } = useBids({});
   const [placing, setPlacing] = useState<string | null>(null);
   const [proposal, setProposal] = useState('');
+  const [amountInput, setAmountInput] = useState<string>('');
   const [amount, setAmount] = useState<number>(0);
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+    const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const user = (cookieAuthUtils.getUser?.() as { role?: string } | null) || null;
   const isCreator = user?.role === 'creator';
   const [search, setSearch] = useState('');
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Helper function to get bid status for a campaign
+  const getBidStatus = (campaignId: string) => {
+    const userBid = bids.find(bid => {
+      // Handle both string and object campaign_id
+      const bidCampaignId = typeof bid.campaign_id === 'string' 
+        ? bid.campaign_id 
+        : bid.campaign_id?._id;
+      
+      console.log('Comparing:', {
+        campaignId,
+        bidCampaignId,
+        bidId: bid._id,
+        match: bidCampaignId === campaignId
+      });
+      
+      return bidCampaignId === campaignId;
+    });
+    
+    console.log('Bid status result:', {
+      campaignId,
+      foundBid: userBid,
+      status: userBid?.status || 'not_applied'
+    });
+    
+    if (!userBid) return { status: 'not_applied', bid: null };
+    return { status: userBid.status, bid: userBid };
+  };
 
   const filtered = useMemo(() => {
     if (!search.trim()) return campaigns;
@@ -41,9 +72,38 @@ export default function CreatorMarketplacePage() {
     return () => clearTimeout(id);
   }, [search, setParams]);
 
+  // Auto-dismiss messages after 5 seconds
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        setMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
+  // Fetch bids when component mounts
+  useEffect(() => {
+    if (isCreator) {
+      refetchBids();
+    }
+  }, [isCreator, refetchBids]);
+
+  // Debug: Log bids data when it changes
+  useEffect(() => {
+    console.log('Bids data updated:', {
+      bidsCount: bids.length,
+      bids: bids.map(b => ({
+        id: b._id,
+        campaign_id: b.campaign_id,
+        status: b.status
+      }))
+    });
+  }, [bids]);
+
   const placeBid = async () => {
     if (!isCreator) {
-      alert('Only creator accounts can place bids. Please login as a creator.');
+      setMessage({ type: 'error', text: 'Only creator accounts can place bids. Please login as a creator.' });
       return;
     }
     if (!selectedCampaign) return;
@@ -52,12 +112,14 @@ export default function CreatorMarketplacePage() {
       await createBidApi({ campaign_id: selectedCampaign._id, proposal_text: proposal, bid_amount: amount, currency: 'INR' });
       setProposal('');
       setAmount(0);
+      setAmountInput('');
       setSelectedCampaign(null);
       await refetch();
-      alert('Bid submitted');
+      await refetchBids(); // Refresh bids to show updated status
+      setMessage({ type: 'success', text: 'Bid submitted successfully!' });
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : 'Failed to place bid';
-      alert(errorMessage);
+      setMessage({ type: 'error', text: errorMessage });
     } finally {
       setPlacing(null);
     }
@@ -72,8 +134,8 @@ export default function CreatorMarketplacePage() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="hidden md:block text-3xl font-bold text-gray-900">Creator Marketplace</h1>
-            <p className="hidden md:block mt-2 text-gray-600">Discover and bid on exciting brand campaigns</p>
+            <h1 className="hidden md:block text-3xl font-bold text-gray-300">Creator Marketplace</h1>
+            <p className="hidden md:block mt-2 text-gray-400">Discover and bid on exciting brand campaigns</p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="relative">
@@ -89,6 +151,34 @@ export default function CreatorMarketplacePage() {
           </div>
         </div>
       </div>
+
+
+    
+      {/* Message Display */}
+      {message && (
+        <div className={`mb-6 p-4 rounded-lg border ${
+          message.type === 'success' 
+            ? 'bg-green-50 border-green-200 text-green-800' 
+            : 'bg-red-50 border-red-200 text-red-800'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              {message.type === 'success' ? (
+                <CheckCircle className="w-5 h-5 mr-2" />
+              ) : (
+                <XCircle className="w-5 h-5 mr-2" />
+              )}
+              <span className="font-medium">{message.text}</span>
+            </div>
+            <button
+              onClick={() => setMessage(null)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <XCircle className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Enhanced Filters Section */}
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50 p-6 mb-8 hover:shadow-md transition-all duration-200">
@@ -109,9 +199,9 @@ export default function CreatorMarketplacePage() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-2">
-            <label className="block text-sm text-black font-medium text-gray-700">Platform</label>
+            <label className="block text-sm font-medium text-gray-700">Platform</label>
             <select 
-              className="w-full border text-black border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200" 
+              className="w-full border  border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200" 
               value={params.platform || ''} 
               onChange={e => setParams({ platform: e.target.value || undefined })}
             >
@@ -127,7 +217,7 @@ export default function CreatorMarketplacePage() {
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">Sort By</label>
             <select 
-              className="w-full border text-black border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200" 
+              className="w-full border  border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200" 
               value={params.sort || '-createdAt'} 
               onChange={e => setParams({ sort: e.target.value })}
             >
@@ -141,7 +231,7 @@ export default function CreatorMarketplacePage() {
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">Budget Range</label>
             <select 
-              className="w-full border text-black border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200"
+              className="w-full border  border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200"
               defaultValue=""
             >
               <option value="">Any Budget</option>
@@ -155,7 +245,7 @@ export default function CreatorMarketplacePage() {
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">Campaign Type</label>
             <select 
-              className="w-full border text-black border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200"
+              className="w-full border  border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200"
               defaultValue=""
             >
               <option value="">All Types</option>
@@ -187,10 +277,12 @@ export default function CreatorMarketplacePage() {
       </div>
 
       {/* Loading and Error States */}
-      {loading && (
+      {(loading || bidsLoading) && (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-3 text-gray-600">Loading campaigns...</span>
+          <span className="ml-3 text-gray-600">
+            {loading ? 'Loading campaigns...' : 'Loading bid status...'}
+          </span>
         </div>
       )}
       
@@ -212,15 +304,37 @@ export default function CreatorMarketplacePage() {
 
       {/* Campaigns Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filtered.map(c => (
-          <div key={c._id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-200">
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{c.title}</h3>
-                  <p className="text-sm text-gray-600 line-clamp-3">{c.description}</p>
+        {filtered.map(c => {
+          const bidStatus = getBidStatus(c._id);
+          console.log('Rendering campaign:', c.title, 'bid status:', bidStatus);
+          return (
+            <div key={c._id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-200">
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900">{c.title}</h3>
+                      {/* Bid Status Badge - Always show */}
+                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        bidStatus.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                        bidStatus.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                        bidStatus.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        bidStatus.status === 'not_applied' ? 'bg-gray-100 text-gray-600' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {bidStatus.status === 'accepted' && <CheckCircle className="w-3 h-3 mr-1" />}
+                        {bidStatus.status === 'rejected' && <XCircle className="w-3 h-3 mr-1" />}
+                        {bidStatus.status === 'pending' && <Clock className="w-3 h-3 mr-1" />}
+                        {bidStatus.status === 'not_applied' && <XCircle className="w-3 h-3 mr-1" />}
+                        {bidStatus.status === 'accepted' ? 'Accepted' :
+                         bidStatus.status === 'rejected' ? 'Rejected' :
+                         bidStatus.status === 'pending' ? 'Pending' :
+                         bidStatus.status === 'not_applied' ? 'Not Applied' : 'Applied'}
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 line-clamp-3">{c.description}</p>
+                  </div>
                 </div>
-              </div>
               
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center text-green-600">
@@ -253,19 +367,35 @@ export default function CreatorMarketplacePage() {
                   <span>Target: {(c as Campaign & { targetAudience?: string }).targetAudience || 'General'}</span>
                 </div>
                 <button 
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200" 
-                  disabled={!isCreator} 
-                  onClick={() => setSelectedCampaign(c)}
+                  className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 ${
+                    bidStatus.status === 'accepted' 
+                      ? 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100 focus:ring-green-500' :
+                    bidStatus.status === 'rejected' 
+                      ? 'border-red-300 text-red-700 bg-red-50 hover:bg-red-100 focus:ring-red-500' :
+                    bidStatus.status === 'pending' 
+                      ? 'border-yellow-300 text-yellow-700 bg-yellow-50 hover:bg-yellow-100 focus:ring-yellow-500' :
+                    bidStatus.status !== 'not_applied'
+                      ? 'border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 focus:ring-blue-500' :
+                    'border-transparent text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  disabled={!isCreator || bidStatus.status !== 'not_applied'} 
+                  onClick={() => bidStatus.status === 'not_applied' ? setSelectedCampaign(c) : null}
                 >
-                  {isCreator ? 'Place Bid' : 'Login Required'}
+                  {!isCreator ? 'Login Required' :
+                   bidStatus.status === 'accepted' ? 'Accepted ✓' :
+                   bidStatus.status === 'rejected' ? 'Rejected ✗' :
+                   bidStatus.status === 'pending' ? 'Pending ⏳' :
+                   bidStatus.status !== 'not_applied' ? 'Applied ✓' :
+                   'Place Bid'}
                 </button>
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
-      {filtered.length === 0 && !loading && (
+      {filtered.length === 0 && !loading && !bidsLoading && (
         <div className="text-center py-12">
           <div className="mx-auto h-12 w-12 text-gray-400">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -313,22 +443,27 @@ export default function CreatorMarketplacePage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Bid Amount (INR)
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IndianRupee className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input 
-                    type="number" 
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                    value={amount} 
-                    onChange={e => setAmount(Number(e.target.value))}
-                    placeholder="0"
-                  />
-                </div>
-              </div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Bid Amount (INR)
+  </label>
+  <div className="relative">
+    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <IndianRupee className="h-5 w-5 text-gray-400" />
+    </div>
+    <input
+      type="number"
+      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      value={amountInput}
+      onChange={(e) => {
+        const val = e.target.value;
+        setAmountInput(val);
+        setAmount(val ? Number(val) : 0);  // only update numeric when valid
+      }}
+      placeholder="0"
+    />
+  </div>
+</div>
+
             </div>
 
             <div className="flex justify-end space-x-3 mt-6">
