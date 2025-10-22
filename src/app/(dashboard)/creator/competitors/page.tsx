@@ -357,8 +357,8 @@ const CompetitorAnalysisPage = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="hidden md:block text-3xl font-bold text-gray-900">Competitors</h1>
-            <p className="hidden md:block mt-2 text-gray-800">Analyze your competitors and discover growth opportunities</p>
+            <h1 className="hidden md:block text-3xl font-bold text-gray-300">Competitors</h1>
+            <p className="hidden md:block mt-2 text-gray-400">Analyze your competitors and discover growth opportunities</p>
           </div>
           <div className="flex items-center space-x-4">
             <Link href="/creator/competitors/analyze">
