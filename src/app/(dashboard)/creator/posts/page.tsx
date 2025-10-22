@@ -97,7 +97,12 @@ const PLATFORM_CONFIGS = {
         options: ["public", "unlisted", "private"],
         default: "public",
       },
-      thumbnail: { required: false, type: "file" },
+      thumbnail: { 
+        required: false, 
+        type: "file",
+        placeholder: "Upload custom thumbnail (optional)",
+        accept: "image/*"
+      },
     },
   },
   twitter: {
@@ -998,6 +1003,10 @@ export default function PostsPage() {
 
         // Add platform-specific content
         if (selectedPlatform === "youtube") {
+          // Detect if this is a YouTube Short (vertical video, typically under 60 seconds)
+          const isShort = selectedPostType === "short" || 
+            (mediaFiles.length > 0 && mediaFiles[0].type.startsWith("video/"));
+          
           // Normalize to backend's expected platformContent.youtube
           postPayload.platform_content = {
             youtube: {
@@ -1010,6 +1019,8 @@ export default function PostsPage() {
                     .filter(Boolean)
                 : [],
               privacy_status: postData.privacy || "public",
+              is_short: isShort,
+              category: postData.category || "Entertainment",
             },
           };
           // Enforce YouTube media constraints early
@@ -1062,6 +1073,11 @@ export default function PostsPage() {
 
         // Append media files under field name 'media' expected by backend upload middleware
         mediaFiles.forEach((file) => formData.append("media", file));
+        
+        // Append thumbnail file if it exists (for YouTube)
+        if (selectedPlatform === "youtube" && postData.thumbnail) {
+          formData.append("thumbnail", postData.thumbnail);
+        }
 
         // Use API base and include auth header to avoid 404/HTML responses
         const { getApiBase } = await import("@/lib/config");
@@ -1217,6 +1233,60 @@ export default function PostsPage() {
     return (
       <div className="space-y-6">
         {Object.entries(config.fields).map(([field, fieldConfig]) => {
+          // Handle file upload fields (like thumbnail)
+          if ((fieldConfig as any).type === "file") {
+            return (
+              <div key={field}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {field.charAt(0).toUpperCase() + field.slice(1)}
+                  {fieldConfig.required && (
+                    <span className="text-red-500">*</span>
+                  )}
+                </label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
+                  <input
+                    type="file"
+                    accept={(fieldConfig as any).accept || "*/*"}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        handleFieldChange(field, file);
+                      }
+                    }}
+                    className="hidden"
+                    id={`${field}-upload`}
+                  />
+                  <label
+                    htmlFor={`${field}-upload`}
+                    className="cursor-pointer block"
+                  >
+                    <Upload size={24} className="mx-auto text-gray-400 mb-2" />
+                    <p className="text-gray-600 mb-1">
+                      {(fieldConfig as any).placeholder || `Upload ${field}`}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {postData[field] ? `Selected: ${(postData[field] as File)?.name}` : "Click to select file"}
+                    </p>
+                  </label>
+                </div>
+                {postData[field] && (
+                  <div className="mt-2 flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <span className="text-sm text-gray-700">
+                      {(postData[field] as File)?.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleFieldChange(field, null)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          }
+
           if ((fieldConfig as any).type === "textarea") {
             return (
               <div key={field}>
@@ -1322,10 +1392,10 @@ export default function PostsPage() {
     >
       {/* Header */}
       <div className="mb-6">
-        <h1 className="hidden md:block text-3xl font-bold text-gray-900">
+        <h1 className="hidden md:block text-3xl font-bold text-gray-300">
           Posts
         </h1>
-        <p className="hidden md:block mt-2 text-gray-600">
+        <p className="hidden md:block mt-2 text-gray-200">
           Create, schedule, and manage your social media content
         </p>
       </div>
@@ -1339,7 +1409,7 @@ export default function PostsPage() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === "create"
                   ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  : "border-transparent text-gray-200 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
               Create Post
@@ -1349,7 +1419,7 @@ export default function PostsPage() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === "drafts"
                   ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  : "border-transparent text-gray-200 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
               Drafts ({drafts.length})
@@ -1359,7 +1429,7 @@ export default function PostsPage() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === "scheduled"
                   ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  : "border-transparent text-gray-200 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
               Scheduled ({scheduledPosts.length})
@@ -1369,7 +1439,7 @@ export default function PostsPage() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === "published"
                   ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  : "border-transparent text-gray-200 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
               Published ({posts.length})
@@ -1380,7 +1450,7 @@ export default function PostsPage() {
 
       {/* Create Post Tab */}
       {activeTab === "create" && (
-        <div className="bg-white rounded-lg shadow-sm border">
+        <div className="bg-white/80 backdrop-blur-sm/80 backdrop-blur-sm rounded-lg shadow-sm border">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">
               Create New Post
@@ -1754,7 +1824,7 @@ export default function PostsPage() {
 
       {/* Drafts Tab */}
       {activeTab === "drafts" && (
-        <div className="bg-white rounded-lg shadow-sm border">
+        <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Drafts</h2>
             <p className="text-sm text-gray-600">
@@ -1782,7 +1852,7 @@ export default function PostsPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white/80 backdrop-blur-sm divide-y divide-gray-200">
                 {drafts.map((post) => (
                   <tr key={post._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
@@ -1861,7 +1931,7 @@ export default function PostsPage() {
 
       {/* Scheduled Posts Tab */}
       {activeTab === "scheduled" && (
-        <div className="bg-white rounded-lg shadow-sm border">
+        <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">
               Scheduled Posts
@@ -1890,7 +1960,7 @@ export default function PostsPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white/80 backdrop-blur-sm divide-y divide-gray-200">
                 {scheduledPosts.map((post) => (
                   <tr key={post._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
@@ -1947,7 +2017,7 @@ export default function PostsPage() {
                         <MoreHorizontal size={16} />
                       </button>
                       {openMenuScheduledId === post._id && (
-                        <div className="absolute right-6 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                        <div className="absolute right-6 mt-2 w-40 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-md shadow-lg z-10">
                           <button
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                             onClick={() => {
@@ -2001,7 +2071,7 @@ export default function PostsPage() {
 
       {/* Published Posts Tab */}
       {activeTab === "published" && (
-        <div className="bg-white rounded-lg shadow-sm border">
+        <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">
               Published Posts
@@ -2032,7 +2102,7 @@ export default function PostsPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white/80 backdrop-blur-sm divide-y divide-gray-200">
                 {posts.map((post) => (
                   <tr key={post._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
@@ -2094,7 +2164,7 @@ export default function PostsPage() {
                         <MoreHorizontal size={16} />
                       </button>
                       {openMenuPublishedId === post._id && (
-                        <div className="absolute right-6 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                        <div className="absolute right-6 mt-2 w-40 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-md shadow-lg z-10">
                           <button
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                             onClick={() => {

@@ -262,14 +262,14 @@ const CompetitorAnalysisPage = () => {
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setSidebarOpen(false)}></div>
           <div className="relative z-50">
-            <Sidebar />
+            <Sidebar sidebarOpen={sidebarOpen} />
           </div>
         </div>
       )}
 
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
-        <Sidebar />
+        <Sidebar sidebarOpen={true} />
       </div>
 
       {/* Main Content */}

@@ -11,7 +11,7 @@ import {
   BarChart3,
   LogOut,
 } from "lucide-react";
-import Sidebar from "./Sidebar";
+import Sidebar from "./Sidebar"; // Make sure this path is correct
 import NotificationDropdown from "./NotificationDropdown";
 import { useRouter } from "next/navigation";
 import { cookieAuthUtils } from "@/lib/cookieAuth";
@@ -77,13 +77,11 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
   const { user } = useAuth();
   const router = useRouter();
 
-  // Derive a safe display name without assuming shape of user
   const displayName =
     ((user as unknown as Record<string, unknown> | null)?.name as string) ||
     ((user as unknown as Record<string, unknown> | null)?.email as string) ||
     "Creator Account";
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -113,35 +111,26 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br via-[#654387] from-[#091536] to-[#0B0819]">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <button
-            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out"
-            onClick={() => setSidebarOpen(false)}
-            onKeyDown={(e) => e.key === "Escape" && setSidebarOpen(false)}
-            aria-label="Close sidebar"
-          />
-          <div className="relative z-50 transform transition-transform duration-300 ease-in-out">
-            <Sidebar />
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="absolute top-4 right-4 p-2 rounded-lg bg-white shadow-lg hover:bg-gray-50 transition-all duration-200 hover:scale-105"
-            >
-              <X className="w-5 h-5 text-gray-600" />
-            </button>
-          </div>
-        </div>
+        <button
+          className="fixed inset-0 z-40 bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+          onKeyDown={(e) => e.key === "Escape" && setSidebarOpen(false)}
+          aria-label="Close sidebar"
+        />
       )}
 
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:block">
-        <Sidebar />
-      </div>
+      {/* FIX 1: Render the Sidebar and pass the sidebarOpen prop to it.
+        This component will now control its own mobile/desktop display.
+      */}
+      <Sidebar sidebarOpen={sidebarOpen} />
 
-      {/* Main Content */}
-      <div className="lg:ml-56">
+      {/* FIX 2: The margin-left MUST match the sidebar's width.
+        Changed from lg:ml-56 to lg:ml-80
+      */}
+      <div className="lg:ml-80">
         {/* Mobile Header */}
         <div className="lg:hidden bg-white/90 backdrop-blur-sm shadow-sm border-b border-gray-200/50 px-3 py-2 flex items-center justify-between sticky top-0 z-[100]">
           <button
@@ -206,9 +195,7 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
         </div>
 
         {/* Enhanced Desktop Header */}
-
         <div className="hidden lg:block bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200/50 overflow-visible relative z-[9999]">
-
           <div className="px-5 py-3">
             <div className="flex justify-between items-center">
               <div className="flex-1">
@@ -309,12 +296,8 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
         </div>
 
         {/* Page Content */}
-
         <div className="p-4 lg:p-5 relative">
-          <div className="max-w-7xl mx-auto ">
-            {children}
-          </div>
-
+          <div className="max-w-7xl mx-auto ">{children}</div>
         </div>
       </div>
     </div>
