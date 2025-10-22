@@ -1392,37 +1392,10 @@ export default function PostsPage() {
 
           <div className="p-6 space-y-6">
             {/* Clear Form Button */}
-            <div className="flex justify-end">
-              <button
-                onClick={clearFormData}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Clear Form
-              </button>
-            </div>
+           
 
             {/* Debug Info */}
-            <div className="bg-gray-50 p-3 rounded-lg text-xs text-gray-600">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div>
-                    Connected Platforms:{" "}
-                    {connectedPlatforms.join(", ") || "None"}
-                  </div>
-                  <div>Selected Platform: {selectedPlatform || "None"}</div>
-                  <div>
-                    Checking Connections: {checkingConnections ? "Yes" : "No"}
-                  </div>
-                </div>
-                <button
-                  onClick={checkPlatformConnections}
-                  className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
-                >
-                  Test Check
-                </button>
-              </div>
-            </div>
-
+        
             {/* Platform Status */}
             <div>
               <div className="flex items-center justify-between mb-4">
