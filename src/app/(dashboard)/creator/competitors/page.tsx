@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, Users, Eye, Heart, MessageCircle, Share2, BarChart3, Target, Zap, Plus, ExternalLink, X } from 'lucide-react';
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
+import { AnalysisResultModal } from '@/Components/AnalysisResultModal';
 //
 import { apiRequest } from '@/lib/apiClient';
 import Link from 'next/link';
@@ -95,6 +96,11 @@ const CompetitorAnalysisPage = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [aiTestStatus, setAiTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [aiTestMessage, setAiTestMessage] = useState<string>('');
+  
+  // Modal state for AI analysis results
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState<any>(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
 
   // Load competitor data and analysis history
   useEffect(() => {
@@ -256,10 +262,13 @@ const CompetitorAnalysisPage = () => {
       setQuickError('Please fetch competitor data first');
       return;
     }
-    setQuickLoading(true);
+    
+    setAnalysisLoading(true);
     setQuickError(null);
+    setShowAnalysisModal(true);
+    
     try {
-      const resp = await apiRequest<{ success: boolean; data: Record<string, unknown> }>(
+      const resp = await apiRequest<{ success: boolean; data: any }>(
         '/api/competitor/analyze',
         {
           method: 'POST',
@@ -281,7 +290,9 @@ const CompetitorAnalysisPage = () => {
           })
         }
       );
+      
       if (resp.success) {
+        setAnalysisResults(resp.data);
         // Update list immediately from returned data
         await loadAnalysisHistory();
         // Reset form
@@ -291,12 +302,14 @@ const CompetitorAnalysisPage = () => {
         setQuickError(null);
       } else {
         setQuickError('Analysis failed. Please try again.');
+        setShowAnalysisModal(false);
       }
     } catch (e: unknown) {
       const err = e as { message?: string } | undefined;
       setQuickError(err?.message || 'Analysis failed. Please try again.');
+      setShowAnalysisModal(false);
     } finally {
-      setQuickLoading(false);
+      setAnalysisLoading(false);
     }
   };
 
@@ -460,10 +473,10 @@ const CompetitorAnalysisPage = () => {
             ) : (
               <button
                 onClick={startQuickAnalysis}
-                disabled={quickLoading}
+                disabled={analysisLoading}
                 className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-800 text-sm"
               >
-                {quickLoading ? 'AI Analyzing…' : 'Start AI Analysis'}
+                {analysisLoading ? 'AI Analyzing…' : 'Start AI Analysis'}
               </button>
             )}
           </div>
@@ -921,6 +934,14 @@ const CompetitorAnalysisPage = () => {
           </div>
         </div>
       )}
+
+      {/* AI Analysis Results Modal */}
+      <AnalysisResultModal
+        isOpen={showAnalysisModal}
+        onClose={() => setShowAnalysisModal(false)}
+        results={analysisResults}
+        loading={analysisLoading}
+      />
     </CreatorLayout>
   );
 };
