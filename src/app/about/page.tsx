@@ -108,7 +108,7 @@ const AboutPage: React.FC = () => {
           {[
             {
               title: "Our Mission",
-              desc: "Empower every team to create, collaborate, and grow—with clarity and speed.",
+              desc: "Empower every team to create, collaborate, and grow—with clarity & speed.",
               icon: (
                 <svg
                   className="w-6 h-6 text-white"
