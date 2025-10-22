@@ -1,23 +1,40 @@
 // src/lib/config.ts
+
+// Helper function to get frontend URL based on environment
+const getFrontendUrl = (): string => {
+  if (typeof window !== 'undefined') {
+    // Client-side: use current origin
+    return window.location.origin;
+  }
+  
+  // Server-side: use environment variable with fallback
+  if (process.env.NODE_ENV === 'production') {
+    return process.env.FRONTEND_URL || 'https://bloocube.com';
+  }
+  return process.env.FRONTEND_URL || 'http://localhost:3000';
+};
+
 export const config = {
   apiUrl: process.env.NEXT_PUBLIC_API_URL,
   appUrl: process.env.NEXT_FRONTEND_API_URL,
   FRONTEND_URL: process.env.FRONTEND_URL,
   twitter: {
-    // callbackUrl: 'http://localhost:3000/auth/twitter/callback'
-    callbackUrl: (process.env.FRONTEND_URL || 'http://localhost:3000') + '/auth/twitter/callback'
+    callbackUrl: getFrontendUrl() + '/auth/twitter/callback'
   },
   youtube: {
-    // callbackUrl: 'http://localhost:3000/auth/youtube/callback'
-    callbackUrl: (process.env.FRONTEND_URL || 'http://localhost:3000') + '/auth/youtube/callback'
+    callbackUrl: getFrontendUrl() + '/auth/youtube/callback'
   },
   instagram: {
-    // callbackUrl: 'http://localhost:3000/auth/instagram/callback'
-    callbackUrl: (process.env.FRONTEND_URL || 'http://localhost:3000') + '/auth/instagram/callback'
+    callbackUrl: getFrontendUrl() + '/auth/instagram/callback'
   },
   facebook: {
-    // callbackUrl: 'http://localhost:3000/auth/facebook/callback'
-    callbackUrl: (process.env.FRONTEND_URL || 'http://localhost:3000') + '/auth/facebook/callback'
+    callbackUrl: getFrontendUrl() + '/auth/facebook/callback'
+  },
+  linkedin: {
+    callbackUrl: getFrontendUrl() + '/auth/linkedin/callback'
+  },
+  google: {
+    callbackUrl: getFrontendUrl() + '/auth/google/callback'
   },
 };
 
