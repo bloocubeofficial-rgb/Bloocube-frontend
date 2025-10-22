@@ -45,10 +45,15 @@ export const cookieAuthUtils = {
     }
   },
 
-  // Check if user is authenticated (based on user data cookie)
+  // Check if user is authenticated (based on user data cookie and HttpOnly cookies)
   isAuthenticated(): boolean {
     const user = this.getUser();
-    return !!user && !!user.id;
+    const hasUserData = !!user && !!user.id;
+    
+    // Also check if we have access token (HttpOnly cookie) - this indicates server-side auth
+    // Note: HttpOnly cookies can't be read by JavaScript, so we rely on user_data cookie
+    // The server sets both user_data and HttpOnly cookies, so user_data should be sufficient
+    return hasUserData;
   },
 
   // Get user role

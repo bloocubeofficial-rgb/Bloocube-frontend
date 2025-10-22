@@ -19,18 +19,32 @@ function GoogleCallbackContent() {
 
     // Handle direct success with session token from backend
     if (success === "success" && token) {
+      console.log('🎉 Google login success, processing token...');
+      
       // With HttpOnly cookies, tokens are handled server-side
       // We only need to update user data from the token
       try {
         // Decode the token to get user data (since it's already verified by backend)
         const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('🔍 Decoded token payload:', payload);
+        
         if (payload && payload.id) {
           cookieAuthUtils.updateUserData(payload);
+          console.log('✅ User data updated in cookies');
         }
       } catch (err) {
-        console.warn('Could not decode token, proceeding with redirect');
+        console.warn('Could not decode token, proceeding with redirect:', err);
       }
-      router.replace("/creator/dashboard");
+      
+      // Check authentication state before redirect
+      const isAuthenticated = cookieAuthUtils.isAuthenticated();
+      console.log('🔐 Authentication check before redirect:', isAuthenticated);
+      
+      // Add a small delay to ensure cookies are set
+      setTimeout(() => {
+        console.log('🚀 Redirecting to dashboard...');
+        router.replace("/creator/dashboard");
+      }, 500);
       return;
     }
 
