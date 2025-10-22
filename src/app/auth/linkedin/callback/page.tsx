@@ -104,15 +104,7 @@ function LinkedInCallbackContent() {
         return;
       }
 
-      // Verify state parameter
-      const storedState = typeof window !== "undefined" ? sessionStorage.getItem("linkedin_state") : null;
-      if (!storedState || storedState !== state) {
-        setStatus("Error: Invalid state parameter");
-        setTimeout(() => {
-          router.replace("/creator/settings?linkedin=error&message=Invalid+state");
-        }, 2000);
-        return;
-      }
+      // State validation is handled by backend - no need to check sessionStorage
 
       // Let backend handle callback via GET redirect (no auth header needed)
       const redirectUri = `${window.location.origin}/auth/linkedin/callback`;

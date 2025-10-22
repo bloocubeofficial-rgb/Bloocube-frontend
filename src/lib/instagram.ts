@@ -31,7 +31,7 @@ class InstagramService {
     return this.request<InstagramAuthResponse>('/api/instagram/auth-url', {
       method: 'POST',
       body: JSON.stringify({ 
-        redirectUri: redirectUri || `${this.baseURL}/api/instagram/callback`
+        redirectUri: redirectUri || `${window.location.origin}/auth/instagram/callback`
       }),
     });
   }

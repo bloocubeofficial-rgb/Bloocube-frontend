@@ -3,6 +3,7 @@
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getApiBase } from "@/lib/config";
+import { cookieAuthUtils } from "@/lib/cookieAuth";
 
 function FacebookCallbackContent() {
   const router = useRouter();
@@ -34,7 +35,7 @@ function FacebookCallbackContent() {
     const redirectUri = `${window.location.origin}/auth/facebook/callback`;
 
     // Ensure user is authenticated before initiating flow
-    const isAuthenticated = typeof window !== "undefined" ? document.cookie.includes('user_data') : false;
+    const isAuthenticated = cookieAuthUtils.isAuthenticated();
     if (!isAuthenticated) {
       const next = typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/auth/facebook/callback";
       router.replace(`/login?next=${encodeURIComponent(next)}`);

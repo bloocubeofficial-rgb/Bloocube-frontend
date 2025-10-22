@@ -3,6 +3,7 @@
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getApiBase } from "@/lib/config";
+import { cookieAuthUtils } from "@/lib/cookieAuth";
 
 function YouTubeCallbackContent() {
   const router = useRouter();
@@ -31,7 +32,7 @@ function YouTubeCallbackContent() {
     // Ensure app JWT exists before initiating flow (auth-url is protected)
     // With HttpOnly cookies, tokens are handled server-side
     // We only need to check if user is authenticated
-    const isAuthenticated = typeof window !== "undefined" ? document.cookie.includes('user_data') : false;
+    const isAuthenticated = cookieAuthUtils.isAuthenticated();
     if (!isAuthenticated) {
       const next = typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/auth/youtube/callback";
       router.replace(`/login?next=${encodeURIComponent(next)}`);

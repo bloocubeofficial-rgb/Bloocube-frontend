@@ -11,16 +11,13 @@ export const useLinkedIn = () => {
   // ✅ Use the specific LinkedInUser type for better type safety
   const [profile, setProfile] = useState<LinkedInUser | null>(null);
 
-  const connect = async () => { // Removed 'redirectUri' since we now have a fixed backend callback
+  const connect = async (redirectUri?: string) => {
     try {
       setLoading(true);
       setError(null);
   
-      // BEFORE:
-      // const callbackUrl = redirectUri || `${window.location.origin}/auth/linkedin/callback`;
-  
-      // ✅ AFTER: Point to your Express backend
-      const callbackUrl = `${getApiBase()}/api/linkedin/callback`;
+      // Use frontend callback URL for LinkedIn OAuth
+      const callbackUrl = redirectUri || `${window.location.origin}/auth/linkedin/callback`;
       
       // This part is important: the redirectUri sent to your backend
       // must be the one that will be used in the final step.
