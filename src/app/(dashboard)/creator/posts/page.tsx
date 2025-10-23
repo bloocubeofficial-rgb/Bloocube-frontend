@@ -1456,7 +1456,7 @@ export default function PostsPage() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === "create"
                   ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-200 hover:text-gray-700 hover:border-gray-300"
+                  : "border-transparent text-gray-200 hover:text-blue-700 hover:border-gray-300"
               }`}
             >
               Create Post
@@ -1466,7 +1466,7 @@ export default function PostsPage() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === "drafts"
                   ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-200 hover:text-gray-700 hover:border-gray-300"
+                  : "border-transparent text-gray-200 hover:text-blue-700 hover:border-gray-300"
               }`}
             >
               Drafts ({drafts.length})
@@ -1476,7 +1476,7 @@ export default function PostsPage() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === "scheduled"
                   ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-200 hover:text-gray-700 hover:border-gray-300"
+                  : "border-transparent text-gray-200 hover:text-blue-700 hover:border-gray-300"
               }`}
             >
               Scheduled ({scheduledPosts.length})
@@ -1802,7 +1802,7 @@ export default function PostsPage() {
 
             <button
               onClick={clearFormData}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors inline-block"
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-800 rounded-lg hover:bg-gray-50 transition-colors inline-block"
             >
               Clear Form
             </button>

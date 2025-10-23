@@ -237,3 +237,6 @@ body {
   display: flex;
   animation: marquee 10s linear infinite;
 }
+.overflow-visible {
+  overflow: visible !important;
+}
