@@ -722,7 +722,53 @@ export default function PostsPage() {
       });
 
       setMediaFiles(validFiles);
+
+      // For YouTube videos, analyze if it might be a Short
+      if (selectedPlatform === "youtube" && validFiles.length > 0) {
+        const videoFile = validFiles[0];
+        analyzeVideoForShorts(videoFile);
+      }
     }
+  };
+
+  // Analyze video file to predict if it will be detected as a YouTube Short
+  const analyzeVideoForShorts = (file: File) => {
+    if (!file.type.startsWith("video/")) return;
+
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    
+    video.onloadedmetadata = () => {
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+      const duration = video.duration;
+      
+      const isVertical = height > width;
+      const isShortDuration = duration <= 60;
+      const isShortResolution = height >= 1080 && width <= 1920;
+      
+      const likelyShorts = isVertical && (isShortDuration || isShortResolution);
+      
+      console.log("🎬 Video analysis preview:", {
+        width,
+        height,
+        duration: duration.toFixed(1) + "s",
+        aspectRatio: (height / width).toFixed(2),
+        isVertical,
+        isShortDuration,
+        isShortResolution,
+        likelyShorts
+      });
+
+      // Show a notification if video is likely to be detected as Shorts
+      if (likelyShorts && selectedPostType !== "short") {
+        setSuccess(
+          `This video appears to be a YouTube Short (${width}x${height}, ${duration.toFixed(1)}s). Consider selecting "Short" as the post type for better optimization.`
+        );
+      }
+    };
+
+    video.src = URL.createObjectURL(file);
   };
 
   const validatePost = () => {
@@ -1003,9 +1049,9 @@ export default function PostsPage() {
 
         // Add platform-specific content
         if (selectedPlatform === "youtube") {
-          // Detect if this is a YouTube Short (vertical video, typically under 60 seconds)
-          const isShort = selectedPostType === "short" || 
-            (mediaFiles.length > 0 && mediaFiles[0].type.startsWith("video/"));
+          // For YouTube, let the backend analyze the video to determine if it's a Short
+          // The frontend just passes the user's selection and lets backend do the analysis
+          const isShort = selectedPostType === "short";
           
           // Normalize to backend's expected platformContent.youtube
           postPayload.platform_content = {
@@ -1023,6 +1069,7 @@ export default function PostsPage() {
               category: postData.category || "Entertainment",
             },
           };
+          
           // Enforce YouTube media constraints early
           if (
             mediaFiles.length !== 1 ||
