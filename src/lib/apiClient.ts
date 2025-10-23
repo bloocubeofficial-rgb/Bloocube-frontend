@@ -2,7 +2,7 @@ import { measureApiCall } from '@/lib/performance';
 import { loadingManager } from '@/lib/loading';
 import { getApiBase } from '@/lib/config';
 
-type TokenPair = { accessToken: string; refreshToken: string; expiresIn: number };
+// type TokenPair = { accessToken: string; refreshToken: string; expiresIn: number };
 
 // Request cache for GET requests
 const requestCache = new Map<string, { data: unknown; timestamp: number; ttl: number }>();
@@ -126,14 +126,19 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
           console.log('✅ Token refreshed successfully, retrying request');
           return apiRequest<T>(path, init, retries - 1);
         } else {
-          console.log('❌ Token refresh failed, redirecting to login');
+          console.log('❌ Token refresh failed, clearing auth and redirecting');
           if (typeof window !== 'undefined') {
             // Clear user data cookie
             const { cookieAuthUtils } = await import('@/lib/cookieAuth');
             cookieAuthUtils.clearAuth();
-            window.location.href = '/login';
+            // Trigger auth sync to update UI
+            window.dispatchEvent(new CustomEvent('authChange'));
+            // Only redirect if not already on login page
+            if (!window.location.pathname.includes('/login')) {
+              window.location.href = '/login';
+            }
           }
-          throw new Error('Authentication failed');
+          throw new Error('Authentication failed - please sign in again');
         }
       }
 

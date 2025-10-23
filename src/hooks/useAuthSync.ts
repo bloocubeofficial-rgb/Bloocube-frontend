@@ -8,27 +8,43 @@ export function useAuthSync() {
 
   // Memoized auth check to prevent unnecessary re-renders
   const checkAuth = useCallback(() => {
-    const userData = cookieAuthUtils.getUser();
-    const newIsAuthenticated = cookieAuthUtils.isAuthenticated();
-    
-    // Only update state if values actually changed
-    setIsAuthenticated(prev => {
-      if (prev !== newIsAuthenticated) {
-        console.log('🔄 Auth state changed:', { was: prev, now: newIsAuthenticated });
-        return newIsAuthenticated;
+    try {
+      const userData = cookieAuthUtils.getUser();
+      const newIsAuthenticated = cookieAuthUtils.isAuthenticated();
+      
+      // Enhanced debugging for authentication issues
+      if (!userData && !newIsAuthenticated) {
+        console.warn('🔍 No authentication data found:', {
+          hasUserData: !!userData,
+          isAuthenticated: newIsAuthenticated,
+          cookies: typeof document !== 'undefined' ? document.cookie : 'SSR'
+        });
       }
-      return prev;
-    });
-    
-    setUser(prev => {
-      if (JSON.stringify(prev) !== JSON.stringify(userData)) {
-        console.log('🔄 User data changed:', { was: prev, now: userData });
-        return userData;
-      }
-      return prev;
-    });
-    
-    setIsLoading(false);
+      
+      // Only update state if values actually changed
+      setIsAuthenticated(prev => {
+        if (prev !== newIsAuthenticated) {
+          console.log('🔄 Auth state changed:', { was: prev, now: newIsAuthenticated, userData });
+          return newIsAuthenticated;
+        }
+        return prev;
+      });
+      
+      setUser(prev => {
+        if (JSON.stringify(prev) !== JSON.stringify(userData)) {
+          console.log('🔄 User data changed:', { was: prev, now: userData });
+          return userData;
+        }
+        return prev;
+      });
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error('❌ Error checking authentication:', error);
+      setIsAuthenticated(false);
+      setUser(null);
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {

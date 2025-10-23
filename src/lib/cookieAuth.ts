@@ -21,17 +21,27 @@ export const cookieAuthUtils = {
   getUser(): Record<string, unknown> | null {
     if (typeof window === 'undefined') return null;
     
-    // Check cache first
-    if (userCache && Date.now() - userCache.timestamp < CACHE_DURATION) {
-      return userCache.user;
-    }
-    
-    // Read from cookie
-    const userCookie = this.getCookie('user_data');
-    if (!userCookie) return null;
-    
     try {
+      // Check cache first
+      if (userCache && Date.now() - userCache.timestamp < CACHE_DURATION) {
+        return userCache.user;
+      }
+      
+      // Read from cookie
+      const userCookie = this.getCookie('user_data');
+      if (!userCookie) {
+        console.log('🔍 No user_data cookie found');
+        return null;
+      }
+      
       const user = JSON.parse(userCookie);
+      
+      // Validate user data structure
+      if (!user || typeof user !== 'object' || !user.id) {
+        console.warn('⚠️ Invalid user data in cookie:', user);
+        this.deleteCookie('user_data');
+        return null;
+      }
       
       // Update cache
       userCache = {
@@ -40,7 +50,11 @@ export const cookieAuthUtils = {
       };
       
       return user;
-    } catch {
+    } catch (error) {
+      console.error('❌ Error parsing user data from cookie:', error);
+      // Clear corrupted cookie
+      this.deleteCookie('user_data');
+      userCache = null;
       return null;
     }
   },
@@ -190,7 +204,8 @@ export const cookieAuthUtils = {
         hasUserData: !!userData,
         hasAccessToken: !!accessToken,
         hasRefreshToken: !!refreshToken,
-        userDataPreview: userData ? userData.substring(0, 50) + '...' : 'none'
+        userDataPreview: userData ? userData.substring(0, 50) + '...' : 'none',
+        allCookies: document.cookie.split(';').map(c => c.trim())
       },
       cache: userCache ? {
         hasUser: !!userCache.user,
@@ -203,8 +218,29 @@ export const cookieAuthUtils = {
         isAuthenticated: this.isAuthenticated(),
         getUserRole: this.getUserRole(),
         isAdmin: this.isAdmin()
+      },
+      environment: {
+        nodeEnv: process.env.NODE_ENV,
+        apiUrl: process.env.NEXT_PUBLIC_API_URL
       }
     });
+  },
+
+  // Force authentication refresh
+  forceAuthRefresh(): void {
+    if (typeof window === 'undefined') return;
+    
+    console.log('🔄 Forcing authentication refresh...');
+    userCache = null;
+    this.triggerAuthSync();
+    
+    // Try to refresh user data
+    const user = this.getUser();
+    if (user) {
+      console.log('✅ User data refreshed:', user);
+    } else {
+      console.warn('⚠️ No user data available after refresh');
+    }
   }
 };
 
@@ -213,4 +249,5 @@ if (typeof window !== 'undefined') {
   (window as unknown as Record<string, unknown>).debugCookieAuth = () => cookieAuthUtils.debugAuthState();
   (window as unknown as Record<string, unknown>).clearUserCache = () => cookieAuthUtils.clearCache();
   (window as unknown as Record<string, unknown>).forceRefreshUser = () => cookieAuthUtils.forceRefreshUser();
+  (window as unknown as Record<string, unknown>).forceAuthRefresh = () => cookieAuthUtils.forceAuthRefresh();
 }

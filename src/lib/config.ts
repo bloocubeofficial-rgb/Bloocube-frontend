@@ -48,7 +48,9 @@ export const getApiBase = (): string => {
   const base = runtime || process.env.NEXT_PUBLIC_API_URL;
   
   if (!base) {
-    throw new Error('NEXT_PUBLIC_API_URL is not set. Configure it in your deployment env or .env.local');
+    console.warn('⚠️ NEXT_PUBLIC_API_URL is not set. Using fallback configuration.');
+    // Fallback to production API URL
+    return 'https://api-backend.bloocube.com';
   }
   return base.replace(/\/+$/, '');
 };

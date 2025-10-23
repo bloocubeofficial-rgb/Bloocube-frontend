@@ -1,7 +1,8 @@
-"use client";
+ "use client";
 import { useEffect, useMemo, useState } from 'react';
 import { createCampaign, updateCampaignApi } from '@/hooks/useCampaigns';
 import type { Campaign } from '@/types/campaign';
+import type { Bid } from '@/types/bid';
 import { acceptBidApi, rejectBidApi } from '@/hooks/useBids';
 import { campaignService } from '@/lib/campaignService';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,7 +33,7 @@ export default function BrandCampaignsPage() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [bidsLoading, setBidsLoading] = useState(false);
   const [bidsError, setBidsError] = useState<string | null>(null);
-  const [bids, setBids] = useState<import('@/types/bid').Bid[]>([]);
+  const [bids, setBids] = useState<Bid[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showDrafts, setShowDrafts] = useState(false);
   const [editingDraft, setEditingDraft] = useState<Campaign | null>(null);
@@ -53,12 +54,43 @@ export default function BrandCampaignsPage() {
     try {
       setLoading(true);
       setError(null);
+      
+      // Enhanced authentication check with better error handling
+      if (!user) {
+        console.warn('🔄 No user data available, waiting for authentication...');
+        // Wait a bit for authentication to load
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!user) {
+          throw new Error('Authentication required. Please sign in to access campaigns.');
+        }
+      }
+      
       const brandId = user?.id;
-      if (!brandId) throw new Error('Brand not authenticated');
+      if (!brandId) {
+        console.error('🚫 User authenticated but missing ID:', { user });
+        throw new Error('User ID not found. Please refresh the page or sign in again.');
+      }
+      
+      console.log('✅ Fetching campaigns for brand:', brandId);
       const res = await campaignService.listByBrand(String(brandId), { limit: 20 });
       setCampaigns(res.data.campaigns || []);
     } catch (e: unknown) {
-      setError((e as Error)?.message || 'Failed to load campaigns');
+      const error = e as Error;
+      console.error('❌ Failed to load campaigns:', error);
+      
+      // More specific error messages based on error type
+      let errorMessage = 'Failed to load campaigns';
+      if (error.message.includes('Authentication required')) {
+        errorMessage = 'Please sign in to access your campaigns';
+      } else if (error.message.includes('User ID not found')) {
+        errorMessage = 'Authentication issue detected. Please refresh the page.';
+      } else if (error.message.includes('Network') || error.message.includes('fetch')) {
+        errorMessage = 'Unable to connect to server. Please check your connection.';
+      } else {
+        errorMessage = error.message || 'Failed to load campaigns';
+      }
+      
+      setError(errorMessage);
       setCampaigns([]);
     } finally {
       setLoading(false);
@@ -67,9 +99,16 @@ export default function BrandCampaignsPage() {
   };
 
   useEffect(() => {
-    refetch();
+    // Only refetch when user is available and authenticated
+    if (user && user.id && user.role === 'brand') {
+      refetch();
+    } else if (!isLoading && user === null) {
+      // If authentication is complete but no user, show error
+      setError('Authentication required. Please sign in to access campaigns.');
+      setInitialLoading(false);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user, isLoading]);
 
   useEffect(() => {
     (async () => {
@@ -127,7 +166,16 @@ export default function BrandCampaignsPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
         <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">{isLoading ? 'Authenticating...' : 'Loading campaigns...'}</p>
+          <p className="text-gray-600">
+            {isLoading ? 'Authenticating...' : 
+             initialLoading ? 'Loading campaigns...' : 
+             'Please wait...'}
+          </p>
+          {!user && (
+            <p className="text-sm text-gray-500 mt-2">
+              Checking authentication status...
+            </p>
+          )}
         </div>
       </div>
     );
@@ -801,8 +849,34 @@ export default function BrandCampaignsPage() {
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <div className="ml-3">
+                <div className="ml-3 flex-1">
                   <p className="text-sm text-red-800">{error}</p>
+                  {error.includes('Authentication') && (
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        onClick={() => {
+                          setError(null);
+                          setInitialLoading(true);
+                          refetch();
+                        }}
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors"
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Retry
+                      </button>
+                      <button
+                        onClick={() => window.location.reload()}
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors"
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Refresh Page
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -956,100 +1030,96 @@ export default function BrandCampaignsPage() {
               )}
               
               {!bidsLoading && !bidsError && bids.length > 0 && (
-                    <div className="space-y-4">
-                  {bids.map(b => (
-                    <div key={b._id} className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          {/* Creator identity */}
-                          <div className="mb-2 text-sm text-gray-500">
-                            {(() => {
-                              const creator = (b as any).creator_id as any;
-                              const name = creator && typeof creator === 'object' ? (creator.name || creator.email || '') : '';
-                              const handle = creator?.socialAccounts?.instagram?.username || creator?.socialAccounts?.twitter?.username || '';
-                              if (name && handle) return `${name} • @${handle}`;
-                              if (name) return String(name);
-                              if (handle) return `@${handle}`;
-                              return 'Creator';
-                            })()}
+                <div className="space-y-4">
+                  {bids.map((bid: any) => (
+                    <div key={bid._id} className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-blue-600 font-semibold text-sm">C</span>
                           </div>
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="text-2xl font-bold text-gray-900">
-                              ₹{b.bid_amount.toLocaleString()}
-                            </div>
-                            <span className="text-sm text-gray-500">{b.currency}</span>
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              New Proposal
-                            </span>
+                          <div>
+                            <h3 className="font-medium text-gray-900">Creator Proposal</h3>
+                            <p className="text-sm text-gray-500">Bid ID: {bid._id}</p>
                           </div>
-                          <div className="text-sm text-gray-700 leading-relaxed">
-                            {b.proposal_text}
-                          </div>
-
-                          {/* Creator Social Profiles for campaign-selected platforms */}
-                          {typeof (b as any).creator_id === 'object' && (b as any).creator_id?.socialAccounts && (
-                            <div className="mt-4">
-                              <div className="text-xs text-gray-500 mb-1">Creator Profiles</div>
-                              <div className="flex flex-wrap gap-2">
-                                {(() => {
-                                  const sa = (b as any).creator_id.socialAccounts as Record<string, any>;
-                                  const selectedPlatforms = Array.isArray((b as any).campaign_id?.requirements?.platforms)
-                                    ? (b as any).campaign_id.requirements.platforms as string[]
-                                    : [];
-                                  const items: Array<{ label: string; url?: string; handle?: string }> = [];
-                                  const pushIfSelected = (platform: string, label: string) => {
-                                    if (!selectedPlatforms.includes(platform)) return;
-                                    items.push({ label });
-                                  };
-                                  if (sa.instagram?.username) pushIfSelected('instagram', `Instagram: @${sa.instagram.username}`);
-                                  if (sa.twitter?.username) pushIfSelected('twitter', `X: @${sa.twitter.username}`);
-                                  if (sa.youtube?.customUrl || sa.youtube?.title) pushIfSelected('youtube', `YouTube: ${sa.youtube.customUrl || sa.youtube.title}`);
-                                  if (sa.linkedin?.username || sa.linkedin?.name) pushIfSelected('linkedin', `LinkedIn: ${sa.linkedin.username || sa.linkedin.name}`);
-                                  if (sa.facebook?.username || sa.facebook?.name) pushIfSelected('facebook', `Facebook: ${sa.facebook.username || sa.facebook.name}`);
-                                  return items.length
-                                    ? items.map((it, idx) => (
-                                        <span key={idx} className="inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-md text-xs text-gray-700">
-                                          {it.label}
-                                        </span>
-                                      ))
-                                    : null;
-                                })()}
-                              </div>
-                            </div>
-                          )}
                         </div>
-                        <div className="ml-6 flex flex-col gap-2">
-                          <button 
-                            disabled={bidActionsLoading[`accept_${b._id}`] || bidActionsLoading[`reject_${b._id}`]}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            onClick={() => onAccept(selectedCampaignId, b._id)}
-                          >
-                            {bidActionsLoading[`accept_${b._id}`] ? (
-                              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                            ) : (
-                            <CheckIcon className="h-4 w-4" />
-                            )}
-                            {bidActionsLoading[`accept_${b._id}`] ? 'Accepting...' : 'Accept'}
-                          </button>
-                          <button 
-                            disabled={bidActionsLoading[`accept_${b._id}`] || bidActionsLoading[`reject_${b._id}`]}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            onClick={() => onReject(selectedCampaignId, b._id)}
-                          >
-                            {bidActionsLoading[`reject_${b._id}`] ? (
-                              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                            ) : (
-                            <XMarkIcon className="h-4 w-4" />
-                            )}
-                            {bidActionsLoading[`reject_${b._id}`] ? 'Rejecting...' : 'Reject'}
-                          </button>
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                          bid.status === 'accepted' 
+                            ? 'bg-green-100 text-green-800' 
+                            : bid.status === 'rejected' 
+                            ? 'bg-red-100 text-red-800'
+                            : bid.status === 'completed'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {bid.status === 'accepted' 
+                            ? 'Accepted' 
+                            : bid.status === 'rejected' 
+                            ? 'Rejected'
+                            : bid.status === 'completed'
+                            ? 'Completed'
+                            : 'New'
+                          }
+                        </span>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <div className="flex items-center space-x-4">
+                          <div className="text-2xl font-bold text-gray-900">
+                            ₹{bid.bid_amount ? bid.bid_amount.toLocaleString() : '0'}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {bid.currency || 'INR'}
+                          </div>
                         </div>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-700">
+                          {bid.proposal_text || 'No proposal details available'}
+                        </p>
+                      </div>
+                      
+                      <div className="flex space-x-3">
+                        {bid.status === 'accepted' ? (
+                          <div className="flex items-center space-x-2 px-4 py-2 bg-green-100 text-green-800 text-sm font-medium rounded-lg">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            <span>Accepted</span>
+                          </div>
+                        ) : bid.status === 'rejected' ? (
+                          <div className="flex items-center space-x-2 px-4 py-2 bg-red-100 text-red-800 text-sm font-medium rounded-lg">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                            <span>Rejected</span>
+                          </div>
+                        ) : bid.status === 'completed' ? (
+                          <div className="flex items-center space-x-2 px-4 py-2 bg-blue-100 text-blue-800 text-sm font-medium rounded-lg">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            <span>Completed</span>
+                          </div>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => onAccept(selectedCampaignId, bid._id)}
+                              disabled={bidActionsLoading[`accept_${bid._id}`] || bidActionsLoading[`reject_${bid._id}`]}
+                              className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {bidActionsLoading[`accept_${bid._id}`] ? 'Accepting...' : 'Accept Bid'}
+                            </button>
+                            <button
+                              onClick={() => onReject(selectedCampaignId, bid._id)}
+                              disabled={bidActionsLoading[`accept_${bid._id}`] || bidActionsLoading[`reject_${bid._id}`]}
+                              className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {bidActionsLoading[`reject_${bid._id}`] ? 'Rejecting...' : 'Reject Bid'}
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
