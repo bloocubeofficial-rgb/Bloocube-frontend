@@ -92,12 +92,12 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-300 via-indigo-500/30 to-purple-400">
+    <div className="min-h-screen bg-gradient-to-br via-[#654387] from-[#091536] to-[#0B0819]">
       <div className="flex h-screen">
         {/* Sidebar */}
         <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-80 bg-white/95 backdrop-blur-2xl shadow-2xl border-r border-gray-200/30 flex flex-col transition-all duration-700 ease-out`}>
           {/* Logo */}
-          <div className="p-8 border-b border-gray-200/30 bg-gradient-to-br from-blue-600/5 via-purple-600/5 to-indigo-600/5 relative overflow-hidden">
+          <div className="p-8 border-b border-gray-200/30 bg-gradient-to-br via-[#654387] from-[#091536] to-[#0B0819]  relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5"></div>
             <div className="relative z-10 flex items-center justify-center">
               <div className="relative w-20 h-20">

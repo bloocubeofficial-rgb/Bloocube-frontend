@@ -160,23 +160,10 @@ async uploadVideo(
   // Check if YouTube is connected
   async isConnected(): Promise<boolean> {
     try {
-      console.log('🔍 Checking YouTube connection status...');
-      const channel = await this.getChannelInfo();
-      const isConnected = channel.success;
-      console.log('📊 YouTube connection status:', isConnected ? 'Connected' : 'Not connected');
-      return isConnected;
+      // Prefer lightweight status endpoint to avoid API calls and token refresh
+      const status = await this.request<{ success: boolean; connected: boolean }>('/api/youtube/status');
+      return !!(status && status.success && status.connected);
     } catch (error: unknown) {
-      const errorMessage = (error as Error).message || 'Unknown error';
-      console.log('⚠️ YouTube connection check failed:', errorMessage);
-      
-      // If it's a "not connected" error, that's expected and not a real error
-      if (errorMessage.includes('YouTube account not connected')) {
-        console.log('ℹ️ YouTube account not connected (expected)');
-        return false;
-      }
-      
-      // For other errors, log them but still return false
-      console.warn('❌ YouTube connection check failed with unexpected error:', errorMessage);
       return false;
     }
   }
