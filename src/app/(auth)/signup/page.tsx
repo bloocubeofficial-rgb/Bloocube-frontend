@@ -348,7 +348,7 @@ const SignupForm: React.FC = () => {
                 id="role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="h-11 w-full bg-[#201F2E] border-white/10 text-white placeholder:text-zinc-500 rounded-xl focus:ring-2 focus:ring-indigo-500/30"
+                className="h-11 w-full bg-white/5 border-white/10 text-gray-600 placeholder:text-zinc-500 rounded-xl focus:ring-2 focus:ring-gray-500/30"
               >
                 <option value="" disabled className="text-zinc-100">
                   Select your role...
