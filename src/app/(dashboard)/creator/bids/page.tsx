@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useBids } from "@/hooks/useBids";
+import { useCampaigns } from "@/hooks/useCampaigns";
 import type { Bid } from "@/types/bid";
 import { cookieAuthUtils } from "@/lib/cookieAuth";
 import CreatorLayout from "@/Components/Creater/CreatorLayout";
@@ -9,12 +10,37 @@ import { IndianRupee, Circle } from "lucide-react";
 export default function CreatorBidsPage() {
   const { data: bids, loading, error, refetch, setParams } = useBids({ limit: 20 });
   const [formError, setFormError] = useState<string | null>(null);
+  const { data: campaigns, loading: campaignsLoading, error: campaignsError, refetch: refetchCampaigns } = useCampaigns({ status: 'active', limit: 100 });
 
   const userId = useMemo(() => cookieAuthUtils.getUser?.()?._id || null, []);
 
   useEffect(() => {
     refetch();
   }, [refetch]);
+
+  const stats = useMemo(() => {
+    const total = bids.length;
+    const byStatus = bids.reduce((acc, b) => {
+      const key = b.status || 'unknown';
+      acc[key] = (acc[key] || 0) as number + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    const distinctCampaignIds = new Set(
+      bids
+        .map((b) => (typeof b.campaign_id === 'string' ? b.campaign_id : (b.campaign_id as any)?._id))
+        .filter(Boolean)
+    );
+    const available = Math.max(0, (campaigns?.length || 0) - distinctCampaignIds.size);
+    return {
+      total,
+      available,
+      pending: byStatus['pending'] || 0,
+      accepted: byStatus['accepted'] || 0,
+      rejected: byStatus['rejected'] || 0,
+      completed: byStatus['completed'] || 0,
+      withdrawn: byStatus['withdrawn'] || 0,
+    };
+  }, [bids, campaigns]);
 
   // Creators place bids from the Marketplace or campaign detail pages.
 
@@ -26,16 +52,44 @@ export default function CreatorBidsPage() {
           Creators can place bids from the Marketplace or a campaign’s detail page. This view shows your submitted bids.
         </div>
 
+        {/* Summary Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="bg-white rounded-xl border border-gray-200/70 p-4 shadow-sm">
+            <div className="text-xs text-gray-500 mb-1">Applied</div>
+            <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200/70 p-4 shadow-sm">
+            <div className="text-xs text-gray-500 mb-1">Available</div>
+            <div className="text-2xl font-bold text-gray-900">{stats.available}</div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200/70 p-4 shadow-sm">
+            <div className="text-xs text-gray-500 mb-1">Pending</div>
+            <div className="text-2xl font-bold text-amber-700">{stats.pending}</div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200/70 p-4 shadow-sm">
+            <div className="text-xs text-gray-500 mb-1">Accepted</div>
+            <div className="text-2xl font-bold text-green-700">{stats.accepted}</div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200/70 p-4 shadow-sm">
+            <div className="text-xs text-gray-500 mb-1">Rejected</div>
+            <div className="text-2xl font-bold text-red-700">{stats.rejected}</div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200/70 p-4 shadow-sm">
+            <div className="text-xs text-gray-500 mb-1">Completed</div>
+            <div className="text-2xl font-bold text-blue-700">{stats.completed}</div>
+          </div>
+        </div>
+
         {/* Bids List */}
         <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-gray-900">My Bids</h2>
-              {loading && <span className="text-xs text-gray-500">Loading...</span>}
+              {(loading || campaignsLoading) && <span className="text-xs text-gray-500">Loading...</span>}
             </div>
             <div>
               <button
-                onClick={() => refetch()}
+                onClick={() => Promise.allSettled([refetch(), refetchCampaigns()])}
                 className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
               >
                 Refresh

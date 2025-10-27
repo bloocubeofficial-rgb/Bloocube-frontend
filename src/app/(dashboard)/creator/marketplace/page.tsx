@@ -110,13 +110,15 @@ export default function CreatorMarketplacePage() {
     try {
       setPlacing(selectedCampaign._id);
       await createBidApi({ campaign_id: selectedCampaign._id, proposal_text: proposal, bid_amount: amount, currency: 'INR' });
+      // Close the modal immediately on success
+      setSelectedCampaign(null);
+      setMessage({ type: 'success', text: 'Bid submitted successfully!' });
+      // Reset inputs
       setProposal('');
       setAmount(0);
       setAmountInput('');
-      setSelectedCampaign(null);
-      await refetch();
-      await refetchBids(); // Refresh bids to show updated status
-      setMessage({ type: 'success', text: 'Bid submitted successfully!' });
+      // Refresh data in the background
+      void Promise.allSettled([refetch(), refetchBids()]);
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : 'Failed to place bid';
       setMessage({ type: 'error', text: errorMessage });
