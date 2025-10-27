@@ -12,7 +12,8 @@ import {
   InstagramInsights,
   InstagramMediaResponse,
   InstagramPostData,
-  InstagramValidationResponse
+  InstagramValidationResponse,
+  
 } from '@/types/instagram';
 
 class InstagramService {
