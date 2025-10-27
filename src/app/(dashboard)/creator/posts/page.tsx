@@ -47,7 +47,7 @@ const PLATFORM_CONFIGS = {
     name: "Instagram",
     icon: Instagram,
     color: "pink",
-    postTypes: ["post", "story", "reel", "carousel"],
+    postTypes: ["post", "story", "reel"],
     maxCaptionLength: 2200,
     supportedMedia: ["image", "video"],
     fields: {
@@ -97,8 +97,8 @@ const PLATFORM_CONFIGS = {
         options: ["public", "unlisted", "private"],
         default: "public",
       },
-      thumbnail: { 
-        required: false, 
+      thumbnail: {
+        required: false,
         type: "file",
         placeholder: "Upload custom thumbnail (optional)",
         accept: "image/*"
@@ -506,7 +506,7 @@ export default function PostsPage() {
       // Check each platform individually using their services (same as settings page)
       const [twitterConnected, facebookConnected, instagramConnected, youtubeConnected] = await Promise.all([
         twitterService.isConnected(),
-        facebookService.isConnected(), 
+        facebookService.isConnected(),
         instagramService.isConnected(),
         youtubeService.isConnected()
       ]);
@@ -633,7 +633,7 @@ export default function PostsPage() {
   // Load posts on component mount
   useEffect(() => {
     loadPosts();
-    checkYouTubeConnection();
+    // checkYouTubeConnection();
     checkPlatformConnections();
   }, []);
 
@@ -716,8 +716,8 @@ export default function PostsPage() {
         const fileType = file.type.startsWith("image/")
           ? "image"
           : file.type.startsWith("video/")
-          ? "video"
-          : "other";
+            ? "video"
+            : "other";
         return config.supportedMedia.includes(fileType);
       });
 
@@ -737,18 +737,18 @@ export default function PostsPage() {
 
     const video = document.createElement("video");
     video.preload = "metadata";
-    
+
     video.onloadedmetadata = () => {
       const width = video.videoWidth;
       const height = video.videoHeight;
       const duration = video.duration;
-      
+
       const isVertical = height > width;
       const isShortDuration = duration <= 60;
       const isShortResolution = height >= 1080 && width <= 1920;
-      
+
       const likelyShorts = isVertical && (isShortDuration || isShortResolution);
-      
+
       console.log("🎬 Video analysis preview:", {
         width,
         height,
@@ -786,8 +786,7 @@ export default function PostsPage() {
         (!postData[field] || postData[field].toString().trim().length === 0)
       ) {
         throw new Error(
-          `${field.charAt(0).toUpperCase() + field.slice(1)} is required for ${
-            config.name
+          `${field.charAt(0).toUpperCase() + field.slice(1)} is required for ${config.name
           }`
         );
       }
@@ -867,12 +866,11 @@ export default function PostsPage() {
         const fileType = file.type.startsWith("image/")
           ? "image"
           : file.type.startsWith("video/")
-          ? "video"
-          : "other";
+            ? "video"
+            : "other";
         if (!config.supportedMedia.includes(fileType)) {
           throw new Error(
-            `File ${index + 1} (${file.name}) is not supported for ${
-              config.name
+            `File ${index + 1} (${file.name}) is not supported for ${config.name
             }`
           );
         }
@@ -897,15 +895,15 @@ export default function PostsPage() {
         caption: postData.content || "",
         hashtags: postData.hashtags
           ? postData.hashtags
-              .split(",")
-              .map((h: string) => h.trim())
-              .filter(Boolean)
+            .split(",")
+            .map((h: string) => h.trim())
+            .filter(Boolean)
           : [],
         mentions: postData.mentions
           ? postData.mentions
-              .split(",")
-              .map((m: string) => m.trim())
-              .filter(Boolean)
+            .split(",")
+            .map((m: string) => m.trim())
+            .filter(Boolean)
           : [],
       },
     };
@@ -986,10 +984,9 @@ export default function PostsPage() {
         console.log("🎭 Mock mode: Simulating post creation");
         await new Promise((resolve) => setTimeout(resolve, 1000));
         setSuccess(
-          `Post ${
-            action === "draft"
-              ? "saved as draft"
-              : action === "publish"
+          `Post ${action === "draft"
+            ? "saved as draft"
+            : action === "publish"
               ? "published"
               : "scheduled"
           } successfully! (Mock Mode)`
@@ -1007,6 +1004,30 @@ export default function PostsPage() {
           selectedPostType,
           mediaFiles
         );
+      } else if (selectedPlatform === "instagram") {
+        postPayload = {
+          platform: selectedPlatform,
+          post_type: selectedPostType,
+          status: "draft", // Always create as draft first
+          content: {
+            caption: postData.caption || "",
+            hashtags: postData.hashtags ? postData.hashtags.split(",").map((h: string) => h.trim()).filter(Boolean) : [],
+            mentions: postData.mentions ? postData.mentions.split(",").map((m: string) => m.trim()).filter(Boolean) : [],
+          },
+          title: postData.caption || "Instagram Post", // Use caption for title consistency on backend
+          media: mediaFiles.length > 0 ? mediaFiles.map(file => ({
+            filename: file.name,
+            type: file.type.startsWith("image/") ? "image" : "video",
+            size: file.size,
+            mimeType: file.type,
+          })) : [],
+          platformContent: {
+            instagram: {
+              location: postData.location || null,
+              altText: postData.altText || null,
+            }
+          }
+        };
       } else {
         // Generic payload for other platforms
         const actualContent =
@@ -1020,30 +1041,30 @@ export default function PostsPage() {
             caption: actualContent.trim(),
             hashtags: postData.hashtags
               ? postData.hashtags
-                  .split(",")
-                  .map((h: string) => h.trim())
-                  .filter(Boolean)
+                .split(",")
+                .map((h: string) => h.trim())
+                .filter(Boolean)
               : [],
             mentions: postData.mentions
               ? postData.mentions
-                  .split(",")
-                  .map((m: string) => m.trim())
-                  .filter(Boolean)
+                .split(",")
+                .map((m: string) => m.trim())
+                .filter(Boolean)
               : [],
           },
           title: actualContent.trim(),
           media:
             mediaFiles.length > 0
               ? mediaFiles.map((file) => ({
-                  filename: file.name,
-                  // ✅ FIX: Convert the full MIME type to the simple type
-                  type: file.type.startsWith("image/")
-                    ? "image"
-                    : file.type.startsWith("video/")
+                filename: file.name,
+                // ✅ FIX: Convert the full MIME type to the simple type
+                type: file.type.startsWith("image/")
+                  ? "image"
+                  : file.type.startsWith("video/")
                     ? "video"
                     : "document",
-                  size: file.size,
-                }))
+                size: file.size,
+              }))
               : [],
         };
 
@@ -1052,7 +1073,7 @@ export default function PostsPage() {
           // For YouTube, let the backend analyze the video to determine if it's a Short
           // The frontend just passes the user's selection and lets backend do the analysis
           const isShort = selectedPostType === "short";
-          
+
           // Normalize to backend's expected platformContent.youtube
           postPayload.platform_content = {
             youtube: {
@@ -1060,16 +1081,16 @@ export default function PostsPage() {
               description: postData.description?.trim() || "",
               tags: postData.tags
                 ? postData.tags
-                    .split(",")
-                    .map((t: string) => t.trim())
-                    .filter(Boolean)
+                  .split(",")
+                  .map((t: string) => t.trim())
+                  .filter(Boolean)
                 : [],
               privacy_status: postData.privacy || "public",
               is_short: isShort,
               category: postData.category || "Entertainment",
             },
           };
-          
+
           // Enforce YouTube media constraints early
           if (
             mediaFiles.length !== 1 ||
@@ -1108,8 +1129,8 @@ export default function PostsPage() {
         const platformContent = postPayload.platform_content
           ? postPayload.platform_content
           : postPayload.youtube_content
-          ? { youtube: postPayload.youtube_content }
-          : {};
+            ? { youtube: postPayload.youtube_content }
+            : {};
         if (Object.keys(platformContent).length > 0) {
           formData.append("platformContent", JSON.stringify(platformContent));
         }
@@ -1120,7 +1141,7 @@ export default function PostsPage() {
 
         // Append media files under field name 'media' expected by backend upload middleware
         mediaFiles.forEach((file) => formData.append("media", file));
-        
+
         // Append thumbnail file if it exists (for YouTube)
         if (selectedPlatform === "youtube" && postData.thumbnail) {
           formData.append("thumbnail", postData.thumbnail);
@@ -1150,8 +1171,8 @@ export default function PostsPage() {
             const errJson = JSON.parse(text);
             throw new Error(
               errJson?.message ||
-                errJson?.error ||
-                `Request failed with status ${res.status}`
+              errJson?.error ||
+              `Request failed with status ${res.status}`
             );
           } catch {
             throw new Error(text || `Request failed with status ${res.status}`);
@@ -1182,10 +1203,9 @@ export default function PostsPage() {
       if (!postId) {
         console.warn("⚠️ No post ID found in response:", response);
         setSuccess(
-          `Post ${
-            action === "draft"
-              ? "saved as draft"
-              : action === "publish"
+          `Post ${action === "draft"
+            ? "saved as draft"
+            : action === "publish"
               ? "published"
               : "scheduled"
           } successfully!`
@@ -1448,52 +1468,7 @@ export default function PostsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab("create")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "create"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-200 hover:text-blue-700 hover:border-gray-300"
-              }`}
-            >
-              Create Post
-            </button>
-            <button
-              onClick={() => setActiveTab("drafts")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "drafts"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-200 hover:text-blue-700 hover:border-gray-300"
-              }`}
-            >
-              Drafts ({drafts.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("scheduled")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "scheduled"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-200 hover:text-blue-700 hover:border-gray-300"
-              }`}
-            >
-              Scheduled ({scheduledPosts.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("published")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "published"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-200 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Published ({posts.length})
-            </button>
-          </nav>
-        </div>
-      </div>
+    
 
       {/* Create Post Tab */}
       {activeTab === "create" && (
@@ -1509,10 +1484,10 @@ export default function PostsPage() {
 
           <div className="p-6 space-y-6">
             {/* Clear Form Button */}
-           
+
 
             {/* Debug Info */}
-        
+
             {/* Platform Status */}
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -1544,11 +1519,10 @@ export default function PostsPage() {
                   return (
                     <div
                       key={platform}
-                      className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                        isSelected
+                      className={`p-4 rounded-lg border-2 transition-all duration-200 ${isSelected
                           ? `border-${config.color}-500 bg-${config.color}-50 shadow-md`
                           : "border-gray-200 bg-gray-50"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center space-x-3">
                         <div className="relative">
@@ -1616,11 +1590,10 @@ export default function PostsPage() {
                     <button
                       key={type}
                       onClick={() => handlePostTypeSelect(type)}
-                      className={`px-4 py-2 rounded-lg border transition-colors ${
-                        selectedPostType === type
+                      className={`px-4 py-2 rounded-lg border transition-colors ${selectedPostType === type
                           ? "border-blue-500 bg-blue-50 text-blue-700"
                           : "border-gray-300 hover:border-gray-400 text-gray-700"
-                      }`}
+                        }`}
                     >
                       {type.charAt(0).toUpperCase() + type.slice(1)}
                     </button>
@@ -1928,16 +1901,15 @@ export default function PostsPage() {
                       {post.updatedAt
                         ? new Date(post.updatedAt as any).toLocaleString()
                         : (post as any).createdAt
-                        ? new Date((post as any).createdAt).toLocaleString()
-                        : "-"}
+                          ? new Date((post as any).createdAt).toLocaleString()
+                          : "-"}
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                          post.status === "failed"
+                        className={`inline-flex px-2 py-1 text-xs rounded-full ${post.status === "failed"
                             ? "bg-red-100 text-red-800"
                             : "bg-gray-100 text-gray-800"
-                        }`}
+                          }`}
                       >
                         {post.status}
                       </span>
@@ -2035,15 +2007,15 @@ export default function PostsPage() {
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {post.scheduling?.scheduled_at
                         ? new Date(
-                            post.scheduling.scheduled_at
-                          ).toLocaleString()
+                          post.scheduling.scheduled_at
+                        ).toLocaleString()
                         : post.scheduling?.scheduled_for
-                        ? new Date(
+                          ? new Date(
                             post.scheduling.scheduled_for
                           ).toLocaleString()
-                        : (post as any).scheduledAt
-                        ? new Date((post as any).scheduledAt).toLocaleString()
-                        : "Not scheduled"}
+                          : (post as any).scheduledAt
+                            ? new Date((post as any).scheduledAt).toLocaleString()
+                            : "Not scheduled"}
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
@@ -2177,8 +2149,8 @@ export default function PostsPage() {
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {post.publishing?.published_at
                         ? new Date(
-                            post.publishing.published_at
-                          ).toLocaleString()
+                          post.publishing.published_at
+                        ).toLocaleString()
                         : "Unknown"}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
