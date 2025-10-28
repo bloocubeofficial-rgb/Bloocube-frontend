@@ -79,13 +79,13 @@ const Sidebar = React.memo(({ sidebarOpen }: SidebarProps) => {
   return (
     // This className controls the mobile slide-in and fixed width
     <aside 
-      className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed left-0 top-0 z-50 w-80 h-screen bg-white/95 backdrop-blur-2xl shadow-2xl border-r border-gray-200/30 flex flex-col transition-all duration-700 ease-out`}
+      className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed left-0 top-0 z-50 w-64 sm:w-72 md:w-80 h-screen bg-white/95 backdrop-blur-2xl shadow-2xl border-r border-gray-200/30 flex flex-col transition-transform duration-500 ease-out will-change-transform`}
     >
       {/* Logo */}
-      <div className="p-8 border-b border-gray-200/30 bg-gradient-to-br via-[#654387] from-[#091536] to-[#0B0819] relative overflow-hidden">
+      <div className="p-6 sm:p-7 md:p-8 border-b border-gray-200/30 bg-gradient-to-br via-[#654387] from-[#091536] to-[#0B0819] relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5"></div>
         <div className="relative z-10 flex items-center justify-center">
-          <div className="relative w-24 h-24">
+          <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24">
             <Image
               src="/logo.png"
               alt="Bloocube Logo"
@@ -101,8 +101,8 @@ const Sidebar = React.memo(({ sidebarOpen }: SidebarProps) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-8 px-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-100">
-        <div className="space-y-3">
+      <nav className="flex-1 py-5 md:py-8 px-3 sm:px-4 md:px-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-100 [scrollbar-width:thin]">
+        <div className="space-y-2 md:space-y-3">
           {sidebarItems.map(item => {
             const isActive = isItemActive(item);
             return (
@@ -117,7 +117,7 @@ const Sidebar = React.memo(({ sidebarOpen }: SidebarProps) => {
                     <div className="absolute -inset-1 bg-white/20 rounded-lg blur-sm"></div>
                   )}
                 </div>
-                <span className="ml-4 font-medium">{item.name}</span>
+                <span className="ml-3 md:ml-4 font-medium truncate">{item.name}</span>
                 {isActive && (
                   <div className="ml-auto flex items-center gap-2">
                     <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
@@ -131,15 +131,15 @@ const Sidebar = React.memo(({ sidebarOpen }: SidebarProps) => {
       </nav>
 
       {/* User Profile */}
-      <div className="p-6 border-t border-gray-200/30 bg-gradient-to-r from-gray-50/30 to-blue-50/20">
-        <div className="flex items-center gap-4 p-5 rounded-2xl bg-white/90 backdrop-blur-sm shadow-xl border border-gray-200/30 hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] group">
+      <div className="p-4 md:p-6 border-t border-gray-200/30 bg-gradient-to-r from-gray-50/30 to-blue-50/20">
+        <div className="flex items-center gap-3 md:gap-4 p-3.5 md:p-5 rounded-2xl bg-white/90 backdrop-blur-sm shadow-xl border border-gray-200/30 hover:shadow-2xl transition-all duration-300 hover:scale-[1.01] group">
           <div className="relative">
             {user === null ? (
-              <div className="w-12 h-12 bg-gray-200 rounded-2xl flex items-center justify-center animate-pulse">
-                <User className="w-6 h-6 text-gray-400" />
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-200 rounded-2xl flex items-center justify-center animate-pulse">
+                <User className="w-5 h-5 md:w-6 md:h-6 text-gray-400" />
               </div>
             ) : user?.avatar_url ? (
-              <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300">
                 <Image
                   src={user.avatar_url}
                   alt={user.name || 'User Avatar'}
@@ -149,31 +149,31 @@ const Sidebar = React.memo(({ sidebarOpen }: SidebarProps) => {
                 />
               </div>
             ) : (
-              <div className="w-12 h-12 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <User className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+                <User className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
             )}
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-sm"></div>
+            <div className="absolute -bottom-1 -right-1 w-3 h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-2 border-white shadow-sm"></div>
           </div>
           <div className="flex-1 min-w-0">
             {user === null ? (
               <div className="space-y-2">
-                <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-3.5 md:h-4 bg-gray-200 rounded animate-pulse"></div>
                 <div className="h-3 bg-gray-200 rounded animate-pulse w-3/4"></div>
               </div>
             ) : (
               <div className="space-y-1">
-                <p className="text-sm font-bold text-gray-900 truncate">
+                <p className="text-sm md:text-base font-bold text-gray-900 truncate">
                   {user?.name || 'Creator Account'}
                 </p>
-                <p className="text-xs text-gray-500 truncate font-medium">
+                <p className="text-xs md:text-sm text-gray-500 truncate font-medium">
                   {user?.email || 'creator@bloocube.com'}
                 </p>
               </div>
             )}
           </div>
-          <button onClick={onLogout} className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-300 hover:scale-110 group">
-            <LogOut className="w-5 h-5" />
+          <button onClick={onLogout} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-300 hover:scale-105 group">
+            <LogOut className="w-4 h-4 md:w-5 md:h-5" />
           </button>
         </div>
       </div>

@@ -1458,11 +1458,11 @@ export default function PostsPage() {
       headerActions={headerActions}
     >
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="hidden md:block text-3xl font-bold text-gray-300">
+      <div className="mb-4 md:mb-6">
+        <h1 className="hidden md:block text-2xl md:text-3xl font-bold text-gray-300">
           Posts
         </h1>
-        <p className="hidden md:block mt-2 text-gray-200">
+        <p className="hidden md:block mt-1 md:mt-2 text-gray-200">
           Create, schedule, and manage your social media content
         </p>
       </div>
@@ -1472,8 +1472,8 @@ export default function PostsPage() {
 
       {/* Create Post Tab */}
       {activeTab === "create" && (
-        <div className="bg-white/80 backdrop-blur-sm/80 backdrop-blur-sm rounded-lg shadow-sm border">
-          <div className="p-6 border-b border-gray-200">
+        <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border">
+          <div className="p-4 md:p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">
               Create New Post
             </h2>
@@ -1482,7 +1482,7 @@ export default function PostsPage() {
             </p>
           </div>
 
-          <div className="p-6 space-y-6">
+          <div className="p-4 md:p-6 space-y-6">
             {/* Clear Form Button */}
 
 
@@ -1490,14 +1490,14 @@ export default function PostsPage() {
 
             {/* Platform Status */}
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3 md:mb-4 flex-wrap gap-2">
                 <h3 className="text-sm font-medium text-gray-700">
                   Platform Status
                 </h3>
                 <button
                   onClick={checkPlatformConnections}
                   disabled={checkingConnections}
-                  className="px-3 py-1 text-xs text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                  className="px-3 py-1 text-xs text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 w-full sm:w-auto justify-center"
                 >
                   {checkingConnections ? (
                     <>
@@ -1510,7 +1510,7 @@ export default function PostsPage() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                 {Object.entries(PLATFORM_CONFIGS).map(([platform, config]) => {
                   const IconComponent = config.icon;
                   const isConnected = connectedPlatforms.includes(platform);
@@ -1590,7 +1590,7 @@ export default function PostsPage() {
                     <button
                       key={type}
                       onClick={() => handlePostTypeSelect(type)}
-                      className={`px-4 py-2 rounded-lg border transition-colors ${selectedPostType === type
+                      className={`px-3 md:px-4 py-2 rounded-lg border transition-colors ${selectedPostType === type
                           ? "border-blue-500 bg-blue-50 text-blue-700"
                           : "border-gray-300 hover:border-gray-400 text-gray-700"
                         }`}
@@ -1608,7 +1608,7 @@ export default function PostsPage() {
                 <h3 className="text-sm font-medium text-gray-700 mb-3">
                   Media Upload
                 </h3>
-                <label className="block border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
+                <label className="block border-2 border-dashed border-gray-300 rounded-lg p-6 md:p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
                   <Upload size={24} className="mx-auto text-gray-400 mb-2" />
                   <p className="text-gray-600 mb-1">
                     Upload{" "}
@@ -1775,7 +1775,7 @@ export default function PostsPage() {
 
             <button
               onClick={clearFormData}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-800 rounded-lg hover:bg-gray-50 transition-colors inline-block"
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-800 rounded-lg hover:bg-gray-50 transition-colors inline-block w-full sm:w-auto text-center"
             >
               Clear Form
             </button>
@@ -1788,7 +1788,7 @@ export default function PostsPage() {
                     loading ||
                     (selectedPlatform === "youtube" && !youtubeConnected)
                   }
-                  className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
                 >
                   <Save size={16} />
                   <span>Save Draft</span>
@@ -1801,7 +1801,7 @@ export default function PostsPage() {
                       loading ||
                       (selectedPlatform === "youtube" && !youtubeConnected)
                     }
-                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
                   >
                     <Clock size={16} />
                     <span>{loading ? "Scheduling..." : "Schedule Post"}</span>
@@ -1813,7 +1813,7 @@ export default function PostsPage() {
                       loading ||
                       (selectedPlatform === "youtube" && !youtubeConnected)
                     }
-                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
                   >
                     <Send size={16} />
                     <span>{loading ? "Publishing..." : "Publish Now"}</span>

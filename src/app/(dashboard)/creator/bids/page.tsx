@@ -46,14 +46,14 @@ export default function CreatorBidsPage() {
 
   return (
     <CreatorLayout title="My Bids" subtitle="Manage and track your bids">
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-6">
         {/* Info Banner: where to bid */}
         <div className="bg-gradient-to-r from-blue-50/80 to-purple-50/80 border border-blue-100 rounded-2xl p-4 text-sm text-gray-700">
           Creators can place bids from the Marketplace or a campaign’s detail page. This view shows your submitted bids.
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
           <div className="bg-white rounded-xl border border-gray-200/70 p-4 shadow-sm">
             <div className="text-xs text-gray-500 mb-1">Applied</div>
             <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
@@ -81,8 +81,8 @@ export default function CreatorBidsPage() {
         </div>
 
         {/* Bids List */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-gray-200/50 shadow-sm">
+          <div className="flex items-center justify-between mb-3 md:mb-4 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-gray-900">My Bids</h2>
               {(loading || campaignsLoading) && <span className="text-xs text-gray-500">Loading...</span>}
@@ -90,7 +90,7 @@ export default function CreatorBidsPage() {
             <div>
               <button
                 onClick={() => Promise.allSettled([refetch(), refetchCampaigns()])}
-                className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors w-full sm:w-auto"
               >
                 Refresh
               </button>
@@ -99,7 +99,7 @@ export default function CreatorBidsPage() {
 
           {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
             {bids.map((b: Bid) => (
               <div key={b._id} className="bg-white rounded-xl border border-gray-200/70 p-4 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between">

@@ -395,7 +395,7 @@ function SettingsPageContent() {
             ? 'bg-red-50/80 border-red-200/50 text-red-800 shadow-sm'
             : 'bg-yellow-50/80 border-yellow-200/50 text-yellow-800 shadow-sm'
         }`}>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center space-x-3">
               <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
                 notification.type === 'success' ? 'bg-green-100' : 
@@ -536,7 +536,7 @@ function SettingsPageContent() {
                   <button
                     onClick={changePassword}
                     disabled={saving || !formData.currentPassword || !formData.newPassword}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                   >
                     {saving ? 'Updating...' : 'Update Password'}
                   </button>
@@ -584,11 +584,11 @@ function SettingsPageContent() {
                 </div>
               </div>
 
-              <div className="flex space-x-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={saveProfile}
                   disabled={saving}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                 >
                   {saving ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -599,7 +599,7 @@ function SettingsPageContent() {
                     setProfilePhone('');
                     setProfileData({});
                   }}
-                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-700 rounded-md hover:bg-gray-50 transition-colors w-full sm:w-auto text-center"
                 >
                   Clear Form
                 </button>
@@ -698,14 +698,14 @@ function SettingsPageContent() {
             
             <div className="space-y-4">
               <div className="p-4 border border-red-200 rounded-lg bg-red-50/50">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-3">
                   <div>
                     <h3 className="font-medium text-red-900">Delete Account</h3>
                     <p className="text-sm text-red-700">Once you delete your account, there is no going back. Please be certain.</p>
                   </div>
                   <button
                     onClick={() => setShowDeleteModal(true)}
-                    className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors text-sm font-medium"
+                    className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors text-sm font-medium w-full sm:w-auto"
                   >
                     Delete Account
                   </button>
@@ -739,7 +739,7 @@ function SettingsPageContent() {
                 placeholder="••••••••••••"
               />
             </div>
-            <div className="flex space-x-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
                 className="flex-1 bg-gray-700 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-800 transition-colors"

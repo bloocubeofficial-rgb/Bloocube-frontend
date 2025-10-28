@@ -166,7 +166,7 @@ export default function CreatorNotificationsPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-gray-200/50 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <div className="flex items-center space-x-3">
               <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl">
                 <Bell className="w-6 h-6 text-white" />
@@ -182,7 +182,7 @@ export default function CreatorNotificationsPage() {
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 w-full sm:w-auto sm:justify-end">
               <button
                 onClick={handleRefresh}
                 disabled={loading}
@@ -193,7 +193,7 @@ export default function CreatorNotificationsPage() {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2 w-full sm:w-auto justify-center"
                 >
                   <Check className="w-4 h-4" />
                   <span>Mark all read</span>
@@ -280,7 +280,7 @@ export default function CreatorNotificationsPage() {
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between flex-wrap gap-3">
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">
                         {notification.title}
@@ -291,13 +291,13 @@ export default function CreatorNotificationsPage() {
                     </div>
                     
                     {/* Priority Badge */}
-                    <div className={`ml-4 px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(notification.priority)}`}>
+                    <div className={`ml-4 px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(notification.priority)} shrink-0`}> 
                       {getPriorityIcon(notification.priority)} {notification.priority}
                     </div>
                   </div>
 
                   {/* Time and Actions */}
-                  <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
                     <div className="flex items-center space-x-4">
                       <span className="text-sm text-gray-500 flex items-center gap-1">
                         <Clock className="w-3 h-3" />
@@ -310,11 +310,11 @@ export default function CreatorNotificationsPage() {
                       )}
                     </div>
                     
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 w-full sm:w-auto sm:justify-end">
                       {!notification.isRead && (
                         <button
                           onClick={() => markAsRead(notification._id)}
-                          className="px-3 py-1 text-sm text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors duration-200 flex items-center space-x-1"
+                          className="px-3 py-1 text-sm text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors duration-200 flex items-center space-x-1 w-full sm:w-auto justify-center"
                         >
                           <Check className="w-4 h-4" />
                           <span>Mark read</span>
@@ -323,7 +323,7 @@ export default function CreatorNotificationsPage() {
                       
                       <button
                         onClick={() => deleteNotification(notification._id)}
-                        className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200 flex items-center space-x-1"
+                        className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200 flex items-center space-x-1 w-full sm:w-auto justify-center"
                       >
                         <Trash2 className="w-4 h-4" />
                         <span>Delete</span>

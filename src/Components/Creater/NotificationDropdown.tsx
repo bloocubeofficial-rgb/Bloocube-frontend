@@ -127,7 +127,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
 
       {isOpen && (
 
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-[10000] max-h-96 overflow-hidden">
+        <div className="absolute right-1 md:right-0 mt-2 w-80 md:w-96 max-w-[90vw] bg-white rounded-xl shadow-xl border border-gray-200 z-[10000] max-h-[70vh] md:max-h-96 overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
             <div className="flex items-center justify-between">
@@ -154,7 +154,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
           </div>
 
           {/* Content */}
-          <div className="max-h-80 overflow-y-auto">
+          <div className="max-h-[60vh] md:max-h-80 overflow-y-auto">
             {loading && (
               <div className="p-4 text-center">
                 <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent mx-auto"></div>
@@ -197,7 +197,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-900 line-clamp-1">
                               {notification.title}
@@ -209,7 +209,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
 
                           {/* Priority Badge */}
                           <div
-                            className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(
+                            className={`ml-2 px-2 py-1 rounded-full text-xs font-medium shrink-0 ${getPriorityColor(
                               notification.priority
                             )}`}
                           >
@@ -227,10 +227,10 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
                             {!notification.isRead && (
                               <button
                                 onClick={() => markAsRead(notification._id)}
-                                className="p-1 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors duration-200"
+                                className="p-2 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors duration-200"
                                 title="Mark as read"
                               >
-                                <Check className="w-3 h-3" />
+                                <Check className="w-4 h-4" />
                               </button>
                             )}
 
@@ -238,10 +238,10 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
                               onClick={() =>
                                 deleteNotification(notification._id)
                               }
-                              className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors duration-200"
+                              className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors duration-200"
                               title="Delete notification"
                             >
-                              <Trash2 className="w-3 h-3" />
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </div>

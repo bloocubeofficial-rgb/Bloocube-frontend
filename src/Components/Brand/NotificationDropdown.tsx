@@ -103,7 +103,7 @@ export default function NotificationDropdown({ className = '' }: NotificationDro
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
+        <div className="absolute right-1 md:right-0 mt-2 w-80 md:w-96 max-w-[90vw] bg-white rounded-xl shadow-xl border border-gray-200 z-50">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
@@ -111,7 +111,7 @@ export default function NotificationDropdown({ className = '' }: NotificationDro
                 <button
                   onClick={handleRefresh}
                   disabled={loading}
-                  className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors disabled:opacity-50"
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors disabled:opacity-50"
                 >
                   <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -119,7 +119,7 @@ export default function NotificationDropdown({ className = '' }: NotificationDro
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
                 >
                   <XMarkIcon className="w-4 h-4" />
                 </button>
@@ -127,7 +127,7 @@ export default function NotificationDropdown({ className = '' }: NotificationDro
             </div>
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-[70vh] md:max-h-96 overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
@@ -146,10 +146,10 @@ export default function NotificationDropdown({ className = '' }: NotificationDro
                         {getNotificationIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className={`text-sm font-medium ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
+                        <h4 className={`text-sm font-medium ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'} line-clamp-1`}>
                           {notification.title}
                         </h4>
-                        <p className={`text-xs mt-1 ${!notification.isRead ? 'text-gray-600' : 'text-gray-500'}`}>
+                        <p className={`text-xs mt-1 ${!notification.isRead ? 'text-gray-600' : 'text-gray-500'} line-clamp-2`}>
                           {notification.message}
                         </p>
                         <div className="flex items-center justify-between mt-2">
@@ -160,18 +160,18 @@ export default function NotificationDropdown({ className = '' }: NotificationDro
                             {!notification.isRead && (
                               <button
                                 onClick={() => handleMarkAsRead(notification._id)}
-                                className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
                                 title="Mark as read"
                               >
-                                <CheckIcon className="w-3 h-3" />
+                                <CheckIcon className="w-4 h-4" />
                               </button>
                             )}
                             <button
                               onClick={() => handleDelete(notification._id)}
-                              className="p-1 text-gray-400 hover:text-red-600 rounded transition-colors"
+                              className="p-2 text-gray-400 hover:text-red-600 rounded-lg transition-colors"
                               title="Delete"
                             >
-                              <XMarkIcon className="w-3 h-3" />
+                              <XMarkIcon className="w-4 h-4" />
                             </button>
                           </div>
                         </div>

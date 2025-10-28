@@ -45,18 +45,18 @@ export function PostFormWithPersistence() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Create Post</h1>
-        <div className="flex gap-2">
+    <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h1 className="text-xl md:text-2xl font-bold">Create Post</h1>
+        <div className="flex gap-2 w-full sm:w-auto sm:justify-end">
           <button
             onClick={handleClearForm}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 w-full sm:w-auto"
           >
             Clear Form
           </button>
           {showSuccess && (
-            <div className="px-4 py-2 bg-green-500 text-white rounded">
+            <div className="px-4 py-2 bg-green-500 text-white rounded w-full sm:w-auto text-center">
               Form cleared! 🎉
             </div>
           )}
@@ -66,19 +66,19 @@ export function PostFormWithPersistence() {
       {/* Platform Selection */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Select Platform</h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
           {PLATFORMS.map(platform => (
             <button
               key={platform.id}
               onClick={() => setSelectedPlatform(platform.id)}
-              className={`p-4 border-2 rounded-lg transition-all ${
+              className={`p-3 md:p-4 border-2 rounded-lg transition-all ${
                 selectedPlatform === platform.id
                   ? `border-${platform.color}-500 bg-${platform.color}-50`
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
-              <platform.icon className="w-8 h-8 mx-auto mb-2" />
-              <span className="text-sm font-medium">{platform.name}</span>
+              <platform.icon className="w-6 h-6 md:w-8 md:h-8 mx-auto mb-1 md:mb-2" />
+              <span className="text-xs md:text-sm font-medium">{platform.name}</span>
             </button>
           ))}
         </div>
@@ -88,10 +88,10 @@ export function PostFormWithPersistence() {
       {selectedPlatform && (
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">Select Post Type</h2>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-3 md:gap-4">
             <button
               onClick={() => setSelectedPostType('post')}
-              className={`px-4 py-2 rounded ${
+              className={`px-3 md:px-4 py-2 rounded ${
                 selectedPostType === 'post'
                   ? 'bg-blue-500 text-white'
                   : 'bg-gray-200 text-gray-700'
@@ -101,7 +101,7 @@ export function PostFormWithPersistence() {
             </button>
             <button
               onClick={() => setSelectedPostType('story')}
-              className={`px-4 py-2 rounded ${
+              className={`px-3 md:px-4 py-2 rounded ${
                 selectedPostType === 'story'
                   ? 'bg-blue-500 text-white'
                   : 'bg-gray-200 text-gray-700'
@@ -112,7 +112,7 @@ export function PostFormWithPersistence() {
             {selectedPlatform === 'youtube' && (
               <button
                 onClick={() => setSelectedPostType('video')}
-                className={`px-4 py-2 rounded ${
+                className={`px-3 md:px-4 py-2 rounded ${
                   selectedPostType === 'video'
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-200 text-gray-700'
@@ -127,7 +127,7 @@ export function PostFormWithPersistence() {
 
       {/* Content Form */}
       {selectedPlatform && selectedPostType && (
-        <div className="space-y-6 p-6 border rounded-lg">
+        <div className="space-y-6 p-4 md:p-6 border rounded-lg">
           <h2 className="text-lg font-semibold">Post Content</h2>
           
           {/* Title */}
@@ -148,7 +148,7 @@ export function PostFormWithPersistence() {
             <textarea
               value={postData.caption || ''}
               onChange={(e) => handleInputChange('caption', e.target.value)}
-              className="w-full p-3 border rounded-lg h-32"
+              className="w-full p-3 border rounded-lg h-28 md:h-32"
               placeholder="Write your post content..."
             />
           </div>

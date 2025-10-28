@@ -10,7 +10,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         ref={ref}
         role="alert"
         className={cn(
-          "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground",
+          "relative w-full rounded-lg border p-3 sm:p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-1px] sm:[&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-3.5 sm:[&>svg]:top-4 [&>svg]:text-foreground",
           className
         )}
         {...props}
@@ -27,7 +27,7 @@ const AlertDescription = React.forwardRef<HTMLParagraphElement, AlertDescription
     return (
       <div
         ref={ref}
-        className={cn("text-sm [&_p]:leading-relaxed", className)}
+        className={cn("text-sm sm:text-[0.95rem] [&_p]:leading-relaxed", className)}
         {...props}
       />
     );

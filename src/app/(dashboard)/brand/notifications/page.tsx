@@ -154,12 +154,12 @@ export default function BrandNotificationsPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
             <p className="text-gray-600 mt-1">Stay updated with your campaign activities</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto sm:justify-end">
             <button
               onClick={handleRefresh}
               disabled={notificationsLoading}
@@ -246,7 +246,7 @@ export default function BrandNotificationsPage() {
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between flex-wrap gap-3">
                     <div className="flex-1">
                       <h3 className={`font-medium ${notification.isRead ? 'text-gray-700' : 'text-gray-900'}`}>
                         {notification.title}
@@ -272,9 +272,9 @@ export default function BrandNotificationsPage() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2 ml-4">
+                    <div className="flex items-center gap-2 ml-4 flex-wrap justify-end">
                       {notification.actions && notification.actions.length > 0 && (
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
                           {notification.actions.map((action, index) => (
                             <a
                               key={index}

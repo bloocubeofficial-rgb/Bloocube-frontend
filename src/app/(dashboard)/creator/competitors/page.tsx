@@ -355,12 +355,12 @@ const CompetitorAnalysisPage = () => {
     >
       {/* Header Section */}
       <div className="mb-8">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="hidden md:block text-3xl font-bold text-gray-300">Competitors</h1>
             <p className="hidden md:block mt-2 text-gray-400">Analyze your competitors and discover growth opportunities</p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 w-full sm:w-auto sm:justify-end">
             <Link href="/creator/competitors/analyze">
               <button className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-sm">
                 <Plus className="w-4 h-4" />
@@ -392,14 +392,14 @@ const CompetitorAnalysisPage = () => {
               <BarChart3 className="w-4 h-4" />
               <span>History</span>
             </button>
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-800 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search competitors..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-3 py-2 border border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-800 transition-colors duration-200 min-w-[260px] text-sm"
+                className="pl-10 pr-3 py-2 border border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-800 transition-colors duration-200 w-full sm:min-w-[260px] text-sm"
               />
             </div>
           </div>
@@ -424,7 +424,7 @@ const CompetitorAnalysisPage = () => {
 
       {/* Quick Analysis Form */}
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-800/50 p-5 mb-8">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
               <Search className="w-5 h-5 text-white" />
@@ -486,7 +486,7 @@ const CompetitorAnalysisPage = () => {
       {/* Competitor Data Preview */}
       {showPreview && fetchedData && (
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-800/50 p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-xl flex items-center justify-center">
                 <Eye className="w-5 h-5 text-white" />
@@ -622,7 +622,7 @@ const CompetitorAnalysisPage = () => {
 
       {/* Enhanced Filters Section */}
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-800/50 p-5 mb-8 hover:shadow-md transition-all duration-200">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-xl flex items-center justify-center">
               <Filter className="w-5 h-5 text-white" />
@@ -700,7 +700,7 @@ const CompetitorAnalysisPage = () => {
           </div>
         </div>
         
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-800">
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-800 flex-wrap gap-2">
           <div className="flex items-center space-x-2">
             <span className="text-xs text-gray-900">Quick filters:</span>
             <button className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors duration-200">
@@ -713,7 +713,7 @@ const CompetitorAnalysisPage = () => {
               Fast Growing
             </button>
           </div>
-          <button className="text-sm text-gray-900 hover:text-gray-800 transition-colors duration-200">
+          <button className="text-sm text-gray-900 hover:text-gray-800 transition-colors duration-200 w-full sm:w-auto text-left sm:text-right">
             Clear all filters
           </button>
         </div>

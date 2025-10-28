@@ -4,11 +4,11 @@ import Image from 'next/image'
 
 const Footer = () => {
   return (
-         <footer className="relative z-10 border-t border-white/[0.06] px-6 py-16 backdrop-blur bg-white/[0.02]">
-        <div className="max-w-7xl mx-auto text-gray-300 grid grid-cols-1 md:grid-cols-4 gap-10">
+         <footer className="relative z-10 border-t border-white/[0.06] px-4 sm:px-6 py-10 sm:py-16 backdrop-blur bg-white/[0.02]">
+        <div className="max-w-7xl mx-auto text-gray-300 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10">
           <div>
             <div className="flex items-center mb-4">
-              <div className="relative w-24 h-24">
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24">
                 <Image
                   src="/logo.png"
                   alt="Bloocube Logo"
@@ -45,7 +45,7 @@ const Footer = () => {
             </ul>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto mt-10 text-center text-gray-500">
+        <div className="max-w-7xl mx-auto mt-8 sm:mt-10 text-center text-gray-500 text-sm sm:text-base">
           <p>&copy; 2025 Bloocube. All rights reserved.</p>
         </div>
       </footer>

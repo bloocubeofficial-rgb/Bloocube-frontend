@@ -307,21 +307,21 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
       )}
 
       {/* Date Range Selection */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 mb-6 shadow-sm border">
+      <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 md:p-4 mb-6 shadow-sm border">
         <h3 className="text-sm font-medium mb-2">Data Range Selection</h3>
         <p className="text-xs text-gray-700 mb-3">Select the period for your analytics data</p>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setRangeDays(7)}
-            className={`px-3 py-1.5 text-sm rounded-md border ${rangeDays === 7 ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-50'}`}
+            className={`px-3 py-1.5 text-xs md:text-sm rounded-md border ${rangeDays === 7 ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-50'}`}
           >7d</button>
           <button
             onClick={() => setRangeDays(30)}
-            className={`px-3 py-1.5 text-sm rounded-md border ${rangeDays === 30 ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-50'}`}
+            className={`px-3 py-1.5 text-xs md:text-sm rounded-md border ${rangeDays === 30 ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-50'}`}
           >30d</button>
           <button
             onClick={() => setRangeDays(90)}
-            className={`px-3 py-1.5 text-sm rounded-md border ${rangeDays === 90 ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-50'}`}
+            className={`px-3 py-1.5 text-xs md:text-sm rounded-md border ${rangeDays === 90 ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-50'}`}
           >90d</button>
         </div>
       </div>
@@ -361,10 +361,10 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
       {/* Charts Row */}
       <div className="grid grid-cols-1 gap-4 md:gap-6 mb-6">
         {/* Engagement Trends */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 md:p-6 shadow-sm border">
+        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 md:p-6 shadow-sm border">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold">Engagement Trends</h3>
-            <p className="text-sm text-gray-700">Likes, comments and shares over the last {rangeDays} days</p>
+            <h3 className="text-base md:text-lg font-semibold">Engagement Trends</h3>
+            <p className="text-xs md:text-sm text-gray-700">Likes, comments and shares over the last {rangeDays} days</p>
           </div>
           <div style={{ height: "250px" }} className="w-full">
             <Line data={engagementData} options={chartOptions} />
@@ -375,10 +375,10 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
       {/* Bottom Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Platform Breakdown */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 md:p-6 shadow-sm border">
+        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 md:p-6 shadow-sm border">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold">Platform Breakdown</h3>
-            <p className="text-sm text-gray-700">Engagement distribution across social media platforms</p>
+            <h3 className="text-base md:text-lg font-semibold">Platform Breakdown</h3>
+            <p className="text-xs md:text-sm text-gray-700">Engagement distribution across social media platforms</p>
           </div>
           <div style={{ height: '200px' }} className="w-full">
             <Pie data={platformData} options={pieOptions} />
@@ -386,10 +386,10 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
         </div>
 
         {/* Post Type Performance */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 md:p-6 shadow-sm border">
+        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 md:p-6 shadow-sm border">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold">Post Type Performance</h3>
-            <p className="text-sm text-gray-700">Engagement by post content type</p>
+            <h3 className="text-base md:text-lg font-semibold">Post Type Performance</h3>
+            <p className="text-xs md:text-sm text-gray-700">Engagement by post content type</p>
           </div>
           <div style={{ height: '200px' }} className="w-full">
             <Bar data={postTypeData} options={barOptions} />

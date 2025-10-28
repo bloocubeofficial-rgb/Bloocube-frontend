@@ -184,10 +184,10 @@ export default function BrandBidsPage() {
             </div>
             
             {/* Status Filter */}
-            <div className="relative" data-dropdown>
+            <div className="relative w-full sm:w-auto" data-dropdown>
               <button
                 type="button"
-                className="inline-flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-left min-w-[160px] bg-white"
+                className="inline-flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-left min-w-[160px] bg-white w-full sm:w-auto"
                 onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
               >
                 <span className="text-gray-700">
@@ -281,14 +281,14 @@ export default function BrandBidsPage() {
             {bids.map(bid => (
               <div key={bid._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-300">
                 {/* Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">
                       {typeof bid.campaign_id === 'object' && (bid.campaign_id as any)?.title
                         ? (bid.campaign_id as any).title
                         : 'Campaign'}
                     </h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 truncate">
                       {(() => {
                         const creator = (bid.creator_id as any);
                         const name = creator && typeof creator === 'object' ? (creator.name || creator.email || '') : '';
@@ -300,7 +300,7 @@ export default function BrandBidsPage() {
                       })()}
                     </p>
                   </div>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(bid.status)}`}>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(bid.status)} mt-2 lg:mt-0 shrink-0`}>
                     {bid.status}
                   </span>
                 </div>
@@ -372,7 +372,7 @@ export default function BrandBidsPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     className="flex-1 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                     onClick={() => setSelectedBid(bid)}
@@ -383,14 +383,14 @@ export default function BrandBidsPage() {
                   {bid.status === 'pending' && (
                     <>
                       <button
-                        className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-60"
+                        className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-60 w-full sm:w-auto"
                         onClick={() => onAccept(bid)}
                         disabled={!!processing && processing.id === bid._id}
                       >
                         Accept
                       </button>
                       <button
-                        className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-60"
+                        className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-60 w-full sm:w-auto"
                         onClick={() => onReject(bid)}
                         disabled={!!processing && processing.id === bid._id}
                       >
@@ -398,7 +398,7 @@ export default function BrandBidsPage() {
                       </button>
                     </>
                   )}
-                  <button className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                  <button className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors w-full sm:w-auto">
                     <ChatBubbleLeftRightIcon className="w-4 h-4" />
                   </button>
                 </div>
@@ -411,7 +411,7 @@ export default function BrandBidsPage() {
         {!!selectedBid && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-wrap gap-3">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">Bid Details</h2>
                   <p className="text-sm text-gray-600 mt-1">

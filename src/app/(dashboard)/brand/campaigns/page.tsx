@@ -394,14 +394,14 @@ export default function BrandCampaignsPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8 flex items-start justify-between gap-3">
+        <div className="mb-8 flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Campaign Management</h1>
             <p className="mt-2 text-gray-600">Create compelling campaigns and connect with talented creators to bring your brand vision to life</p>
           </div>
           <Link
             href="/brand/marketplace"
-            className="inline-flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-sm hover:shadow-md transition-all duration-200 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700"
+            className="inline-flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-sm hover:shadow-md transition-all duration-200 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 w-full sm:w-auto justify-center"
           >
             <span className="w-2 h-2 rounded-full bg-white/90 animate-pulse"></span>
             View all campaigns
@@ -491,7 +491,7 @@ export default function BrandCampaignsPage() {
             {/* Deadline */}
               <div>
               <label htmlFor="campaign-deadline" className="block text-sm font-medium text-gray-700 mb-2">Deadline</label>
-              <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
                 <input 
                   id="campaign-deadline"
                   className="flex-1 px-4 text-black py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
@@ -697,7 +697,7 @@ export default function BrandCampaignsPage() {
 
         {/* Draft Campaigns Section */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
             <h2 className="text-2xl font-bold text-gray-900">Draft Campaigns</h2>
             <button
               onClick={() => {
@@ -738,9 +738,9 @@ export default function BrandCampaignsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                   {campaigns.filter(c => c.status === 'draft').map(c => (
                     <div key={c._id} className="bg-gray-50 rounded-lg border border-gray-200 p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{c.title}</h3>
+                      <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">{c.title}</h3>
                           <p className="text-sm text-gray-600 line-clamp-3 mb-3">{c.description}</p>
                         </div>
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
@@ -753,7 +753,7 @@ export default function BrandCampaignsPage() {
                           <span>Platforms</span>
                           <span>Budget</span>
                         </div>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
                           <div className="flex flex-wrap gap-1">
                             {c.requirements.platforms.map(p => {
                               const option = platformOptions.find(opt => opt.value === p);
@@ -769,11 +769,11 @@ export default function BrandCampaignsPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-200 flex-wrap gap-2">
                         <div className="text-xs text-gray-500">
                           {new Date(c.deadline).toLocaleDateString()}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap justify-end">
                           <button
                             onClick={() => onEditDraft(c)}
                             className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
@@ -826,7 +826,7 @@ export default function BrandCampaignsPage() {
       </div>
 
         {/* Campaigns List */}
-        <div className="mb-6">
+          <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Active Campaigns</h2>
           
           {loading && (
@@ -905,9 +905,9 @@ export default function BrandCampaignsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {campaigns.map(c => (
                 <div key={c._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{c.title}</h3>
+                  <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">{c.title}</h3>
                       <p className="text-sm text-gray-600 line-clamp-3 mb-3">{c.description}</p>
                     </div>
                     <div className="ml-4">
@@ -933,7 +933,7 @@ export default function BrandCampaignsPage() {
                       <span>Platforms</span>
                       <span>Budget</span>
                     </div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
                       <div className="flex flex-wrap gap-1">
                         {c.requirements.platforms.map(p => {
                           const option = platformOptions.find(opt => opt.value === p);
@@ -949,7 +949,7 @@ export default function BrandCampaignsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100 flex-wrap gap-2">
                     <button 
                       className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
                         selectedCampaignId === c._id 
@@ -976,7 +976,7 @@ export default function BrandCampaignsPage() {
       {!!selectedCampaignId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-wrap gap-3">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Campaign Proposals</h2>
                 <p className="text-sm text-gray-600 mt-1">Review creative proposals and select the best fit for your campaign</p>

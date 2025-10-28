@@ -43,7 +43,7 @@ function GoogleCallbackContent() {
       // Add a small delay to ensure cookies are set
       setTimeout(() => {
         console.log('🚀 Redirecting to dashboard...');
-        router.replace("/creator/dashboard");
+        router.replace("/creator");
       }, 500);
       return;
     }

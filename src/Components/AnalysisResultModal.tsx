@@ -164,27 +164,27 @@ export const AnalysisResultModal: React.FC<AnalysisResultModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="AI Analysis Results" size="xl">
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-6 max-h-[80vh] overflow-y-auto">
         {/* Analysis Summary */}
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-gray-900 flex items-center">
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 md:p-6">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h3 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center">
               <BarChart3 className="w-6 h-6 mr-2 text-blue-600" />
               Analysis Summary
             </h3>
-            <div className="flex items-center text-sm text-gray-600">
+            <div className="flex items-center text-xs md:text-sm text-gray-600">
               <Clock className="w-4 h-4 mr-1" />
               {results.processing_time_ms ? `${results.processing_time_ms}ms` : 'Completed'}
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div className="bg-white rounded-lg p-4 shadow-sm">
               <div className="flex items-center">
                 <Users className="w-8 h-8 text-green-600 mr-3" />
                 <div>
-                  <div className="text-2xl font-bold text-green-600">{results.competitors_analyzed}</div>
-                  <div className="text-sm text-gray-600">Competitors Analyzed</div>
+                  <div className="text-xl md:text-2xl font-bold text-green-600">{results.competitors_analyzed}</div>
+                  <div className="text-xs md:text-sm text-gray-600">Competitors Analyzed</div>
                 </div>
               </div>
             </div>
@@ -193,10 +193,10 @@ export const AnalysisResultModal: React.FC<AnalysisResultModalProps> = ({
               <div className="flex items-center">
                 <Target className="w-8 h-8 text-blue-600 mr-3" />
                 <div>
-                  <div className="text-2xl font-bold text-blue-600">
+                  <div className="text-xl md:text-2xl font-bold text-blue-600">
                     {results.results.metadata.platforms_analyzed.length}
                   </div>
-                  <div className="text-sm text-gray-600">Platforms Covered</div>
+                  <div className="text-xs md:text-sm text-gray-600">Platforms Covered</div>
                 </div>
               </div>
             </div>
@@ -205,10 +205,10 @@ export const AnalysisResultModal: React.FC<AnalysisResultModalProps> = ({
               <div className="flex items-center">
                 <TrendingUp className="w-8 h-8 text-purple-600 mr-3" />
                 <div>
-                  <div className="text-2xl font-bold text-purple-600">
+                  <div className="text-xl md:text-2xl font-bold text-purple-600">
                     {results.results.metadata.total_posts_analyzed || 0}
                   </div>
-                  <div className="text-sm text-gray-600">Posts Analyzed</div>
+                  <div className="text-xs md:text-sm text-gray-600">Posts Analyzed</div>
                 </div>
               </div>
             </div>
@@ -236,7 +236,7 @@ export const AnalysisResultModal: React.FC<AnalysisResultModalProps> = ({
 
         {/* AI Insights */}
         {results.results.ai_insights && (
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <Lightbulb className="w-5 h-5 mr-2 text-yellow-600" />
               AI Insights
@@ -246,7 +246,7 @@ export const AnalysisResultModal: React.FC<AnalysisResultModalProps> = ({
             {results.results.ai_insights.market_insights && (
               <div className="mb-6">
                 <h4 className="font-medium text-gray-800 mb-3">Market Insights</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {results.results.ai_insights.market_insights.platforms && (
                     <div className="bg-gray-50 rounded-lg p-4">
                       <div className="text-sm font-medium text-gray-700 mb-2">Platforms</div>

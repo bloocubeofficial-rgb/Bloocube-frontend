@@ -134,18 +134,18 @@ export default function CreatorMarketplacePage() {
     >
       {/* Header Section */}
       <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="w-full sm:w-auto">
             <h1 className="hidden md:block text-3xl font-bold text-gray-300">Creator Marketplace</h1>
             <p className="hidden md:block mt-2 text-gray-400">Discover and bid on exciting brand campaigns</p>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
+          <div className="flex items-center space-x-4 w-full sm:w-auto sm:justify-end">
+            <div className="relative w-full sm:w-auto">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search campaigns..."
-                className="pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200 min-w-[300px]"
+                className="pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200 w-full sm:min-w-[300px]"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -184,7 +184,7 @@ export default function CreatorMarketplacePage() {
 
       {/* Enhanced Filters Section */}
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50 p-6 mb-8 hover:shadow-md transition-all duration-200">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
               <Filter className="w-5 h-5 text-white" />
@@ -194,7 +194,7 @@ export default function CreatorMarketplacePage() {
               <p className="text-sm text-gray-500">Refine your search to find the perfect campaigns</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 w-full sm:w-auto">
             <span className="text-sm text-gray-500">{filtered.length} campaigns found</span>
           </div>
         </div>
@@ -259,7 +259,7 @@ export default function CreatorMarketplacePage() {
           </div>
         </div>
         
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 flex-wrap gap-2">
           <div className="flex items-center space-x-2">
             <span className="text-xs text-gray-500">Quick filters:</span>
             <button className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors duration-200">
@@ -272,7 +272,7 @@ export default function CreatorMarketplacePage() {
               YouTube
             </button>
           </div>
-          <button className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200">
+          <button className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200 w-full sm:w-auto text-left sm:text-right">
             Clear all filters
           </button>
         </div>
