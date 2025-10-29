@@ -78,6 +78,9 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
   const base = getApiBase();
   const method = init.method || 'GET';
   const cacheKey = getCacheKey(path, init);
+  // Only show global loading when explicitly requested (manual refresh)
+  const showLoading = (init as unknown as { showLoading?: boolean })?.showLoading === true
+    || (typeof init.headers === 'object' && init.headers !== null && (init.headers as Record<string, string>)['X-Show-Loading'] === '1');
   
   // Check cache for GET requests
   if (shouldCache(path, method)) {
@@ -107,7 +110,7 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
 
   // Create request promise with performance monitoring
   const requestPromise = (async (): Promise<T> => {
-    loadingManager.start();
+    if (showLoading) loadingManager.start();
     return measureApiCall(async (): Promise<T> => {
     try {
       const res = await fetch(`${base}${path}`, {
@@ -200,7 +203,7 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
     } finally {
       // Remove from pending requests
       pendingRequests.delete(cacheKey);
-      loadingManager.done();
+      if (showLoading) loadingManager.done();
     }
     }, path);
   })();

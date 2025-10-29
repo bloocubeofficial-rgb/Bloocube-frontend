@@ -39,16 +39,7 @@ export const useYouTube = () => {
         return;
       }
 
-      const isYouTubeConnected = await youtubeService.isConnected();
-
-      if (!isYouTubeConnected) {
-        console.log('❌ YouTube not connected, setting state to disconnected');
-        setIsConnected(false);
-        setChannel(null);
-        return;
-      }
-
-      console.log('✅ YouTube is connected, fetching channel info...');
+      // Fetch channel info directly; derive connection from presence
       const channelResponse = await youtubeService.getChannelInfo();
 
       if (channelResponse.success && channelResponse.channel?.id) {

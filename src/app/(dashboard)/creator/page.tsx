@@ -31,6 +31,7 @@ import {
 import CreatorLayout from "@/Components/Creater/CreatorLayout";
 import { apiRequest } from "@/lib/apiClient";
 import { cookieAuthUtils } from "@/lib/cookieAuth";
+import { persistentCache } from "@/lib/cache";
 
 type AnalyticsItem = {
   post_id?: string;
@@ -50,12 +51,41 @@ type AnalyticsItem = {
 };
 
 const Dashboard = () => {
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsItem[]>([]);
   const [lastUpdated, setLastUpdated] = useState<number>(0);
   const [scheduledCount, setScheduledCount] = useState<number>(0);
   const [totalPostsCount, setTotalPostsCount] = useState<number>(0);
+
+  // Local cache keys and helpers
+  const ANALYTICS_CACHE_KEY = 'creator_dashboard_analytics_v1';
+  const COUNTS_CACHE_KEY = 'creator_dashboard_counts_v1';
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+  const loadAnalyticsCache = () => {
+    const cached = persistentCache.getFresh<{ data: AnalyticsItem[]; ts: number }>(ANALYTICS_CACHE_KEY);
+    if (cached && Array.isArray(cached.data)) {
+      setAnalytics(cached.data);
+      setLastUpdated(cached.ts);
+    }
+  };
+
+  const saveAnalyticsCache = (data: AnalyticsItem[]) => {
+    persistentCache.set(ANALYTICS_CACHE_KEY, { data, ts: Date.now() }, CACHE_TTL);
+  };
+
+  const loadCountsCache = () => {
+    const cached = persistentCache.getFresh<{ total: number; scheduled: number; ts: number }>(COUNTS_CACHE_KEY);
+    if (cached) {
+      setTotalPostsCount(cached.total || 0);
+      setScheduledCount(cached.scheduled || 0);
+    }
+  };
+
+  const saveCountsCache = (total: number, scheduled: number) => {
+    persistentCache.set(COUNTS_CACHE_KEY, { total, scheduled, ts: Date.now() }, CACHE_TTL);
+  };
 
   // Formatting helpers
   const formatNumber = (n: number) => n.toLocaleString();
@@ -65,9 +95,10 @@ const Dashboard = () => {
       maximumFractionDigits: 1,
     }).format(n);
 
-  const fetchAnalytics = async (options?: { sync?: boolean }) => {
+  const fetchAnalytics = async (options?: { sync?: boolean; showLoading?: boolean }) => {
     try {
       setError(null);
+      if (options?.showLoading) setLoading(true);
 
       const user = cookieAuthUtils.getUser() as {
         id?: string;
@@ -93,14 +124,15 @@ const Dashboard = () => {
       const res = await apiRequest<{
         success: boolean;
         data: { analytics: AnalyticsItem[] };
-      }>(`/api/analytics/user/${userId}`);
+      }>(`/api/analytics/user/${userId}`, { showLoading: !!options?.showLoading });
       setAnalytics(res?.data?.analytics || []);
       setLastUpdated(Date.now());
+      saveAnalyticsCache(res?.data?.analytics || []);
     } catch (e) {
       setError((e as Error).message || "Failed to load analytics");
       setAnalytics([]);
     } finally {
-      setLoading(false);
+      if (options?.showLoading) setLoading(false);
     }
   };
 
@@ -117,6 +149,7 @@ const Dashboard = () => {
       }>(`/api/posts?status=scheduled&limit=1`);
       setTotalPostsCount(totalRes?.pagination?.total || 0);
       setScheduledCount(scheduledRes?.pagination?.total || 0);
+      saveCountsCache(totalRes?.pagination?.total || 0, scheduledRes?.pagination?.total || 0);
     } catch (e) {
       // Non-fatal for dashboard; keep previous values
       console.warn("Failed to load post counts", e);
@@ -124,15 +157,9 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    // First load will try to sync from linked accounts, then fetch
-    fetchAnalytics({ sync: true });
-    fetchPostCounts();
-    const interval = setInterval(() => {
-      // Regular refresh without heavy sync
-      fetchAnalytics();
-      fetchPostCounts();
-    }, 30000);
-    return () => clearInterval(interval);
+    // Do not auto-fetch on mount; hydrate from cache only
+    loadAnalyticsCache();
+    loadCountsCache();
   }, []);
 
   const engagementData = useMemo(() => {
@@ -257,7 +284,10 @@ const Dashboard = () => {
   const headerActions = (
     <>
       <button
-        onClick={() => fetchAnalytics({ sync: true })}
+        onClick={() => {
+          fetchAnalytics({ sync: true, showLoading: true });
+          fetchPostCounts();
+        }}
         disabled={loading}
         className="flex items-center space-x-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
       >

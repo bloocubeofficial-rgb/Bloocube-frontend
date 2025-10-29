@@ -30,14 +30,7 @@ export const useTwitter = () => {
       setLoading(true);
       setError(null);
 
-      const isTwitterConnected = await twitterService.isConnected();
-
-      if (!isTwitterConnected) {
-        setIsConnected(false);
-        setProfile(null);
-        return;
-      }
-
+      // Fetch profile directly; derive connection state from profile presence
       const profileResponse = await twitterService.getProfile();
 
       if (profileResponse.success && profileResponse.profile?.username) {

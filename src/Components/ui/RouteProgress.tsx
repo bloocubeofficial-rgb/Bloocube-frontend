@@ -1,44 +1,50 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { loadingManager } from "@/lib/loading";
 import TopProgressBar from "@/Components/ui/TopProgressBar";
 
 export default function RouteProgress() {
   const pathname = usePathname();
+  const firstActiveAtRef = useRef<number | null>(null);
+  const watchdogRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Immediate feedback on internal link clicks with a tiny fade cue
-    const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (!target) return;
-      const anchor = target.closest('a') as HTMLAnchorElement | null;
-      if (!anchor) return;
-      const href = anchor.getAttribute('href') || '';
-      const isInternal = href.startsWith('/') && !href.startsWith('//');
-      const isModified = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
-      const isNewTab = anchor.target === '_blank';
-      if (isInternal && !isModified && !isNewTab) {
-        loadingManager.start();
-        // Safety timeout in case navigation is prevented
-        const t = setTimeout(() => loadingManager.done(), 1500);
-        // Clear timeout on next tick when pathname effect runs
-        setTimeout(() => clearTimeout(t), 0);
-      }
-    };
-    const options: AddEventListenerOptions = { capture: true, passive: true };
-    document.addEventListener('click', handleClick, options);
-    return () => document.removeEventListener('click', handleClick, options);
+    // Navigation progress disabled per requirements (manual refresh only)
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!pathname) return;
-    // Delay done slightly to allow route content to paint and feel smooth
-    loadingManager.start();
-    const t = setTimeout(() => loadingManager.done(), 480);
-    return () => clearTimeout(t);
+    // Disable automatic route progress on pathname change
   }, [pathname]);
+
+  // Watchdog: if global loading stays active too long (e.g., due to an unbalanced start/done), auto-reset
+  useEffect(() => {
+    const unsubscribe = loadingManager.subscribe((activeCount) => {
+      const now = Date.now();
+      if (activeCount > 0) {
+        if (firstActiveAtRef.current === null) firstActiveAtRef.current = now;
+        // Kick a watchdog timer that will reset after 6s of continuous activity
+        if (watchdogRef.current) window.clearTimeout(watchdogRef.current);
+        watchdogRef.current = window.setTimeout(() => {
+          // If still active and has been > 6s, force reset to prevent stuck spinners
+          if (firstActiveAtRef.current && Date.now() - firstActiveAtRef.current > 6000) {
+            loadingManager.reset();
+            firstActiveAtRef.current = null;
+          }
+        }, 6000);
+      } else {
+        firstActiveAtRef.current = null;
+        if (watchdogRef.current) {
+          window.clearTimeout(watchdogRef.current);
+          watchdogRef.current = null;
+        }
+      }
+    });
+    return () => {
+      if (watchdogRef.current) window.clearTimeout(watchdogRef.current);
+      unsubscribe();
+    };
+  }, []);
 
   return <TopProgressBar />;
 }

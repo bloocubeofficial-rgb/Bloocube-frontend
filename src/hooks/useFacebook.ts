@@ -32,14 +32,7 @@ export const useFacebook = () => {
       setLoading(true);
       setError(null);
 
-      const isFacebookConnected = await facebookService.isConnected();
-
-      if (!isFacebookConnected) {
-        setIsConnected(false);
-        setProfile(null);
-        return;
-      }
-
+      // Fetch profile directly; derive connection state from profile presence
       const profileResponse = await facebookService.getProfile();
 
       if (profileResponse.success && profileResponse.profile?.name) {

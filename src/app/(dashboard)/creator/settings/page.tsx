@@ -83,6 +83,40 @@ function SettingsPageContent() {
   const instagramRef = useRef<InstagramIntegrationRef>(null);
   const facebookRef = useRef<FacebookIntegrationRef>(null);
 
+  // Cache helpers shared with Posts page
+  const CONNECTIONS_CACHE_KEY = 'platform_connections_v1';
+  const CONNECTIONS_CACHE_TTL = 5 * 60 * 1000;
+  const loadConnectionsCache = (): { platforms: string[]; timestamp: number } | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(CONNECTIONS_CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.platforms) || typeof parsed.timestamp !== 'number') return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  };
+  const saveConnectionsCache = (platforms: string[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(CONNECTIONS_CACHE_KEY, JSON.stringify({ platforms, timestamp: Date.now() }));
+    } catch {}
+  };
+  const addPlatformToCache = (platform: string) => {
+    const cached = loadConnectionsCache();
+    const set = new Set(cached?.platforms || []);
+    set.add(platform);
+    saveConnectionsCache(Array.from(set));
+  };
+  const removePlatformFromCache = (platform: string) => {
+    const cached = loadConnectionsCache();
+    const set = new Set(cached?.platforms || []);
+    set.delete(platform);
+    saveConnectionsCache(Array.from(set));
+  };
+
   // Load user profile
   const loadProfile = async () => {
     try {
@@ -259,6 +293,8 @@ function SettingsPageContent() {
     
     if (twitterStatus === 'success') {
       setNotification({ type: 'success', message: 'Twitter account connected successfully!' });
+      addPlatformToCache('twitter');
+      try { sessionStorage.setItem('invalidate_connections_cache', '1'); } catch {}
       setTimeout(() => twitterRef.current?.checkConnection(), 1000);
       setTimeout(() => {
         window.history.replaceState({}, '', window.location.pathname);
@@ -272,6 +308,8 @@ function SettingsPageContent() {
       }, 5000);
     } else if (linkedinStatus === 'success') {
       setNotification({ type: 'success', message: 'LinkedIn account connected successfully!' });
+      addPlatformToCache('linkedin');
+      try { sessionStorage.setItem('invalidate_connections_cache', '1'); } catch {}
       setTimeout(() => linkedinRef.current?.checkConnection(), 1000);
       setTimeout(() => {
         window.history.replaceState({}, '', window.location.pathname);
@@ -285,6 +323,8 @@ function SettingsPageContent() {
       }, 5000);
     } else if (youtubeStatus === 'success') {
       setNotification({ type: 'success', message: 'YouTube account connected successfully!' });
+      addPlatformToCache('youtube');
+      try { sessionStorage.setItem('invalidate_connections_cache', '1'); } catch {}
       setTimeout(() => youtubeRef.current?.checkConnection(), 3000);
       setTimeout(() => {
         window.history.replaceState({}, '', window.location.pathname);
@@ -298,6 +338,8 @@ function SettingsPageContent() {
       }, 5000);
     } else if (instagramStatus === 'success') {
       setNotification({ type: 'success', message: 'Instagram account connected successfully!' });
+      addPlatformToCache('instagram');
+      try { sessionStorage.setItem('invalidate_connections_cache', '1'); } catch {}
       setTimeout(() => instagramRef.current?.checkConnection(), 1500);
       setTimeout(() => {
         window.history.replaceState({}, '', window.location.pathname);
@@ -311,6 +353,8 @@ function SettingsPageContent() {
       }, 5000);
     } else if (facebookStatus === 'success') {
       setNotification({ type: 'success', message: 'Facebook account connected successfully!' });
+      addPlatformToCache('facebook');
+      try { sessionStorage.setItem('invalidate_connections_cache', '1'); } catch {}
       setTimeout(() => facebookRef.current?.checkConnection(), 1500);
       setTimeout(() => {
         window.history.replaceState({}, '', window.location.pathname);
@@ -343,14 +387,16 @@ function SettingsPageContent() {
     const youtubeStatus = searchParams.get('youtube');
     const instagramStatus = searchParams.get('instagram');
 
+    // Use cache instead of auto-checking to avoid repeated API calls on refresh
     if (tokenPresent && !twitterStatus && !linkedinStatus && !youtubeStatus && !instagramStatus) {
-      const timers: number[] = [];
-      timers.push(window.setTimeout(() => youtubeRef.current?.checkConnection?.(), 400));
-      timers.push(window.setTimeout(() => twitterRef.current?.checkConnection?.(), 900));
-      timers.push(window.setTimeout(() => linkedinRef.current?.checkConnection?.(), 1400));
-      timers.push(window.setTimeout(() => instagramRef.current?.checkConnection?.(), 1900));
-
-      return () => timers.forEach((id) => clearTimeout(id));
+      const cached = loadConnectionsCache();
+      const fresh = cached && (Date.now() - cached.timestamp < CONNECTIONS_CACHE_TTL);
+      if (!fresh) {
+        // If no fresh cache, minimally check only YouTube (used for validation elsewhere)
+        const timers: number[] = [];
+        timers.push(window.setTimeout(() => youtubeRef.current?.checkConnection?.(), 400));
+        return () => timers.forEach((id) => clearTimeout(id));
+      }
     }
   }, [tokenPresent, searchParams]);
 

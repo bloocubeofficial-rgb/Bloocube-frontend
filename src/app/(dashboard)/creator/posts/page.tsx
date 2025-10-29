@@ -473,6 +473,33 @@ export default function PostsPage() {
   const [checkingConnections, setCheckingConnections] = useState(true);
   const [lastCheckTime, setLastCheckTime] = useState(0);
 
+  // Connection cache helpers (5 min TTL)
+  const CONNECTIONS_CACHE_KEY = 'platform_connections_v1';
+  const CONNECTIONS_CACHE_TTL = 5 * 60 * 1000;
+
+  const loadConnectionsCache = (): { platforms: string[]; timestamp: number } | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(CONNECTIONS_CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.platforms) || typeof parsed.timestamp !== 'number') return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  };
+
+  const saveConnectionsCache = (platforms: string[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(
+        CONNECTIONS_CACHE_KEY,
+        JSON.stringify({ platforms, timestamp: Date.now() })
+      );
+    } catch {}
+  };
+
   // Refresh user data from server
   const refreshUserData = async () => {
     try {
@@ -488,11 +515,21 @@ export default function PostsPage() {
   };
 
   // Check platform connections - API-based approach (like settings page)
-  const checkPlatformConnections = async () => {
-    // Debounce: prevent calls more than once every 2 seconds
+  const checkPlatformConnections = async (force = false) => {
     const now = Date.now();
-    if (now - lastCheckTime < 2000) {
-      console.log("Skipping connection check - too soon");
+
+    // Use cache when fresh, unless force refresh requested
+    if (!force) {
+      const cached = loadConnectionsCache();
+      if (cached && now - cached.timestamp < CONNECTIONS_CACHE_TTL) {
+        setConnectedPlatforms(cached.platforms);
+        setCheckingConnections(false);
+        return;
+      }
+    }
+
+    // Throttle rapid calls regardless of force
+    if (!force && now - lastCheckTime < 2000) {
       return;
     }
 
@@ -500,11 +537,10 @@ export default function PostsPage() {
       setCheckingConnections(true);
       setLastCheckTime(now);
 
-      console.log("Checking platform connections via API...");
       const connected: string[] = [];
 
       // Check each platform individually using their services (same as settings page)
-      const [twitterConnected, facebookConnected, instagramConnected, youtubeConnected] = await Promise.all([
+      const [twitterConn, facebookConn, instagramConn, ytConn] = await Promise.all([
         twitterService.isConnected(),
         facebookService.isConnected(),
         instagramService.isConnected(),
@@ -512,42 +548,25 @@ export default function PostsPage() {
       ]);
 
       // Update YouTube connection state for validation and button disabling
-      setYoutubeConnected(youtubeConnected);
+      setYoutubeConnected(ytConn);
 
-      // LinkedIn uses getProfile() to check connection (like the LinkedIn hook)
+      // LinkedIn uses getProfile() to check connection
       let linkedinConnected = false;
       try {
         const linkedinProfile = await linkedInService.getProfile();
         linkedinConnected = linkedinProfile.success && !!linkedinProfile.profile;
-      } catch (error) {
-        console.log("LinkedIn connection check failed:", error);
+      } catch {
         linkedinConnected = false;
       }
 
-      // Add connected platforms to array
-      if (twitterConnected) {
-        connected.push("twitter");
-        console.log("Twitter connected");
-      }
-      if (facebookConnected) {
-        connected.push("facebook");
-        console.log("Facebook connected");
-      }
-      if (instagramConnected) {
-        connected.push("instagram");
-        console.log("Instagram connected");
-      }
-      if (linkedinConnected) {
-        connected.push("linkedin");
-        console.log("LinkedIn connected");
-      }
-      if (youtubeConnected) {
-        connected.push("youtube");
-        console.log("YouTube connected");
-      }
+      if (twitterConn) connected.push("twitter");
+      if (facebookConn) connected.push("facebook");
+      if (instagramConn) connected.push("instagram");
+      if (linkedinConnected) connected.push("linkedin");
+      if (ytConn) connected.push("youtube");
 
-      console.log("Final connected platforms array:", connected);
       setConnectedPlatforms(connected);
+      saveConnectionsCache(connected);
     } catch (error) {
       console.error("Error checking platform connections:", error);
       setConnectedPlatforms([]);
@@ -633,8 +652,23 @@ export default function PostsPage() {
   // Load posts on component mount
   useEffect(() => {
     loadPosts();
-    // checkYouTubeConnection();
-    checkPlatformConnections();
+
+    // Try cache first for instant UI; background refresh only if needed
+    const cached = loadConnectionsCache();
+    if (cached && Date.now() - cached.timestamp < CONNECTIONS_CACHE_TTL) {
+      setConnectedPlatforms(cached.platforms);
+      setCheckingConnections(false);
+    } else {
+      checkPlatformConnections(false);
+    }
+
+    // If navigation initiated from this page to settings, force refresh once on return
+    if (typeof window !== 'undefined') {
+      if (sessionStorage.getItem('invalidate_connections_cache') === '1') {
+        sessionStorage.removeItem('invalidate_connections_cache');
+        checkPlatformConnections(true);
+      }
+    }
   }, []);
 
   // Refresh connections when window regains focus (user returns from settings) - with debounce
@@ -644,8 +678,17 @@ export default function PostsPage() {
     const handleFocus = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
-        checkPlatformConnections();
-      }, 1000); // 1 second debounce
+        // Only refresh if cache is stale or invalidated
+        const cached = loadConnectionsCache();
+        const stale = !cached || (Date.now() - cached.timestamp >= CONNECTIONS_CACHE_TTL);
+        const shouldForce = sessionStorage.getItem('invalidate_connections_cache') === '1';
+        if (shouldForce) {
+          sessionStorage.removeItem('invalidate_connections_cache');
+        }
+        if (stale || shouldForce) {
+          checkPlatformConnections(!!shouldForce);
+        }
+      }, 500);
     };
 
     window.addEventListener("focus", handleFocus);
@@ -1468,7 +1511,51 @@ export default function PostsPage() {
       </div>
 
       {/* Tabs */}
-    
+      <div className="mb-4">
+        <div className="inline-flex rounded-lg border border-gray-300 bg-white overflow-hidden">
+          <button
+            onClick={() => setActiveTab("create")}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === "create"
+                ? "bg-gray-900 text-white"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            Create
+          </button>
+          <button
+            onClick={() => setActiveTab("drafts")}
+            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 transition-colors ${
+              activeTab === "drafts"
+                ? "bg-gray-900 text-white"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            Drafts {drafts.length > 0 ? `(${drafts.length})` : ""}
+          </button>
+          <button
+            onClick={() => setActiveTab("scheduled")}
+            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 transition-colors ${
+              activeTab === "scheduled"
+                ? "bg-gray-900 text-white"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            Scheduled {scheduledPosts.length > 0 ? `(${scheduledPosts.length})` : ""}
+          </button>
+          <button
+            onClick={() => setActiveTab("published")}
+            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 transition-colors ${
+              activeTab === "published"
+                ? "bg-gray-900 text-white"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            Published {posts.length > 0 ? `(${posts.length})` : ""}
+          </button>
+        </div>
+      </div>
+
 
       {/* Create Post Tab */}
       {activeTab === "create" && (
@@ -1495,7 +1582,7 @@ export default function PostsPage() {
                   Platform Status
                 </h3>
                 <button
-                  onClick={checkPlatformConnections}
+                  onClick={() => checkPlatformConnections(true)}
                   disabled={checkingConnections}
                   className="px-3 py-1 text-xs text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 w-full sm:w-auto justify-center"
                 >
@@ -1564,9 +1651,10 @@ export default function PostsPage() {
                                   No account connected
                                 </span>
                                 <button
-                                  onClick={() =>
-                                    (window.location.href = "/creator/settings")
-                                  }
+                                  onClick={() => {
+                                    try { sessionStorage.setItem('invalidate_connections_cache', '1'); } catch {}
+                                    (window.location.href = "/creator/settings");
+                                  }}
                                   className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                                 >
                                   Connect

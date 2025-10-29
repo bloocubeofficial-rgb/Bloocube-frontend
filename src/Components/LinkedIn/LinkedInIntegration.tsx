@@ -1,6 +1,6 @@
 // LinkedInIntegration.tsx
 "use client";
-import React, { forwardRef, useImperativeHandle, useEffect } from 'react';
+import React, { forwardRef, useImperativeHandle, useEffect, useState } from 'react';
 import { SocialIntegrationCard } from '@/Components/LazyComponents';
 import { useLinkedIn } from '@/hooks/useLinkedIn';
 
@@ -14,11 +14,39 @@ export interface LinkedInIntegrationRef {
 
 export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIntegrationProps>(({ className = '' }, ref) => {
   const { connect, getProfile, disconnect, isConnected, profile, loading, error } = useLinkedIn();
+  const [cachedConnected, setCachedConnected] = useState(false);
+  const PROFILE_LOADED_KEY = 'conn_profile_loaded:linkedin';
 
-  // Check connection status on mount
+  // Read cached connection on mount to avoid extra API checks
   useEffect(() => {
-    checkConnectionStatus();
+    try {
+      const raw = localStorage.getItem('platform_connections_v1');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.platforms)) {
+          setCachedConnected(parsed.platforms.includes('linkedin'));
+        }
+      }
+    } catch {}
   }, []);
+
+  // If cached connected but no profile yet, fetch once per session or when invalidated
+  useEffect(() => {
+    if (!cachedConnected) return;
+    if (profile) return;
+    if (loading) return;
+    try {
+      const invalidated = sessionStorage.getItem('invalidate_connections_cache') === '1';
+      const loaded = sessionStorage.getItem(PROFILE_LOADED_KEY) === '1';
+      if (!loaded || invalidated) {
+        sessionStorage.setItem(PROFILE_LOADED_KEY, '1');
+        sessionStorage.removeItem('invalidate_connections_cache');
+        getProfile();
+      }
+    } catch {
+      getProfile();
+    }
+  }, [cachedConnected, profile, loading, getProfile]);
 
   const checkConnectionStatus = async () => {
     // This function now just triggers the hook's getProfile method.
@@ -36,6 +64,16 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
   
   const handleDisconnect = async () => {
     await disconnect();
+    // Update cache to reflect disconnection
+    try {
+      const raw = localStorage.getItem('platform_connections_v1');
+      const parsed = raw ? JSON.parse(raw) : { platforms: [], timestamp: Date.now() };
+      const set = new Set<string>(Array.isArray(parsed.platforms) ? parsed.platforms : []);
+      set.delete('linkedin');
+      localStorage.setItem('platform_connections_v1', JSON.stringify({ platforms: Array.from(set), timestamp: Date.now() }));
+      sessionStorage.setItem('invalidate_connections_cache', '1');
+      setCachedConnected(false);
+    } catch {}
   };
 
   // Expose checkConnection method to the parent component
@@ -58,12 +96,15 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
       className={className}
       icon={<span className="text-blue-600 font-medium text-sm">in</span>}
       title="LinkedIn"
-      connected={Boolean(isConnected && profile)}
+      connected={Boolean((isConnected && profile) || cachedConnected)}
       loading={loading}
       error={error || undefined}
       onConnect={handleConnect}
       onDisconnect={handleDisconnect}
-      onRefresh={checkConnectionStatus}
+      onRefresh={() => {
+        try { sessionStorage.removeItem(PROFILE_LOADED_KEY); } catch {}
+        checkConnectionStatus();
+      }}
       connectLabel="Connect LinkedIn"
       profileName={profile ? `@${profile.username || profile.name || `${profile.firstName || ''} ${profile.lastName || ''}`.trim()}` : undefined}
       profileDetail={profile?.headline || profile?.industry}
