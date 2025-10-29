@@ -392,13 +392,32 @@ function SettingsPageContent() {
       const cached = loadConnectionsCache();
       const fresh = cached && (Date.now() - cached.timestamp < CONNECTIONS_CACHE_TTL);
       if (!fresh) {
-        // If no fresh cache, minimally check only YouTube (used for validation elsewhere)
+        // If no fresh cache, check all platforms with slight staggering to avoid bursts
         const timers: number[] = [];
-        timers.push(window.setTimeout(() => youtubeRef.current?.checkConnection?.(), 400));
+        timers.push(window.setTimeout(() => youtubeRef.current?.checkConnection?.(), 300));
+        timers.push(window.setTimeout(() => twitterRef.current?.checkConnection?.(), 500));
+        timers.push(window.setTimeout(() => instagramRef.current?.checkConnection?.(), 700));
+        timers.push(window.setTimeout(() => linkedinRef.current?.checkConnection?.(), 900));
+        timers.push(window.setTimeout(() => facebookRef.current?.checkConnection?.(), 1100));
         return () => timers.forEach((id) => clearTimeout(id));
       }
     }
   }, [tokenPresent, searchParams]);
+
+  // Re-validate connections when window regains focus (lightweight and throttled by session flags in components)
+  useEffect(() => {
+    const onFocus = () => {
+      const timers: number[] = [];
+      timers.push(window.setTimeout(() => youtubeRef.current?.checkConnection?.(), 200));
+      timers.push(window.setTimeout(() => twitterRef.current?.checkConnection?.(), 300));
+      timers.push(window.setTimeout(() => instagramRef.current?.checkConnection?.(), 400));
+      timers.push(window.setTimeout(() => linkedinRef.current?.checkConnection?.(), 500));
+      timers.push(window.setTimeout(() => facebookRef.current?.checkConnection?.(), 600));
+      return () => timers.forEach((id) => clearTimeout(id));
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
 
   if (loading) {
     return (

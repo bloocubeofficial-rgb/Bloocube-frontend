@@ -52,6 +52,7 @@ export const InstagramIntegration = forwardRef<InstagramIntegrationRef, Instagra
     const loaded = sessionStorage.getItem(PROFILE_LOADED_KEY) === '1';
     if (!loaded) {
       try { sessionStorage.setItem(PROFILE_LOADED_KEY, '1'); } catch {}
+      setHasCheckedConnection(true);
       checkConnection();
     }
   }, [cachedConnected, loading, isConnecting, isDisconnecting, checkConnection]);
@@ -91,6 +92,26 @@ export const InstagramIntegration = forwardRef<InstagramIntegrationRef, Instagra
   }, [cachedConnected, profile, loading, isConnecting, isDisconnecting, checkConnection]);
 
   // Do not purge cache automatically; only explicit Disconnect updates cache
+  // If we've verified a check and the result is disconnected, purge cached connection
+  useEffect(() => {
+    try { if (!cookieAuthUtils.isAuthenticated()) return; } catch {}
+    const loaded = sessionStorage.getItem(PROFILE_LOADED_KEY) === '1';
+    if (!(hasCheckedConnection || loaded)) return;
+    if (loading || isConnecting || isDisconnecting) return;
+    const disconnected = !(isConnected && profile);
+    if (disconnected && cachedConnected) {
+      try {
+        const raw = localStorage.getItem('platform_connections_v1');
+        const parsed = raw ? JSON.parse(raw) : { platforms: [], timestamp: Date.now() };
+        const set = new Set<string>(Array.isArray(parsed.platforms) ? parsed.platforms : []);
+        if (set.delete('instagram')) {
+          localStorage.setItem('platform_connections_v1', JSON.stringify({ platforms: Array.from(set), timestamp: Date.now() }));
+          sessionStorage.setItem('invalidate_connections_cache', '1');
+        }
+        setCachedConnected(false);
+      } catch {}
+    }
+  }, [hasCheckedConnection, loading, isConnecting, isDisconnecting, isConnected, profile, cachedConnected]);
 
   const handleConnect = async () => {
     try {
@@ -153,5 +174,8 @@ export const InstagramIntegration = forwardRef<InstagramIntegrationRef, Instagra
     />
   );
 });
+
+// Purge cache if a verified check shows disconnected
+export const _InstagramIntegrationCacheSync = () => null;
 
 InstagramIntegration.displayName = 'InstagramIntegration';

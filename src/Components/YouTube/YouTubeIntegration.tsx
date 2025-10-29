@@ -18,6 +18,7 @@ export const YouTubeIntegration = forwardRef<YouTubeIntegrationRef, YouTubeInteg
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [cachedConnected, setCachedConnected] = useState(false);
   const PROFILE_LOADED_KEY = 'conn_profile_loaded:youtube';
+  const [hasCheckedConnection, setHasCheckedConnection] = useState(false);
 
   // Read cached connection on mount to avoid extra API checks
   useEffect(() => {
@@ -40,6 +41,7 @@ export const YouTubeIntegration = forwardRef<YouTubeIntegrationRef, YouTubeInteg
     const loaded = sessionStorage.getItem(PROFILE_LOADED_KEY) === '1';
     if (!loaded) {
       try { sessionStorage.setItem(PROFILE_LOADED_KEY, '1'); } catch {}
+      setHasCheckedConnection(true);
       checkConnection();
     }
   }, [cachedConnected, loading, isConnecting, isDisconnecting, checkConnection]);
@@ -82,7 +84,10 @@ export const YouTubeIntegration = forwardRef<YouTubeIntegrationRef, YouTubeInteg
 
   // Expose checkConnection method to parent component
   useImperativeHandle(ref, () => ({
-    checkConnection
+    checkConnection: () => {
+      setHasCheckedConnection(true);
+      return checkConnection();
+    }
   }));
 
   const handleConnect = async () => {
@@ -91,6 +96,7 @@ export const YouTubeIntegration = forwardRef<YouTubeIntegrationRef, YouTubeInteg
       await connect();
       // After successful connection, check the status to update UI
       setTimeout(() => {
+        setHasCheckedConnection(true);
         checkConnection();
       }, 1000);
     } catch (error) {
@@ -123,6 +129,26 @@ export const YouTubeIntegration = forwardRef<YouTubeIntegrationRef, YouTubeInteg
 
   // Note: Removed automatic checkConnection() call to prevent 429 errors
   // Connection status will be checked only when user manually clicks connect/disconnect
+
+  // If we've verified a check and the result is disconnected, purge cached connection
+  useEffect(() => {
+    try { if (!cookieAuthUtils.isAuthenticated()) return; } catch {}
+    if (!hasCheckedConnection) return;
+    if (loading || isConnecting || isDisconnecting) return;
+    const disconnected = !(isConnected && channel);
+    if (disconnected && cachedConnected) {
+      try {
+        const raw = localStorage.getItem('platform_connections_v1');
+        const parsed = raw ? JSON.parse(raw) : { platforms: [], timestamp: Date.now() };
+        const set = new Set<string>(Array.isArray(parsed.platforms) ? parsed.platforms : []);
+        if (set.delete('youtube')) {
+          localStorage.setItem('platform_connections_v1', JSON.stringify({ platforms: Array.from(set), timestamp: Date.now() }));
+          sessionStorage.setItem('invalidate_connections_cache', '1');
+        }
+        setCachedConnected(false);
+      } catch {}
+    }
+  }, [hasCheckedConnection, loading, isConnecting, isDisconnecting, isConnected, channel, cachedConnected]);
 
   return (
     <SocialIntegrationCard

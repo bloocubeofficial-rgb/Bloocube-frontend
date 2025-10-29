@@ -17,6 +17,7 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
   const { connect, getProfile, disconnect, isConnected, profile, loading, error } = useLinkedIn();
   const [cachedConnected, setCachedConnected] = useState(false);
   const PROFILE_LOADED_KEY = 'conn_profile_loaded:linkedin';
+  const [hasCheckedConnection, setHasCheckedConnection] = useState(false);
 
   // Read cached connection on mount to avoid extra API checks
   useEffect(() => {
@@ -39,6 +40,7 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
     const loaded = sessionStorage.getItem(PROFILE_LOADED_KEY) === '1';
     if (!loaded) {
       try { sessionStorage.setItem(PROFILE_LOADED_KEY, '1'); } catch {}
+      setHasCheckedConnection(true);
       getProfile();
     }
   }, [cachedConnected, loading, getProfile]);
@@ -60,6 +62,25 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
   }, [isConnected, profile]);
 
   // Do not purge cache automatically; only explicit Disconnect updates cache
+  // If we've verified a check and the result is disconnected, purge cached connection
+  useEffect(() => {
+    try { if (!(cookieAuthUtils as any)?.isAuthenticated?.()) return; } catch {}
+    if (!hasCheckedConnection) return;
+    if (loading) return;
+    const disconnected = !(isConnected && profile);
+    if (disconnected && cachedConnected) {
+      try {
+        const raw = localStorage.getItem('platform_connections_v1');
+        const parsed = raw ? JSON.parse(raw) : { platforms: [], timestamp: Date.now() };
+        const set = new Set<string>(Array.isArray(parsed.platforms) ? parsed.platforms : []);
+        if (set.delete('linkedin')) {
+          localStorage.setItem('platform_connections_v1', JSON.stringify({ platforms: Array.from(set), timestamp: Date.now() }));
+          sessionStorage.setItem('invalidate_connections_cache', '1');
+        }
+        setCachedConnected(false);
+      } catch {}
+    }
+  }, [hasCheckedConnection, loading, isConnected, profile, cachedConnected]);
 
   // If cached connected but no profile yet, fetch once per session or when invalidated
   useEffect(() => {
@@ -82,6 +103,7 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
   const checkConnectionStatus = async () => {
     // This function now just triggers the hook's getProfile method.
     // The component will automatically re-render with the new state.
+    setHasCheckedConnection(true);
     await getProfile();
   };
 
