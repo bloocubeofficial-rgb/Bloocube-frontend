@@ -121,10 +121,13 @@ const Dashboard = () => {
           );
         } catch {}
       }
+      const reqInit: RequestInit = options?.showLoading
+        ? { headers: { 'X-Show-Loading': '1' } as any }
+        : {};
       const res = await apiRequest<{
         success: boolean;
         data: { analytics: AnalyticsItem[] };
-      }>(`/api/analytics/user/${userId}`, { showLoading: !!options?.showLoading });
+      }>(`/api/analytics/user/${userId}`, reqInit);
       setAnalytics(res?.data?.analytics || []);
       setLastUpdated(Date.now());
       saveAnalyticsCache(res?.data?.analytics || []);
