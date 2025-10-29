@@ -1,6 +1,7 @@
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from "react";
 import { ExternalLink, Loader2, Play } from "lucide-react";
 import { SocialIntegrationCard } from '@/Components/LazyComponents';
+import { cookieAuthUtils } from '@/lib/cookieAuth';
 import { useYouTube } from "@/hooks/useYouTube";
 
 interface YouTubeIntegrationProps {
@@ -31,6 +32,34 @@ export const YouTubeIntegration = forwardRef<YouTubeIntegrationRef, YouTubeInteg
     } catch {}
   }, []);
 
+  // If no cache available, perform a one-time check per session (authenticated only)
+  useEffect(() => {
+    try { if (!cookieAuthUtils.isAuthenticated()) return; } catch {}
+    if (cachedConnected) return;
+    if (loading || isConnecting || isDisconnecting) return;
+    const loaded = sessionStorage.getItem(PROFILE_LOADED_KEY) === '1';
+    if (!loaded) {
+      try { sessionStorage.setItem(PROFILE_LOADED_KEY, '1'); } catch {}
+      checkConnection();
+    }
+  }, [cachedConnected, loading, isConnecting, isDisconnecting, checkConnection]);
+
+  // When connection confirmed, add to cache
+  useEffect(() => {
+    if (isConnected && channel) {
+      try {
+        const raw = localStorage.getItem('platform_connections_v1');
+        const parsed = raw ? JSON.parse(raw) : { platforms: [], timestamp: 0 };
+        const set = new Set<string>(Array.isArray(parsed.platforms) ? parsed.platforms : []);
+        if (!set.has('youtube')) {
+          set.add('youtube');
+          localStorage.setItem('platform_connections_v1', JSON.stringify({ platforms: Array.from(set), timestamp: Date.now() }));
+          setCachedConnected(true);
+        }
+      } catch {}
+    }
+  }, [isConnected, channel]);
+
   // If cached connected but no channel yet, fetch once per session or when invalidated
   useEffect(() => {
     if (!cachedConnected) return;
@@ -48,6 +77,8 @@ export const YouTubeIntegration = forwardRef<YouTubeIntegrationRef, YouTubeInteg
       checkConnection();
     }
   }, [cachedConnected, channel, loading, isConnecting, isDisconnecting, checkConnection]);
+
+  // Do not purge cache automatically; only explicit Disconnect updates cache
 
   // Expose checkConnection method to parent component
   useImperativeHandle(ref, () => ({

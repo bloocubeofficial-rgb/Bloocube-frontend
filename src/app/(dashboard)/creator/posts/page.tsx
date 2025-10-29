@@ -1555,7 +1555,7 @@ export default function PostsPage() {
           </button>
         </div>
       </div>
-
+    
 
       {/* Create Post Tab */}
       {activeTab === "create" && (

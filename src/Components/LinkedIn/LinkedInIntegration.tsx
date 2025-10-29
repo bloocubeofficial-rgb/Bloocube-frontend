@@ -1,6 +1,7 @@
 // LinkedInIntegration.tsx
 "use client";
 import React, { forwardRef, useImperativeHandle, useEffect, useState } from 'react';
+import { cookieAuthUtils } from '@/lib/cookieAuth';
 import { SocialIntegrationCard } from '@/Components/LazyComponents';
 import { useLinkedIn } from '@/hooks/useLinkedIn';
 
@@ -29,6 +30,36 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
       }
     } catch {}
   }, []);
+
+  // If no cache available, perform a one-time check per session (authenticated only)
+  useEffect(() => {
+    try { if (!(cookieAuthUtils as any)?.isAuthenticated?.()) return; } catch {}
+    if (cachedConnected) return;
+    if (loading) return;
+    const loaded = sessionStorage.getItem(PROFILE_LOADED_KEY) === '1';
+    if (!loaded) {
+      try { sessionStorage.setItem(PROFILE_LOADED_KEY, '1'); } catch {}
+      getProfile();
+    }
+  }, [cachedConnected, loading, getProfile]);
+
+  // When connection confirmed, add to cache
+  useEffect(() => {
+    if (isConnected && profile) {
+      try {
+        const raw = localStorage.getItem('platform_connections_v1');
+        const parsed = raw ? JSON.parse(raw) : { platforms: [], timestamp: 0 };
+        const set = new Set<string>(Array.isArray(parsed.platforms) ? parsed.platforms : []);
+        if (!set.has('linkedin')) {
+          set.add('linkedin');
+          localStorage.setItem('platform_connections_v1', JSON.stringify({ platforms: Array.from(set), timestamp: Date.now() }));
+          setCachedConnected(true);
+        }
+      } catch {}
+    }
+  }, [isConnected, profile]);
+
+  // Do not purge cache automatically; only explicit Disconnect updates cache
 
   // If cached connected but no profile yet, fetch once per session or when invalidated
   useEffect(() => {

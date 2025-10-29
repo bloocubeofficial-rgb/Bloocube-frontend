@@ -3,6 +3,7 @@ import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'rea
 import { useInstagram } from '@/hooks/useInstagram'; // FIX: Changed path alias '@/hooks/useInstagram' to relative path '../hooks/useInstagram'
 import { Loader2, CheckCircle, ExternalLink, Instagram } from 'lucide-react';
 import { SocialIntegrationCard } from '@/Components/LazyComponents';
+import { cookieAuthUtils } from '@/lib/cookieAuth';
 import { InstagramSetupGuide } from './InstagramSetupGuide';
 
 interface InstagramIntegrationProps {
@@ -43,6 +44,34 @@ export const InstagramIntegration = forwardRef<InstagramIntegrationRef, Instagra
     } catch {}
   }, []);
 
+  // If no cache available, perform a one-time check per session (authenticated only)
+  useEffect(() => {
+    try { if (!cookieAuthUtils.isAuthenticated()) return; } catch {}
+    if (cachedConnected) return;
+    if (loading || isConnecting || isDisconnecting) return;
+    const loaded = sessionStorage.getItem(PROFILE_LOADED_KEY) === '1';
+    if (!loaded) {
+      try { sessionStorage.setItem(PROFILE_LOADED_KEY, '1'); } catch {}
+      checkConnection();
+    }
+  }, [cachedConnected, loading, isConnecting, isDisconnecting, checkConnection]);
+
+  // When connection confirmed, add to cache
+  useEffect(() => {
+    if (isConnected && profile) {
+      try {
+        const raw = localStorage.getItem('platform_connections_v1');
+        const parsed = raw ? JSON.parse(raw) : { platforms: [], timestamp: 0 };
+        const set = new Set<string>(Array.isArray(parsed.platforms) ? parsed.platforms : []);
+        if (!set.has('instagram')) {
+          set.add('instagram');
+          localStorage.setItem('platform_connections_v1', JSON.stringify({ platforms: Array.from(set), timestamp: Date.now() }));
+          setCachedConnected(true);
+        }
+      } catch {}
+    }
+  }, [isConnected, profile]);
+
   // If cached connected but no profile yet, fetch once per session or when invalidated
   useEffect(() => {
     if (!cachedConnected) return;
@@ -60,6 +89,8 @@ export const InstagramIntegration = forwardRef<InstagramIntegrationRef, Instagra
       checkConnection();
     }
   }, [cachedConnected, profile, loading, isConnecting, isDisconnecting, checkConnection]);
+
+  // Do not purge cache automatically; only explicit Disconnect updates cache
 
   const handleConnect = async () => {
     try {
