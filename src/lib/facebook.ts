@@ -27,6 +27,20 @@ export interface FacebookValidationResponse {
   error?: string;
 }
 
+export interface FacebookPage {
+  id: string;
+  name: string;
+  access_token?: string;
+}
+
+export interface FacebookPagesResponse {
+  success: boolean;
+  count?: number;
+  pages?: FacebookPage[];
+  permissions?: Array<{ permission: string; status: string }>;
+  error?: string;
+}
+
 class FacebookService {
   private baseURL: string;
 
@@ -95,6 +109,19 @@ class FacebookService {
   // Validate Facebook connection
   async validateConnection(): Promise<FacebookValidationResponse> {
     return this.request<FacebookValidationResponse>('/api/facebook/validate');
+  }
+
+  // List pages available to the connected user
+  async getPages(): Promise<FacebookPagesResponse> {
+    return this.request<FacebookPagesResponse>('/api/facebook/pages');
+  }
+
+  // Set default page for posting
+  async setDefaultPage(pageId: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    return this.request('/api/facebook/default-page', {
+      method: 'POST',
+      body: JSON.stringify({ pageId })
+    });
   }
 }
 

@@ -30,6 +30,7 @@ import {
   Plus,
   X,
   Menu,
+  Sparkles,
 } from "lucide-react";
 import CreatorLayout from "@/Components/Creater/CreatorLayout";
 import { apiRequest } from "@/lib/apiClient";
@@ -109,7 +110,7 @@ const PLATFORM_CONFIGS = {
     name: "Twitter",
     icon: Twitter,
     color: "sky",
-    postTypes: ["tweet", "thread", "poll"],
+    postTypes: ["tweet", "thread"],
     maxCaptionLength: 280,
     supportedMedia: ["image", "video", "gif"],
     fields: {
@@ -160,15 +161,12 @@ const PLATFORM_CONFIGS = {
     name: "Facebook",
     icon: Facebook,
     color: "blue",
-    postTypes: ["post", "story", "event"],
+    postTypes: ["post"],
     maxCaptionLength: 63206,
     supportedMedia: ["image", "video"],
     fields: {
       content: { required: false, placeholder: "What's on your mind?" },
       hashtags: { required: false, placeholder: "#facebook #social" },
-      mentions: { required: false, placeholder: "@friend" },
-      feeling: { required: false, placeholder: "How are you feeling?" },
-      location: { required: false, placeholder: "Check in somewhere" },
       linkPreview: { required: false, type: "url", placeholder: "Add a link" },
     },
   },
@@ -327,91 +325,6 @@ const TwitterPostForm = ({
         </div>
       )}
 
-      {/* Poll Section - Only for poll type */}
-      {selectedPostType === "poll" && (
-        <div className="border-l-4 border-green-500 pl-4">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">
-            Poll Settings
-          </h4>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Poll Question *
-            </label>
-            <input
-              type="text"
-              value={postData.poll_question || ""}
-              onChange={(e) => onFieldChange("poll_question", e.target.value)}
-              placeholder="Ask a question for your poll..."
-              maxLength={280}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* Poll Options */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Poll Options * (2-4 options)
-            </label>
-            <div className="space-y-2">
-              {pollOptions.map((option, index) => (
-                <div key={index} className="flex space-x-2">
-                  <input
-                    type="text"
-                    value={option}
-                    onChange={(e) =>
-                      handlePollOptionChange(index, e.target.value)
-                    }
-                    placeholder={`Option ${index + 1}`}
-                    maxLength={25}
-                    className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  {pollOptions.length > 2 && (
-                    <button
-                      onClick={() => removePollOption(index)}
-                      className="flex-shrink-0 p-3 text-red-500 hover:text-red-700"
-                      type="button"
-                    >
-                      <X size={16} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-            {pollOptions.length < 4 && (
-              <button
-                onClick={addPollOption}
-                className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm mt-2"
-                type="button"
-              >
-                <Plus size={14} />
-                <span>Add Option</span>
-              </button>
-            )}
-          </div>
-
-          {/* Poll Duration */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Poll Duration *
-            </label>
-            <select
-              value={postData.poll_duration || 1440}
-              onChange={(e) =>
-                onFieldChange("poll_duration", parseInt(e.target.value))
-              }
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value={60}>1 hour</option>
-              <option value={1440}>24 hours</option>
-              <option value={10080}>7 days</option>
-            </select>
-          </div>
-
-          {/* Debug Info removed */}
-        </div>
-      )}
-
       {/* Reply Settings - For all types */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -442,8 +355,6 @@ export default function PostsPage() {
     setPostData,
     mediaFiles,
     setMediaFiles,
-    pollOptions,
-    setPollOptions,
     threadTweets,
     setThreadTweets,
     clearFormData,
@@ -472,6 +383,37 @@ export default function PostsPage() {
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
   const [checkingConnections, setCheckingConnections] = useState(true);
   const [lastCheckTime, setLastCheckTime] = useState(0);
+
+  // Facebook Pages selection
+  const [facebookPages, setFacebookPages] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedFacebookPageId, setSelectedFacebookPageId] = useState<string>("")
+  const [loadingFbPages, setLoadingFbPages] = useState<boolean>(false);
+
+  const fetchFacebookPages = async () => {
+    try {
+      setLoadingFbPages(true);
+      const resp = await facebookService.getPages();
+      if (resp?.success && Array.isArray(resp.pages)) {
+        setFacebookPages(resp.pages.map((p: any) => ({ id: p.id, name: p.name })));
+        if (resp.pages.length === 1) {
+          setSelectedFacebookPageId(resp.pages[0].id);
+        }
+      } else {
+        setFacebookPages([]);
+      }
+    } catch (e) {
+      setFacebookPages([]);
+    } finally {
+      setLoadingFbPages(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedPlatform === "facebook") {
+      // load available pages for posting
+      fetchFacebookPages();
+    }
+  }, [selectedPlatform]);
 
   // Connection cache helpers (5 min TTL)
   const CONNECTIONS_CACHE_KEY = 'platform_connections_v1';
@@ -578,7 +520,12 @@ export default function PostsPage() {
   // Handle platform selection
   const handlePlatformSelect = (platform: string) => {
     setSelectedPlatform(platform);
+    try {
+      const firstType = PLATFORM_CONFIGS[platform as keyof typeof PLATFORM_CONFIGS]?.postTypes?.[0] || "";
+      setSelectedPostType(firstType);
+    } catch {
     setSelectedPostType("");
+    }
     setPostData({});
     setMediaFiles([]);
     setError("");
@@ -824,13 +771,16 @@ export default function PostsPage() {
 
     // Check required fields
     Object.entries(config.fields).forEach(([field, fieldConfig]) => {
+      // Special case: LinkedIn article should not require 'content'
+      if (selectedPlatform === "linkedin" && selectedPostType === "article" && field === "content") {
+        return; // skip content requirement for articles
+      }
       if (
         fieldConfig.required &&
         (!postData[field] || postData[field].toString().trim().length === 0)
       ) {
         throw new Error(
-          `${field.charAt(0).toUpperCase() + field.slice(1)} is required for ${config.name
-          }`
+          `${field.charAt(0).toUpperCase() + field.slice(1)} is required for ${config.name}`
         );
       }
     });
@@ -876,30 +826,20 @@ export default function PostsPage() {
           throw new Error("Thread must contain at least one valid tweet");
         }
       }
-
-      // Validate poll data
-      if (selectedPostType === "poll") {
-        if (
-          !postData.poll_question ||
-          postData.poll_question.trim().length === 0
-        ) {
-          throw new Error("Poll question is required");
-        }
-        if (!postData.poll_options || postData.poll_options.length < 2) {
-          throw new Error("Poll must have at least 2 options");
-        }
-        const validOptions = postData.poll_options.filter(
-          (opt: string) => opt && opt.trim().length > 0
-        );
-        if (validOptions.length < 2) {
-          throw new Error("Poll must have at least 2 valid options");
-        }
-      }
     }
 
     if (selectedPlatform === "linkedin") {
+      if (selectedPostType === "article") {
+        if (!(postData as any).articleTitle || (postData as any).articleTitle.trim().length === 0) {
+          throw new Error("Article Title is required for LinkedIn");
+        }
+        if (!(postData as any).articleBody || (postData as any).articleBody.trim().length === 0) {
+          throw new Error("Article Body is required for LinkedIn");
+        }
+      } else {
       if (!postData.content || postData.content.trim().length === 0) {
         throw new Error("Content is required for LinkedIn posts");
+        }
       }
     }
 
@@ -982,7 +922,7 @@ export default function PostsPage() {
       twitterContent.tweet_type = "tweet";
     }
 
-    basePayload.platform_content = {
+    basePayload.platformContent = {
       twitter: twitterContent,
     };
 
@@ -1073,8 +1013,12 @@ export default function PostsPage() {
         };
       } else {
         // Generic payload for other platforms
-        const actualContent =
-          postData.caption || postData.content || postData.title || "";
+        let actualContent = postData.caption || postData.content || postData.title || "";
+        // Map LinkedIn article fields into content/title
+        if (selectedPlatform === "linkedin" && selectedPostType === "article") {
+          if ((postData as any).articleBody) actualContent = (postData as any).articleBody;
+          if ((postData as any).articleTitle) postData.title = (postData as any).articleTitle;
+        }
 
         postPayload = {
           platform: selectedPlatform,
@@ -1095,7 +1039,7 @@ export default function PostsPage() {
                 .filter(Boolean)
               : [],
           },
-          title: actualContent.trim(),
+          title: (postData.title || actualContent).trim(),
           media:
             mediaFiles.length > 0
               ? mediaFiles.map((file) => ({
@@ -1141,6 +1085,15 @@ export default function PostsPage() {
           ) {
             throw new Error("YouTube requires exactly one video file.");
           }
+        } else if (selectedPlatform === "facebook") {
+          // Provide selected page for posting
+          if (selectedFacebookPageId) {
+            postPayload.platform_content = {
+              facebook: {
+                pageId: selectedFacebookPageId,
+              },
+            };
+          }
         }
         // Add other platform content as needed...
       }
@@ -1169,8 +1122,8 @@ export default function PostsPage() {
         formData.append("title", postPayload.title || "");
         formData.append("content", JSON.stringify(postPayload.content || {}));
         // Platform-specific content wrapper expected by backend as platformContent
-        const platformContent = postPayload.platform_content
-          ? postPayload.platform_content
+        const platformContent = postPayload.platformContent
+          ? postPayload.platformContent
           : postPayload.youtube_content
             ? { youtube: postPayload.youtube_content }
             : {};
@@ -1340,9 +1293,119 @@ export default function PostsPage() {
     const config =
       PLATFORM_CONFIGS[selectedPlatform as keyof typeof PLATFORM_CONFIGS];
 
+    // Special rendering for LinkedIn post types
+    if (selectedPlatform === "linkedin") {
+      if (selectedPostType === "article") {
     return (
       <div className="space-y-6">
-        {Object.entries(config.fields).map(([field, fieldConfig]) => {
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Article Title</label>
+              <input
+                type="text"
+                value={(postData as any).articleTitle || ""}
+                onChange={(e) => handleFieldChange("articleTitle", e.target.value)}
+                placeholder="Enter article title"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">Article Body</label>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      setLoading(true);
+                      const prompt = `Write a professional LinkedIn article body about: ${(postData as any).articleTitle || "my topic"}`;
+                      const res = await apiRequest('/api/ai/suggestions', {
+                        method: 'POST',
+                        body: JSON.stringify({ prompt, platform: 'linkedin', type: 'article', context: postData })
+                      }) as any;
+                      const text = res?.data?.result?.content || '';
+                      if (text) handleFieldChange('articleBody', text);
+                    } catch {
+                      setError('Failed to generate article content');
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+                  title="Generate article with AI"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  AI
+                </button>
+              </div>
+              <textarea
+                value={(postData as any).articleBody || ""}
+                onChange={(e) => handleFieldChange("articleBody", e.target.value)}
+                placeholder="Write your article body..."
+                rows={8}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              />
+            </div>
+          </div>
+        );
+      }
+      // For LinkedIn post (not article): keep default fields, but hide article-specific ones
+    }
+
+    return (
+      <div className="space-y-6">
+        {selectedPlatform === "facebook" && (
+          <div className="p-4 border border-gray-200 rounded-lg bg-white">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-gray-700">
+                Select Facebook Page
+              </label>
+              <button
+                type="button"
+                onClick={fetchFacebookPages}
+                className="text-blue-600 text-sm hover:underline"
+              >
+                {loadingFbPages ? "Loading..." : "Refresh"}
+              </button>
+            </div>
+            <select
+              value={selectedFacebookPageId}
+              onChange={(e) => setSelectedFacebookPageId(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">{loadingFbPages ? "Loading pages..." : "Select a Page (required to post)"}</option>
+              {facebookPages.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            {selectedFacebookPageId && (
+              <div className="mt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await facebookService.setDefaultPage(selectedFacebookPageId);
+                      setSuccess("Default Facebook Page saved");
+                    } catch (e) {
+                      setError("Failed to set default page");
+                    }
+                  }}
+                  className="text-xs text-gray-700 hover:text-gray-900 underline"
+                >
+                  Make default for future posts
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        {Object
+          .entries(config.fields)
+          .filter(([field]) => {
+            // Hide LinkedIn article fields when not in article mode
+            if (selectedPlatform === 'linkedin' && selectedPostType !== 'article') {
+              if (field === 'articleTitle' || field === 'articleBody') return false;
+            }
+            return true;
+          })
+          .map(([field, fieldConfig]) => {
           // Handle file upload fields (like thumbnail)
           if ((fieldConfig as any).type === "file") {
             return (
@@ -1397,15 +1460,45 @@ export default function PostsPage() {
             );
           }
 
-          if ((fieldConfig as any).type === "textarea") {
+          if ((fieldConfig as any).type === "textarea" || field === 'content') {
             return (
               <div key={field}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
                   {field.charAt(0).toUpperCase() + field.slice(1)}
                   {fieldConfig.required && (
                     <span className="text-red-500">*</span>
                   )}
                 </label>
+                  {field === 'content' && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          setLoading(true);
+                          const prompt = `Generate a social post for ${selectedPlatform}.` + (postData.hashtags ? ` Use hashtags: ${postData.hashtags}` : '');
+                          const res = await apiRequest('/api/ai/suggestions', {
+                            method: 'POST',
+                            body: JSON.stringify({ prompt, platform: selectedPlatform, context: postData })
+                          }) as any;
+                          const text = res?.data?.result?.content || '';
+                          if (text) {
+                            handleFieldChange('content', text);
+                          }
+                        } catch (e) {
+                          setError('Failed to generate content');
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+                      title="Generate content with AI"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      AI
+                    </button>
+                  )}
+                </div>
                 <textarea
                   value={postData[field] || ""}
                   onChange={(e) => handleFieldChange(field, e.target.value)}
@@ -1670,8 +1763,10 @@ export default function PostsPage() {
               </div>
             </div>
 
-            {/* Post Type Selection */}
-            {selectedPlatform && (
+            {/* Post Type Selection (hidden when only one type) */}
+            {selectedPlatform && PLATFORM_CONFIGS[
+              selectedPlatform as keyof typeof PLATFORM_CONFIGS
+            ].postTypes.length > 1 && (
               <div>
                 <h3 className="text-sm font-medium text-gray-700 mb-3">
                   Post Type
