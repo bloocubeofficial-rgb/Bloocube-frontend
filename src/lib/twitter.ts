@@ -131,7 +131,8 @@ class TwitterService {
   async isConnected(): Promise<boolean> {
     try {
       const profile = await this.getProfile();
-      return profile.success;
+      // Consider connected only if success AND a valid profile with username exists
+      return Boolean(profile.success && profile.profile && (profile.profile as any).username);
     } catch {
       return false;
     }
