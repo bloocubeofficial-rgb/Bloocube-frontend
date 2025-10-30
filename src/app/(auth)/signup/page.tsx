@@ -39,6 +39,23 @@ const SignupForm: React.FC = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const [confirmTouched, setConfirmTouched] = useState(false);
+
+  const passwordRules = {
+    minLength: 8,
+  } as const;
+
+  const passwordChecks = {
+    length: password.length >= passwordRules.minLength,
+    upper: /[A-Z]/.test(password),
+    lower: /[a-z]/.test(password),
+    number: /[0-9]/.test(password),
+    special: /[^A-Za-z0-9]/.test(password),
+    noSpace: !/\s/.test(password),
+  };
+  const isStrongPassword = Object.values(passwordChecks).every(Boolean);
+  const passwordsMatch = password === confirm && confirm.length > 0;
 
   // ✅ Handles Google signup redirect
   const handleGoogle = async () => {
@@ -131,8 +148,10 @@ const SignupForm: React.FC = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (!isStrongPassword) {
+      setError(
+        "Password must be at least 8 chars and include upper, lower, number, special, and no spaces."
+      );
       setIsLoading(false);
       return;
     }
@@ -304,8 +323,37 @@ const SignupForm: React.FC = () => {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onBlur={() => setPasswordTouched(true)}
                 className="pl-10 pr-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-zinc-500 rounded-xl focus:ring-2 focus:ring-indigo-500/30"
               />
+            {passwordTouched || password.length > 0 ? (
+              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div className={`flex items-center gap-2 ${passwordChecks.length ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                  <span className={`w-2 h-2 rounded-full ${passwordChecks.length ? 'bg-emerald-400' : 'bg-zinc-500'}`}></span>
+                  At least {passwordRules.minLength} characters
+                </div>
+                <div className={`flex items-center gap-2 ${passwordChecks.upper ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                  <span className={`w-2 h-2 rounded-full ${passwordChecks.upper ? 'bg-emerald-400' : 'bg-zinc-500'}`}></span>
+                  One uppercase letter (A-Z)
+                </div>
+                <div className={`flex items-center gap-2 ${passwordChecks.lower ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                  <span className={`w-2 h-2 rounded-full ${passwordChecks.lower ? 'bg-emerald-400' : 'bg-zinc-500'}`}></span>
+                  One lowercase letter (a-z)
+                </div>
+                <div className={`flex items-center gap-2 ${passwordChecks.number ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                  <span className={`w-2 h-2 rounded-full ${passwordChecks.number ? 'bg-emerald-400' : 'bg-zinc-500'}`}></span>
+                  One number (0-9)
+                </div>
+                <div className={`flex items-center gap-2 ${passwordChecks.special ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                  <span className={`w-2 h-2 rounded-full ${passwordChecks.special ? 'bg-emerald-400' : 'bg-zinc-500'}`}></span>
+                  One special character (!@#$...)
+                </div>
+                <div className={`flex items-center gap-2 ${passwordChecks.noSpace ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                  <span className={`w-2 h-2 rounded-full ${passwordChecks.noSpace ? 'bg-emerald-400' : 'bg-zinc-500'}`}></span>
+                  No spaces
+                </div>
+              </div>
+            ) : null}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
@@ -333,8 +381,16 @@ const SignupForm: React.FC = () => {
                 placeholder="••••••••"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
+                onBlur={() => setConfirmTouched(true)}
                 className="pl-10 pr-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-zinc-500 rounded-xl focus:ring-2 focus:ring-indigo-500/30"
               />
+            {(confirmTouched || confirm.length > 0) && (
+              <div className="mt-2 text-xs">
+                <span className={`${passwordsMatch ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
+                </span>
+              </div>
+            )}
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
@@ -392,7 +448,7 @@ const SignupForm: React.FC = () => {
 
           <Button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !isStrongPassword || !passwordsMatch}
             className="w-full h-11 bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 rounded-xl text-white font-semibold shadow-lg hover:shadow-[0_0_20px_rgba(147,51,234,0.4)] transition-all duration-300"
           >
             {isLoading ? (
