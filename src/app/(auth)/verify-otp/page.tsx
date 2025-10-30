@@ -3,7 +3,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, ArrowLeft, RefreshCw } from "lucide-react";
-import Button from "@/Components/ui/Button";
+import { Button } from "@/Components/ui/Button";
 import { Input } from "@/Components/ui/Input";
 import { Label } from "@/Components/ui/Label";
 import { Alert, AlertDescription } from "@/Components/ui/Alert";

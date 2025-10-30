@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
-import Button from "@/Components/ui/Button";
+import { Button } from "@/Components/ui/Button";
 import { Input } from "@/Components/ui/Input";
 import { Label } from "@/Components/ui/Label";
 import { Alert, AlertDescription } from "@/Components/ui/Alert";

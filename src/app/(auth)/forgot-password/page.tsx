@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import Button from "@/Components/ui/Button";
+import { Button } from "@/Components/ui/Button";
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -55,7 +55,7 @@ const ForgotPasswordPage: React.FC = () => {
             onChange={(e) => setEmail(e.target.value)}
             className="px-4 py-2 rounded-xl bg-white/10 placeholder:text-white/50 focus:outline-none"
           />
-          <Button type="submit" size="md" className="w-full mt-2">
+          <Button type="submit"  className="w-full mt-2">
             Send Reset Link
           </Button>
         </form>
