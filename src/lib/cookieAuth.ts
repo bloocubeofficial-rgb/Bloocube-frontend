@@ -179,13 +179,27 @@ export const cookieAuthUtils = {
     
     const expires = new Date();
     expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
-    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Strict`;
+    const isSecure = window.location.protocol === 'https:';
+    // Use top-level domain (if subdomain) so app subpaths share cookie
+    const hostname = window.location.hostname;
+    const parts = hostname.split('.');
+    const domain = parts.length > 2 ? `.${parts.slice(-2).join('.')}` : undefined;
+    const domainAttr = domain ? `;domain=${domain}` : '';
+    const secureAttr = isSecure ? ';Secure' : '';
+    // Lax avoids breaking typical navigations in production behind redirects
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax${secureAttr}${domainAttr}`;
   },
 
   deleteCookie(name: string): void {
     if (typeof window === 'undefined') return;
     
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Strict`;
+    const isSecure = window.location.protocol === 'https:';
+    const hostname = window.location.hostname;
+    const parts = hostname.split('.');
+    const domain = parts.length > 2 ? `.${parts.slice(-2).join('.')}` : undefined;
+    const domainAttr = domain ? `;domain=${domain}` : '';
+    const secureAttr = isSecure ? ';Secure' : '';
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Lax${secureAttr}${domainAttr}`;
   },
 
   // Debug function to check authentication state
