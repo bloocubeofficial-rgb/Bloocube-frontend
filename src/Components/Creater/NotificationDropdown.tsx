@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
+import {  useRef, useEffect } from "react";
 
 interface NotificationDropdownProps {
   className?: string;
@@ -23,7 +24,22 @@ interface NotificationDropdownProps {
 
 const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className = '' }) => {
   const [isOpen, setIsOpen] = useState(false);
-  
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      dropdownRef.current &&
+      !dropdownRef.current.contains(event.target as Node)
+    ) {
+      setIsOpen(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, []);
+
 
   const {
     notifications,
@@ -109,11 +125,11 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
   const closeDropdown = () => setIsOpen(false);
 
   return (
-    <div className={`relative ${className}`}>
+    <div ref={dropdownRef} className={`relative ${className}`}>
       {/* Notification Bell Button */}
       <button
         onClick={toggleDropdown}
-        className="relative p-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 "
+        className="relative p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 "
       >
         <Bell className="w-4 h-4" />
         {unreadCount > 0 && (
@@ -127,8 +143,19 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
 
       {isOpen && (
 
-        <div className="absolute right-1 md:right-0 mt-2 w-80 md:w-96 max-w-[90vw] bg-white rounded-xl shadow-xl border border-gray-200 z-[10000] max-h-[70vh] md:max-h-96 overflow-hidden">
-          {/* Header */}
+        <div   className="
+      fixed 
+      top-14 left-1/2 -translate-x-1/2 
+
+      sm:absolute  sm:right-0 sm:left-auto sm:translate-x-0
+      
+      w-[92vw] sm:w-80 md:w-96 
+      bg-white rounded-xl shadow-xl border border-gray-200 
+      z-[99999]
+      max-h-[75vh] sm:max-h-96 overflow-hidden
+      animate-in fade-in slide-in-from-top-2 
+    ">
+          {/* header */}
           <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-900">

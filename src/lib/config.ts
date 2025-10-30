@@ -6,7 +6,7 @@ const getFrontendUrl = (): string => {
     // Client-side: use current origin
     return window.location.origin;
   }
-  
+
   // Server-side: use environment variable with fallback
   if (process.env.NODE_ENV === 'production') {
     return process.env.FRONTEND_URL || 'https://bloocube.com';
@@ -41,12 +41,12 @@ export const config = {
 export const getApiBase = (): string => {
   // In development mode, always use localhost
   if (process.env.NODE_ENV === 'development' || (typeof window !== 'undefined' && window.location.hostname === 'localhost')) {
-    return 'http://localhost:5000';
+    return 'https://api-backend.bloocube.com';
   }
-  
+
   const runtime = (globalThis as any)?.NEXT_PUBLIC_API_URL as string | undefined;
   const base = runtime || process.env.NEXT_PUBLIC_API_URL;
-  
+
   if (!base) {
     console.warn('⚠️ NEXT_PUBLIC_API_URL is not set. Using fallback configuration.');
     // Fallback to production API URL
