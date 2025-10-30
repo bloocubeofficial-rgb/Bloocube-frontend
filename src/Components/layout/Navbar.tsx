@@ -7,6 +7,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import clsx from "clsx";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -18,6 +19,7 @@ const navItems = [
 const Navbar = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [open, setOpen] = useState(false);
+  const { isAuthenticated, user, isLoading } = useAuth();
 
   useEffect(() => {
     setIsVisible(true);
@@ -88,12 +90,19 @@ const Navbar = () => {
 
               {/* CTA Buttons */}
               <div className="hidden md:flex items-center gap-3">
-                <Link href="/login">
-                  <Button variant="outline" size="sm" className="px-4 py-2 border-white/20 hover:border-white/40 hover:bg-white/5 transition-all duration-300">
-                    Sign In
-                  </Button>
-                </Link>
-                
+                {isAuthenticated ? (
+                  <Link href={user?.role === 'brand' ? '/brand' : '/creator'}>
+                    <Button variant="outline" size="sm" className="px-4 py-2 border-white/20 hover:border-white/40 hover:bg-white/5 transition-all duration-300">
+                      My Profile
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/login">
+                    <Button variant="outline" size="sm" className="px-4 py-2 border-white/20 hover:border-white/40 hover:bg-white/5 transition-all duration-300">
+                      Sign In
+                    </Button>
+                  </Link>
+                )}
               </div>
 
               {/* Mobile menu toggle */}
@@ -140,11 +149,19 @@ const Navbar = () => {
               </Link>
             ))}
             <div className="pt-2 border-t border-white/10 space-y-2">
-              <Link href="/login" onClick={() => setOpen(false)}>
-                <Button variant="outline" size="sm" className="w-full border-white/20 hover:border-white/40 py-3 text-base">
-                  Sign In
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <Link href={user?.role === 'brand' ? '/brand' : '/creator'} onClick={() => setOpen(false)}>
+                  <Button variant="outline" size="sm" className="w-full border-white/20 hover:border-white/40 py-3 text-base">
+                    My Profile
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/login" onClick={() => setOpen(false)}>
+                  <Button variant="outline" size="sm" className="w-full border-white/20 hover:border-white/40 py-3 text-base">
+                    Sign In
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </motion.div>

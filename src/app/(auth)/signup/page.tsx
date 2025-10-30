@@ -10,10 +10,21 @@ import { Alert, AlertDescription } from "@/Components/ui/Alert";
 import { Select, SelectItem, SelectTrigger } from "@/Components/ui/Select";
 import Link from "next/link";
 import { apiRequest } from "@/lib/apiClient";
+import { useAuth } from "@/hooks/useAuth";
 
 const SignupForm: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
+  // Redirect authenticated users away from signup
+  if (!authLoading && isAuthenticated) {
+    const target = user?.role === 'brand' ? '/brand' : '/creator';
+    if (typeof window !== 'undefined') {
+      router.replace(target);
+    }
+    return null;
+  }
+
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

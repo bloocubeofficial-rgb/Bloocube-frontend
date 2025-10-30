@@ -10,6 +10,7 @@ import { Input } from "@/Components/ui/Input";
 import { Label } from "@/Components/ui/Label";
 import { Checkbox } from "@/Components/ui/Checkbox";
 import { apiRequest } from "@/lib/apiClient";
+import { useAuth } from "@/hooks/useAuth";
 
 interface LoginResponse {
   success: boolean;
@@ -38,6 +39,7 @@ interface GoogleAuthResponse {
 
 const LoginPage: React.FC = () => {
   const router = useRouter();
+  const { isAuthenticated, user, isLoading } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,6 +47,16 @@ const LoginPage: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Redirect authenticated users away from login
+  if (!isLoading && isAuthenticated) {
+    const target = user?.role === 'brand' ? '/brand' : '/creator';
+    // Replace to avoid back navigation to login
+    if (typeof window !== 'undefined') {
+      router.replace(target);
+    }
+    return null;
+  }
 
   // ✅ Handles login submission with real API
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
