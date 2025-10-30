@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { Alert, AlertDescription } from "@/Components/ui/Alert";
-import Button from "@/Components/ui/Button";
+import { Button } from "@/Components/ui/Button";
 import { Input } from "@/Components/ui/Input";
 import { Label } from "@/Components/ui/Label";
 import { Checkbox } from "@/Components/ui/Checkbox";

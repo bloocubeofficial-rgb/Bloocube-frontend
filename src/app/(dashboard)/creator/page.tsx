@@ -301,9 +301,9 @@ const Dashboard = () => {
         <Plus className="w-4 h-4" />
         <span className="font-medium">Create Post</span>
       </button>
-      <div className="w-8 h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
+      {/* <div className="w-8 h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
         <User className="w-4 h-4 text-gray-600" />
-      </div>
+      </div> */}
     </>
   );
 

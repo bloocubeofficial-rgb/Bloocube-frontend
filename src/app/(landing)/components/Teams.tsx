@@ -20,7 +20,7 @@ const Teams = () => {
         <div className="flex animate-marquee whitespace-nowrap will-change-transform">
           {[...companies, ...companies].map((company, index) => (
             <div key={index} className="mx-12 flex-shrink-0">
-              <span className="text-2xl font-semibold text-muted-foreground hover:text-foreground transition-colors">
+              <span className="text-2xl font-semibold text-muted-foreground  transition-colors">
                 {company}
               </span>
             </div>
