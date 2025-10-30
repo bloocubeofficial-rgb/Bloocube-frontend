@@ -5,8 +5,7 @@ import { LogOut, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cookieAuthUtils } from '@/lib/cookieAuth';
 import { apiRequest } from '@/lib/apiClient';
-import Button from './ui/Button';
-
+import { Button } from './ui/Button';
 interface LogoutProps {
   variant?: 'primary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
@@ -101,7 +100,7 @@ const Logout: React.FC<LogoutProps> = ({
                 Cancel
               </Button>
               <Button
-                variant="primary"
+                variant="ghost"
                 size="sm"
                 className="flex-1 bg-red-600 hover:bg-red-700"
                 onClick={handleConfirmLogout}
