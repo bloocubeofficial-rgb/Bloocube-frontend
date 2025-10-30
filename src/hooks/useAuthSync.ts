@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { cookieAuthUtils } from '@/lib/cookieAuth';
+import { apiRequest } from '@/lib/apiClient';
 
 export function useAuthSync() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -50,6 +51,31 @@ export function useAuthSync() {
   useEffect(() => {
     // Initial check
     checkAuth();
+
+    // Optional server validation to prevent stale/tampered user_data
+    // Only run if we think user is authenticated from cookies
+    (async () => {
+      try {
+        const hasUser = cookieAuthUtils.isAuthenticated();
+        if (!hasUser) return;
+        const me = await apiRequest<{ success: boolean; data?: { user?: Record<string, unknown> } }>(
+          '/api/auth/me',
+          { method: 'GET' }
+        );
+        if (me?.data?.user) {
+          // Reconcile cookie with server truth
+          cookieAuthUtils.updateUserData(me.data.user);
+          setUser(me.data.user);
+          setIsAuthenticated(true);
+        }
+      } catch (e) {
+        // If server says unauthorized, clear local auth
+        console.warn('Auth server validation failed, clearing local state');
+        setIsAuthenticated(false);
+        setUser(null);
+        cookieAuthUtils.clearAuth();
+      }
+    })();
 
     // Listen for storage changes from other tabs (for user data cookie)
     const handleStorageChange = (e: StorageEvent) => {

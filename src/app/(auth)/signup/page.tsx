@@ -11,6 +11,7 @@ import { Select, SelectItem, SelectTrigger } from "@/Components/ui/Select";
 import Link from "next/link";
 import { apiRequest } from "@/lib/apiClient";
 import { useAuth } from "@/hooks/useAuth";
+import { getFriendlyMessage } from "@/lib/errors";
 
 const SignupForm: React.FC = () => {
   const router = useRouter();
@@ -190,8 +191,7 @@ const SignupForm: React.FC = () => {
       }
     } catch (err) {
       console.error("Signup error:", err);
-      const message = err instanceof Error ? err.message : "An error occurred";
-      setError(message);
+      setError(getFriendlyMessage(err, 'signup'));
     } finally {
       setIsLoading(false);
     }
