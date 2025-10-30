@@ -41,7 +41,7 @@ export const config = {
 export const getApiBase = (): string => {
   // In development mode, always use localhost
   if (process.env.NODE_ENV === 'development' || (typeof window !== 'undefined' && window.location.hostname === 'localhost')) {
-    return 'http://localhost:5000';
+    return 'https://api-backend.bloocube.com';
   }
 
   const runtime = (globalThis as any)?.NEXT_PUBLIC_API_URL as string | undefined;
