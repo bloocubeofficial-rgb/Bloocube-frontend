@@ -38,6 +38,9 @@ export function getFriendlyMessage(err: unknown, context: 'login' | 'signup' | '
 
   // Unauthorized / expired
   if (status === 401) {
+    if (context === 'login') {
+      return 'Incorrect email or password. Please try again or reset your password.';
+    }
     return 'Your session expired. Please sign in again.';
   }
 

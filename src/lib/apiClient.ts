@@ -123,7 +123,9 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
         credentials: 'include' // This sends HttpOnly cookies automatically
       });
 
-      if (res.status === 401 && retries > 0) {
+      // Only attempt refresh for protected, non-auth endpoints
+      const isAuthEndpoint = path.startsWith('/api/auth/');
+      if (res.status === 401 && retries > 0 && !isAuthEndpoint) {
         console.log('🔑 Token expired, attempting refresh...');
         const newToken = await refreshAppToken();
         if (newToken) {
