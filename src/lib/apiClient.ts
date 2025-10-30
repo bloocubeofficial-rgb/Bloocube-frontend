@@ -1,6 +1,7 @@
 import { measureApiCall } from '@/lib/performance';
 import { loadingManager } from '@/lib/loading';
 import { getApiBase } from '@/lib/config';
+import { ApiError } from '@/lib/errors';
 
 // type TokenPair = { accessToken: string; refreshToken: string; expiresIn: number };
 
@@ -122,7 +123,9 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
         credentials: 'include' // This sends HttpOnly cookies automatically
       });
 
-      if (res.status === 401 && retries > 0) {
+      // Only attempt refresh for protected, non-auth endpoints
+      const isAuthEndpoint = path.startsWith('/api/auth/');
+      if (res.status === 401 && retries > 0 && !isAuthEndpoint) {
         console.log('🔑 Token expired, attempting refresh...');
         const newToken = await refreshAppToken();
         if (newToken) {
@@ -141,7 +144,7 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
               window.location.href = '/login';
             }
           }
-          throw new Error('Authentication failed - please sign in again');
+          throw new ApiError('Authentication failed - please sign in again', { status: 401 });
         }
       }
 
@@ -165,6 +168,8 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
         const parsed = body as { error?: string; message?: string; code?: string | number; details?: unknown; validation_errors?: unknown; errors?: unknown; validation?: unknown } | null;
         const baseMessage = (parsed?.error || parsed?.message);
         const message = baseMessage || `HTTP ${res.status} ${res.statusText}`;
+        const retryAfterHeader = res.headers.get('retry-after');
+        const retryAfter = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : undefined;
         
         console.log(`❌ API Error: ${res.status} ${res.statusText}`, {
           path,
@@ -176,14 +181,14 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
           responseText: await res.text().catch(() => 'Could not read response text')
         });
         
-        // For validation errors, include more details
-        if (res.status === 400 && parsed?.validation_errors) {
-          throw new Error(`Validation failed: ${JSON.stringify(parsed.validation_errors)}`);
-        } else if (res.status === 400 && parsed?.errors) {
-          throw new Error(`Validation failed: ${JSON.stringify(parsed.errors)}`);
-        }
-        
-        throw new Error(message);
+        // Throw structured ApiError with helpful fields
+        throw new ApiError(message, {
+          status: res.status,
+          code: parsed?.code,
+          details: parsed?.details || parsed?.validation_errors || parsed?.errors || parsed?.validation,
+          retryAfter,
+          raw: parsed ?? body
+        });
       }
 
       const data = await res.json() as T;

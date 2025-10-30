@@ -32,6 +32,7 @@ import CreatorLayout from "@/Components/Creater/CreatorLayout";
 import { apiRequest } from "@/lib/apiClient";
 import { cookieAuthUtils } from "@/lib/cookieAuth";
 import { persistentCache } from "@/lib/cache";
+import { getFriendlyMessage } from "@/lib/errors";
 
 type AnalyticsItem = {
   post_id?: string;
@@ -132,7 +133,7 @@ const Dashboard = () => {
       setLastUpdated(Date.now());
       saveAnalyticsCache(res?.data?.analytics || []);
     } catch (e) {
-      setError((e as Error).message || "Failed to load analytics");
+      setError(getFriendlyMessage(e));
       setAnalytics([]);
     } finally {
       if (options?.showLoading) setLoading(false);

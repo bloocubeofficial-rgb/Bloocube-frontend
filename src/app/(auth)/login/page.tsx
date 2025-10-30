@@ -11,6 +11,7 @@ import { Label } from "@/Components/ui/Label";
 import { Checkbox } from "@/Components/ui/Checkbox";
 import { apiRequest } from "@/lib/apiClient";
 import { useAuth } from "@/hooks/useAuth";
+import { getFriendlyMessage } from "@/lib/errors";
 
 interface LoginResponse {
   success: boolean;
@@ -89,16 +90,7 @@ const LoginPage: React.FC = () => {
       const role = data.data.user?.role;
       router.push(role === "brand" ? "/brand" : "/creator");
     } catch (err: unknown) {
-      const apiErr = err as {
-        status?: number;
-        retryAfter?: number;
-        message?: string;
-      };
-      if (apiErr?.status === 429) {
-        const retryAfter = apiErr.retryAfter ? `${apiErr.retryAfter}s` : "";
-        setError(`Too many attempts. Try again in ${retryAfter}`);
-      } else
-        setError(apiErr?.message || "Network error. Please try again later.");
+      setError(getFriendlyMessage(err, 'login'));
     } finally {
       setIsSubmitting(false);
     }
