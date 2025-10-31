@@ -275,7 +275,7 @@ const CompetitorAnalysisPage = () => {
           body: JSON.stringify({
             competitorUrls: [fetchedData.profile.profileUrl],
             analysisType: 'comprehensive',
-            platform: quickPlatform,
+            platforms: [quickPlatform],
             options: { 
               maxPosts: 30, 
               timePeriodDays: 30, 

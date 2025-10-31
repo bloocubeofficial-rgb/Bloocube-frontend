@@ -113,7 +113,12 @@ const CompetitorAnalysisPage = () => {
       }
 
       if (hostname.includes('youtube.com')) {
-        if (pathname.includes('/channel/') || pathname.includes('/c/') || pathname.includes('/@')) {
+        if (
+          pathname.includes('/channel/') ||
+          pathname.includes('/c/') ||
+          pathname.includes('/user/') ||
+          pathname.includes('/@')
+        ) {
           return {
             isValid: true,
             platform: 'YouTube',
