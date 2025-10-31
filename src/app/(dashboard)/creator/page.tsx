@@ -13,6 +13,9 @@ import {
   Brush,
   ResponsiveContainer,
 } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
+
+
 import {
   Plus,
   Eye,
@@ -27,6 +30,7 @@ import {
   ThumbsUp,
   MessageSquare,
   Share2,
+  TrendingDown,
 } from "lucide-react";
 import CreatorLayout from "@/Components/Creater/CreatorLayout";
 import { apiRequest } from "@/lib/apiClient";
@@ -34,6 +38,8 @@ import { cookieAuthUtils } from "@/lib/cookieAuth";
 import { persistentCache } from "@/lib/cache";
 import { getFriendlyMessage } from "@/lib/errors";
 
+import Link from "next/link";
+import RecentPosts from "./recentpost";
 type AnalyticsItem = {
   post_id?: string;
   platform?: string;
@@ -293,15 +299,15 @@ const Dashboard = () => {
           fetchPostCounts();
         }}
         disabled={loading}
-        className="flex items-center space-x-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+        className="flex bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm items-center space-x-2 px-3 py-1.5 text-gray-600 hover:text-white-900 hover:bg-gray-100 rounded-md transition-colors"
       >
         <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
         <span className="text-sm">Refresh</span>
       </button>
-      <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1.5 rounded-lg flex items-center space-x-2 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow hover:shadow-md text-sm">
+      {/* <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm px-2 py-1.5 rounded-sm flex items-center space-x-2 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow hover:shadow-md text-sm">
         <Plus className="w-4 h-4" />
         <span className="font-medium">Create Post</span>
-      </button>
+      </button> */}
       {/* <div className="w-8 h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
         <User className="w-4 h-4 text-gray-600" />
       </div> */}
@@ -316,7 +322,7 @@ const Dashboard = () => {
     >
       {/* Loading and Error States */}
       {loading && (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-gray-200/50 shadow-sm">
+        <div className="bg-white/80 backdrop-blur-sm rounded-sm p-6 mb-6 border border-gray-200/50 shadow-sm">
           <div className="flex items-center space-x-3">
             <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
             <span className="text-gray-600 font-medium">
@@ -327,7 +333,7 @@ const Dashboard = () => {
       )}
 
       {!!error && (
-        <div className="bg-red-50/80 backdrop-blur-sm text-red-700 rounded-2xl p-6 mb-6 border border-red-200/50 shadow-sm">
+        <div className="bg-red-50/80 backdrop-blur-sm text-red-700 rounded-sm p-6 mb-6 border border-red-200/50 shadow-sm">
           <div className="flex items-center space-x-3">
             <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
               <span className="text-red-600 text-sm">!</span>
@@ -338,7 +344,9 @@ const Dashboard = () => {
       )}
 
       {!loading && !error && (
-        <div className="flex items-center justify-between mb-6">
+        <>
+          <div className="flex justify-between ">
+          <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-2 text-sm text-gray-500">
             <Calendar className="w-4 h-4" />
             <span>
@@ -346,10 +354,23 @@ const Dashboard = () => {
             </span>
           </div>
         </div>
+        <div>
+              <Link href="/creator/posts">
+  <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-sm text-white px-4 py-2.5 rounded-sm flex items-center space-x-1 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md">
+    <Plus className="w-4 h-4" />
+    <span>Create New Post</span>
+  </button>
+</Link>
+        </div>
+        </div>
+        </>
+
       )}
+      
+      
 
       {/* Enhanced Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
@@ -425,15 +446,105 @@ const Dashboard = () => {
           </p>
           <p className="text-xs text-gray-500">From last month</p>
         </div>
+      </div> */}
+
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-9">
+{/* Total Posts */}
+<Card className="rounded-sm  hover:shadow-md transition-all duration-200 bg-white/80 ">
+  <CardContent className="p-3">
+    <div className="flex justify-between items-start mb-1">
+      <div>
+        <p className="text-xs text-gray-500 font-medium">Total Posts</p>
+        <p className="text-2xl font-semibold text-gray-900 mt-1">{totals.totalPosts}</p>
       </div>
 
+      <div className="w-10 h-10 bg-green-100 rounded-md flex items-center justify-center">
+        <Target className="w-5 h-5 text-green-600" />
+      </div>
+    </div>
+    <div className="flex items-center text-green-600 text-xs font-sm mt-1">
+      <TrendingUp className="w-3 h-3 mr-1" />
+      +12.5% from last month
+    </div>
+  </CardContent>
+</Card>
+
+{/* Scheduled Posts */}
+
+<Card className="rounded-sm  hover:shadow-md transition-all duration-200 bg-white/80 ">
+  <CardContent className="p-3">
+    
+    <div className="flex justify-between items-start mb-1">
+      <div>
+        <p className="text-xs text-gray-500 font-medium">Scheduled Posts</p>
+        <p className="text-2xl font-semibold text-gray-900 mt-1">{totals.scheduledPosts}</p>
+      </div>
+      <div className="w-10 h-10 bg-green-100 rounded-md flex items-center justify-center">
+        <Calendar className="w-5 h-5 text-green-600" />
+      </div>
+    </div>
+    <div className="flex items-center text-green-600 text-xs font-sm mt-1">
+      <TrendingUp className="w-3 h-3 mr-1" />
+   +5% From last month
+    </div>
+  </CardContent>
+</Card>
+
+{/* Engagement Rate */}
+ <Card className="rounded-sm  hover:shadow-md transition-all duration-200 bg-white/80 ">
+  <CardContent className="p-3">
+    <div className="flex justify-between items-start mb-1">
+      <div>
+        <p className="text-xs text-gray-500 font-medium">Engagement Rate</p>
+        <p className="text-2xl font-semibold text-gray-900 mt-1">{totals.engagementRate}%</p>
+      </div>
+
+      <div className="w-10 h-10 bg-green-100 rounded-md flex items-center justify-center">
+        <TrendingUp className="w-5 h-5 text-green-600" />
+      </div>
+    </div>
+    <div className="flex items-center text-green-600 text-xs font-sm mt-1">
+      <TrendingUp className="w-3 h-3 mr-1" />
+   +2.1% From last month
+    </div>
+
+  </CardContent>
+</Card>
+        
+
+{/* Avg Engagement Score */}
+ <Card className="rounded-xl  hover:shadow-md transition-all duration-200 bg-white/80 ">
+  <CardContent className="p-3">
+    <div className="flex justify-between items-start mb-1">
+      <div>
+        <p className="text-xs text-gray-500 font-medium">Avg. Engagement Score</p>
+        <p className="text-2xl font-semibold text-gray-900 mt-1">{totals.avgEngagementScore}</p>
+      </div>
+      <div className="w-10 h-10 bg-green-100 rounded-md flex items-center justify-center">
+      <Zap className="w-5 h-5 text-green-600" />
+      </div>
+    </div>
+    <div className="flex items-center text-red-600 text-xs font-sm mt-1">
+    <TrendingDown className="w-3 h-3 mr-1" />
+   -3% From last month
+    </div>
+  </CardContent>
+</Card>
+
+</div>
+      
+      
+
+
+      {/* recent post  */}
+      <RecentPosts/>
       {/* KPI Cards: Views, Likes, Comments, Shares */}
    
 
       {/* Enhanced Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Engagement Trends */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
+        <div  className="rounded-sm  p-4 shadow-md hover:shadow-md transition-all duration-200 bg-white/80 border border-gray-200/10">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-lg font-bold text-gray-900">
@@ -441,8 +552,8 @@ const Dashboard = () => {
               </h3>
               <p className="text-sm text-gray-500">Performance over time</p>
             </div>
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-blue-200 rounded-md flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-blue-800" />
             </div>
           </div>
           <ResponsiveContainer width="100%" height={320}>
@@ -523,7 +634,7 @@ const Dashboard = () => {
         </div>
 
         {/* Views by Month */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
+       <div  className="rounded-sm  p-4 shadow-md hover:shadow-md transition-all duration-200 bg-white/80 border border-gray-200/50">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-lg font-bold text-gray-900">
@@ -533,8 +644,8 @@ const Dashboard = () => {
                 Total views across content
               </p>
             </div>
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-purple-200  rounded-md flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-purple-800" />
             </div>
           </div>
           <ResponsiveContainer width="100%" height={320}>
@@ -594,7 +705,7 @@ const Dashboard = () => {
       </div>
 
       {/* Enhanced Top Performing Posts */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
+      <div  className="rounded-sm  p-4 shadow-md hover:shadow-md transition-all duration-200 bg-white/80 border border-gray-200/50">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-lg font-bold text-gray-900">
@@ -604,8 +715,8 @@ const Dashboard = () => {
               Your best content this month
             </p>
           </div>
-          <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-            <Zap className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 bg-green-200 rounded-md flex items-center justify-center">
+            <Zap className="w-5 h-5 text-green-800" />
           </div>
         </div>
         <div className="overflow-x-auto">

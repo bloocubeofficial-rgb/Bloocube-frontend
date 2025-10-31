@@ -356,26 +356,27 @@ const CompetitorAnalysisPage = () => {
       {/* Header Section */}
       <div className="mb-8">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
+          {/* <div>
             <h1 className="hidden md:block text-3xl font-bold text-gray-300">Competitors</h1>
             <p className="hidden md:block mt-2 text-gray-400">Analyze your competitors and discover growth opportunities</p>
-          </div>
+          </div> */}
           <div className="flex items-center space-x-4 w-full sm:w-auto sm:justify-end">
             <Link href="/creator/competitors/analyze">
-              <button className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-sm">
+              <button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1.5 rounded-sm  transition-all duration-150  flex items-center space-x-2 text-sm">
                 <Plus className="w-4 h-4" />
                 <span>New Analysis</span>
               </button>
             </Link>
+
             <button
               onClick={testAIServices}
               disabled={aiTestStatus === 'testing'}
-              className={`px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-2 text-sm ${
+              className={`px-3 py-1.5 rounded-sm transition-colors flex items-center space-x-2 text-sm ${
                 aiTestStatus === 'success' 
                   ? 'bg-green-100 text-green-700 border border-green-300' 
                   : aiTestStatus === 'error'
                   ? 'bg-red-100 text-red-700 border border-red-300'
-                  : 'border border-gray-800 text-gray-800 hover:bg-gray-50'
+                  : 'border border-gray-200/80 shadow-sm hover:shadow-md text-gray-800 hover:bg-gray-50'
               }`}
             >
               <Zap className="w-4 h-4" />
@@ -387,7 +388,7 @@ const CompetitorAnalysisPage = () => {
             </button>
             <button
               onClick={() => setShowHistory(!showHistory)}
-              className="border border-gray-800 text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2 text-sm"
+              className="border  border-gray-200/80 shadow-sm hover:shadow-md text-gray-800 px-3 py-1.5 rounded-sm hover:bg-gray-50 transition-colors flex items-center space-x-2 text-sm"
             >
               <BarChart3 className="w-4 h-4" />
               <span>History</span>
@@ -399,7 +400,7 @@ const CompetitorAnalysisPage = () => {
                 placeholder="Search competitors..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-3 py-2 border border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-800 transition-colors duration-200 w-full sm:min-w-[260px] text-sm"
+                className="pl-10 pr-3 py-2 border  border-gray-200/12 shadow-sm hover:shadow-md rounded-sm   focus:border-none bg-white  transition-colors duration-200 w-full sm:min-w-[260px] text-sm"
               />
             </div>
           </div>
@@ -408,7 +409,7 @@ const CompetitorAnalysisPage = () => {
 
       {/* AI Services Status */}
       {aiTestMessage && (
-        <div className={`mb-4 p-4 rounded-lg border ${
+        <div className={`mb-4 p-4 rounded-sm border ${
           aiTestStatus === 'success' 
             ? 'bg-green-50 border-green-200 text-green-800' 
             : aiTestStatus === 'error'
@@ -426,7 +427,7 @@ const CompetitorAnalysisPage = () => {
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-800/50 p-5 mb-8">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-md flex items-center justify-center">
               <Search className="w-5 h-5 text-white" />
             </div>
             <div>

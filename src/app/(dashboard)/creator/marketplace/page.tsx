@@ -6,7 +6,13 @@ import type { Campaign } from '@/types/campaign';
 import { cookieAuthUtils } from '@/lib/cookieAuth';
 import { Search, Filter, IndianRupee, Calendar, Users, Globe, CheckCircle, Clock, XCircle } from 'lucide-react';
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/Components/ui/Select";
 export default function CreatorMarketplacePage() {
   const { data: campaigns, loading, error, params, setParams, refetch } = useCampaigns({ status: 'active', limit: 10 });
   const { data: bids, loading: bidsLoading, refetch: refetchBids } = useBids({});
@@ -134,25 +140,23 @@ export default function CreatorMarketplacePage() {
     >
       {/* Header Section */}
       <div className="mb-8">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="w-full sm:w-auto">
-            <h1 className="hidden md:block text-3xl font-bold text-gray-300">Creator Marketplace</h1>
-            <p className="hidden md:block mt-2 text-gray-400">Discover and bid on exciting brand campaigns</p>
-          </div>
-          <div className="flex items-center space-x-4 w-full sm:w-auto sm:justify-end">
-            <div className="relative w-full sm:w-auto">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search campaigns..."
-                className="pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200 w-full sm:min-w-[300px]"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+  <div className="flex flex-col">
+    <div className="relative w-full">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+      <input
+        type="text"
+        placeholder="Search campaigns..."
+        className="pl-10 pr-4 py-3 border border-gray-300 rounded-sm 
+                  focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                  bg-white hover:border-gray-200 transition-colors duration-200 
+                  w-full"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+    </div>
+  </div>
+</div>
+
 
 
     
@@ -183,10 +187,10 @@ export default function CreatorMarketplacePage() {
       )}
 
       {/* Enhanced Filters Section */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50 p-6 mb-8 hover:shadow-md transition-all duration-200">
+      <div className="bg-white/80  rounded-sm border border-gray-200/90 p-6 mb-8 hover:shadow-md transition-all duration-200">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-sm flex items-center justify-center">
               <Filter className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -203,37 +207,39 @@ export default function CreatorMarketplacePage() {
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">Platform</label>
             <select 
-              className="w-full border  border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200" 
+             className="w-full border  border-gray-300 rounded-sm px-4 py-3 text-sm  focus:border-gray-300 bg-white hover:border-gray-300 transition-colors duration-200" 
               value={params.platform || ''} 
               onChange={e => setParams({ platform: e.target.value || undefined })}
             >
               <option value="">All Platforms</option>
-              <option value="instagram">📸 Instagram</option>
-              <option value="youtube">🎥 YouTube</option>
-              <option value="twitter">🐦 X (Twitter)</option>
-              <option value="linkedin">💼 LinkedIn</option>
-              <option value="facebook">👥 Facebook</option>
+              <option value="instagram"> Instagram</option>
+              <option value="youtube"> YouTube</option>
+              <option value="twitter"> X (Twitter)</option>
+              <option value="linkedin"> LinkedIn</option>
+              <option value="facebook"> Facebook</option>
             </select>
           </div>
-          
+
+
+
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">Sort By</label>
             <select 
-              className="w-full border  border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200" 
+             className="w-full border  border-gray-300 rounded-sm px-4 py-3 text-sm  focus:border-gray-300 bg-white hover:border-gray-300 transition-colors duration-200" 
               value={params.sort || '-createdAt'} 
               onChange={e => setParams({ sort: e.target.value })}
             >
-              <option value="-createdAt">🕒 Newest First</option>
-              <option value="createdAt">📅 Oldest First</option>
-              <option value="-budget">💰 Highest Budget</option>
-              <option value="budget">💵 Lowest Budget</option>
+              <option value="-createdAt"> Newest First</option>
+              <option value="createdAt"> Oldest First</option>
+              <option value="-budget"> Highest Budget</option>
+              <option value="budget"> Lowest Budget</option>
             </select>
           </div>
           
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">Budget Range</label>
             <select 
-              className="w-full border  border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200"
+            className="w-full border  border-gray-300 rounded-sm px-4 py-3 text-sm  focus:border-gray-300 bg-white hover:border-gray-300 transition-colors duration-200" 
               defaultValue=""
             >
               <option value="">Any Budget</option>
@@ -247,14 +253,14 @@ export default function CreatorMarketplacePage() {
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">Campaign Type</label>
             <select 
-              className="w-full border  border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-400 transition-colors duration-200"
+           className="w-full border  border-gray-300 rounded-sm px-4 py-3 text-sm  focus:border-gray-300 bg-white hover:border-gray-300 transition-colors duration-200" 
               defaultValue=""
             >
               <option value="">All Types</option>
-              <option value="sponsored">🎯 Sponsored Posts</option>
-              <option value="collaboration">🤝 Collaborations</option>
-              <option value="review">⭐ Product Reviews</option>
-              <option value="brand">🏷️ Brand Partnerships</option>
+              <option value="sponsored"> Sponsored Posts</option>
+              <option value="collaboration"> Collaborations</option>
+              <option value="review"> Product Reviews</option>
+              <option value="brand"> Brand Partnerships</option>
             </select>
           </div>
         </div>
@@ -262,13 +268,13 @@ export default function CreatorMarketplacePage() {
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 flex-wrap gap-2">
           <div className="flex items-center space-x-2">
             <span className="text-xs text-gray-500">Quick filters:</span>
-            <button className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors duration-200">
+            <button className="px-3 py-1 text-xs bg-blue-100 text-blue-700  border border-blue-700 rounded-full hover:bg-blue-200 transition-colors duration-200">
               High Budget
             </button>
-            <button className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors duration-200">
+            <button className="px-3 py-1 text-xs bg-green-100 text-green-700 border border-green-700 rounded-full hover:bg-green-200 transition-colors duration-200">
               Instagram
             </button>
-            <button className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 transition-colors duration-200">
+            <button className="px-3 py-1 text-xs bg-purple-100 text-purple-700   border border-purple-700 rounded-full hover:bg-purple-200 transition-colors duration-200">
               YouTube
             </button>
           </div>
@@ -312,16 +318,16 @@ export default function CreatorMarketplacePage() {
           return (
             <div key={c._id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-200">
               <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex  items-start justify-between mb-4">
                   <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">{c.title}</h3>
+                    <div className="flex  items-center justify-between mb-2">
+                      <h3 className="text-lg flex-2 font-semibold text-gray-900">{c.title}</h3>
                       {/* Bid Status Badge - Always show */}
-                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        bidStatus.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                        bidStatus.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                        bidStatus.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        bidStatus.status === 'not_applied' ? 'bg-gray-100 text-gray-600' :
+                      <div className={`flex flex-1 items-center px-2 py-1.5 rounded-xl text-xs font-medium ${
+                        bidStatus.status === 'accepted' ? 'bg-green-100 text-green-800 border border-green-300 items-center' :
+                        bidStatus.status === 'rejected' ? 'bg-red-100 text-red-800 border border-red-800 items-center' :
+                        bidStatus.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border border-yellow-800 items-center ' :
+                        bidStatus.status === 'not_applied' ? 'bg-gray-100 text-gray-600 border border-gray-400 items-center ' :
                         'bg-blue-100 text-blue-800'
                       }`}>
                         {bidStatus.status === 'accepted' && <CheckCircle className="w-3 h-3 mr-1" />}
@@ -334,14 +340,14 @@ export default function CreatorMarketplacePage() {
                          bidStatus.status === 'not_applied' ? 'Not Applied' : 'Applied'}
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 line-clamp-3">{c.description}</p>
+                    <p className="text-sm text-gray-600 line-clamp-3 ">{c.description}</p>
                   </div>
                 </div>
               
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center text-green-600">
                   <IndianRupee className="w-4 h-4 mr-1" />
-                  <span className="text-lg font-bold">₹{c.budget.toLocaleString()}</span>
+                  <span className="text-lg font-bold">{c.budget.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center text-gray-500 text-sm">
                   <Calendar className="w-4 h-4 mr-1" />
@@ -350,13 +356,13 @@ export default function CreatorMarketplacePage() {
               </div>
 
               <div className="mb-4">
-                <div className="flex items-center mb-2">
+                <div className="flex items-center mb-3">
                   <Globe className="w-4 h-4 text-gray-500 mr-2" />
                   <span className="text-sm font-medium text-gray-700">Platforms</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {c.requirements.platforms.map(p => (
-                    <span key={p} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <span key={p} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 border border-purple-700 text-purple-800">
                       {p}
                     </span>
                   ))}
@@ -369,16 +375,16 @@ export default function CreatorMarketplacePage() {
                   <span>Target: {(c as Campaign & { targetAudience?: string }).targetAudience || 'General'}</span>
                 </div>
                 <button 
-                  className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 ${
+                  className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 ${
                     bidStatus.status === 'accepted' 
-                      ? 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100 focus:ring-green-500' :
+                      ? 'border-green-700 text-green-700 bg-green-200 hover:bg-green-100 focus:ring-green-500' :
                     bidStatus.status === 'rejected' 
-                      ? 'border-red-300 text-red-700 bg-red-50 hover:bg-red-100 focus:ring-red-500' :
+                      ? 'border-red-700 text-red-700 bg-red-200 hover:bg-red-200 focus:ring-red-500' :
                     bidStatus.status === 'pending' 
-                      ? 'border-yellow-300 text-yellow-700 bg-yellow-50 hover:bg-yellow-100 focus:ring-yellow-500' :
+                      ? 'border-yellow-700 text-yellow-700 bg-yellow-200 hover:bg-yellow-200 focus:ring-yellow-500' :
                     bidStatus.status !== 'not_applied'
                       ? 'border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 focus:ring-blue-500' :
-                    'border-transparent text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+                    ' text-blue-700 border border-blue-700 bg-blue-200 hover:bg-blue-200 focus:ring-blue-500'
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                   disabled={!isCreator || bidStatus.status !== 'not_applied'} 
                   onClick={() => bidStatus.status === 'not_applied' ? setSelectedCampaign(c) : null}
@@ -414,7 +420,7 @@ export default function CreatorMarketplacePage() {
         <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Place Your Bid</h2>
+              <h2 className="text-xl font-semibold text-gray-900 ">Place Your Bid</h2>
               <button 
                 onClick={() => setSelectedCampaign(null)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
