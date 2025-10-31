@@ -1580,7 +1580,7 @@ export default function PostsPage() {
 
   const headerActions = (
     <>
-      <button className="bg-gradient-to-r from-blue-600 to-purple-600   text-white px-6 py-2.5 rounded-xl flex items-center space-x-2 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md">
+      <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-sm  text-white px-4 py-2.5 rounded-sm flex items-center space-x-1 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md">
         <Plus className="w-4 h-4" />
         <span>Create New Post</span>
       </button>
@@ -1591,69 +1591,77 @@ export default function PostsPage() {
     <CreatorLayout
       title="Posts Management"
       subtitle="Create, schedule, and manage your social media posts"
-      headerActions={headerActions}
+     
     >
       {/* Header */}
-      <div className="mb-4 md:mb-6">
+      {/* <div className="mb-4 md:mb-6">
         <h1 className="hidden md:block text-2xl md:text-3xl font-bold text-gray-300">
           Posts
         </h1>
         <p className="hidden md:block mt-1 md:mt-2 text-gray-200">
           Create, schedule, and manage your social media content
         </p>
-      </div>
+      </div> */}
 
-      {/* Tabs */}
-      <div className="mb-4">
-        <div className="inline-flex rounded-lg border border-gray-300 bg-white overflow-hidden">
+      <div className="flex justify-between">
+         {/* Tabs */}
+      <div className="mb-4  flex flex-wrap gap-2 mt-5">
+       
           <button
             onClick={() => setActiveTab("create")}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
+            className={`px-4 py-1 text-xs rounded-xl border transition-all ${
               activeTab === "create"
-                ? "bg-gray-900 text-white"
-                : "text-gray-700 hover:bg-gray-100"
+                ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                : " hover:bg-white-300 border border-blue-600 bg-blue-50 text-blue-600 hover:shadow-md transition-all duration-150"
             }`}
           >
             Create
           </button>
           <button
             onClick={() => setActiveTab("drafts")}
-            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 transition-colors ${
+             className={`px-4 py-1 text-xs rounded-xl border transition-all ${
               activeTab === "drafts"
-                ? "bg-gray-900 text-white"
-                : "text-gray-700 hover:bg-gray-100"
+                ? "bg-blue-50 text-blue-700 border-blue-700 shadow-sm"
+                : " hover:bg-white-300 border border-blue-600 bg-blue-50 text-blue-600 hover:shadow-md transition-all duration-150"
             }`}
           >
             Drafts {drafts.length > 0 ? `(${drafts.length})` : ""}
           </button>
           <button
             onClick={() => setActiveTab("scheduled")}
-            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 transition-colors ${
-              activeTab === "scheduled"
-                ? "bg-gray-900 text-white"
-                : "text-gray-700 hover:bg-gray-100"
+             className={`px-4 py-1 text-xs rounded-xl border transition-all ${
+              activeTab === "create"
+                ? "bg-blue-50 text-blue-700 border-blue-700 shadow-sm"
+                : " hover:bg-white-300 border border-blue-600 bg-blue-50 text-blue-600 hover:shadow-md transition-all duration-150"
             }`}
           >
             Scheduled {scheduledPosts.length > 0 ? `(${scheduledPosts.length})` : ""}
           </button>
           <button
             onClick={() => setActiveTab("published")}
-            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 transition-colors ${
-              activeTab === "published"
-                ? "bg-gray-900 text-white"
-                : "text-gray-700 hover:bg-gray-100"
+             className={`px-4 py-1 text-xs rounded-xl border transition-all ${
+              activeTab === "create"
+                ? "bg-blue-50 text-blue-700 border-blue-700 shadow-sm"
+                : " hover:bg-white-300 border border-blue-600 bg-blue-50 text-blue-600 hover:shadow-md transition-all duration-150"
             }`}
           >
             Published {posts.length > 0 ? `(${posts.length})` : ""}
           </button>
-        </div>
+      </div>
+      
+     {headerActions && (
+     <div className="flex items-center space-x-2">
+     {headerActions}
+      </div>
+     )}
+     
       </div>
     
 
       {/* Create Post Tab */}
       {activeTab === "create" && (
-        <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border">
-          <div className="p-4 md:p-6 border-b border-gray-200">
+        <div className="rounded-sm p-3 md:p-6 shadow-sm border border-gray-200/100 hover:shadow:sm mt-11">
+          <div className="p-2 md:p-2 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">
               Create New Post
             </h2>
@@ -1699,13 +1707,13 @@ export default function PostsPage() {
                   return (
                     <div
                       key={platform}
-                      className={`p-4 rounded-lg border-2 transition-all duration-200 ${isSelected
-                          ? `border-${config.color}-500 bg-${config.color}-50 shadow-md`
-                          : "border-gray-200 bg-gray-50"
+                      className={`p-4 rounded-sm border transition-all duration-200 ${isSelected
+                          ? `border-${config.color}-500 bg-${config.color}-50 shadow-sm hover:shadow:md`
+                          : "border-gray-200/80 bg-white"
                         }`}
                     >
-                      <div className="flex items-center space-x-3">
-                        <div className="relative">
+                      <div className="flex flex-col  space-x-3">
+                        <div className="relative flex gap-3 item-center  ">
                           <IconComponent
                             size={24}
                             className={`text-${config.color}-600`}
@@ -1715,12 +1723,13 @@ export default function PostsPage() {
                           ) : isConnected ? (
                             <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                           ) : null}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-sm font-medium text-gray-900">
+                          <h4 className="text-sm font-sm text-gray-900">
                             {config.name}
                           </h4>
-                          <div className="mt-1">
+                        </div>
+                        <div className="flex-1">
+                          
+                          <div className="mt-3">
                             {checkingConnections ? (
                               <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                                 <span className="w-3 h-3 mr-2 border border-gray-400 border-t-transparent rounded-full animate-spin"></span>
@@ -1739,8 +1748,8 @@ export default function PostsPage() {
                                 </button>
                               </div>
                             ) : (
-                              <div className="flex items-center space-x-2">
-                                <span className="text-xs text-red-600 font-medium">
+                              <div className="flex flex-col  space-x-2">
+                                <span className="text-xs text-red-600 font-sm">
                                   No account connected
                                 </span>
                                 <button
@@ -1748,7 +1757,7 @@ export default function PostsPage() {
                                     try { sessionStorage.setItem('invalidate_connections_cache', '1'); } catch {}
                                     (window.location.href = "/creator/settings");
                                   }}
-                                  className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                                  className="px-2 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm text-gray-700 shadow-sm   border border-gray-200/100 rounded hover:shadow:md transition-all duration-150 mt-3"
                                 >
                                   Connect
                                 </button>
@@ -1961,12 +1970,12 @@ export default function PostsPage() {
 
             {/* Action Buttons */}
 
-            <button
+            {/* <button
               onClick={clearFormData}
               className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-800 rounded-lg hover:bg-gray-50 transition-colors inline-block w-full sm:w-auto text-center"
             >
               Clear Form
-            </button>
+            </button> */}
 
             {selectedPlatform && selectedPostType && (
               <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
