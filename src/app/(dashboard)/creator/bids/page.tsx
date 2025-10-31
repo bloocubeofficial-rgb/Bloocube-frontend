@@ -44,44 +44,78 @@ export default function CreatorBidsPage() {
 
   // Creators place bids from the Marketplace or campaign detail pages.
 
+
+
+
+  const [filter, setFilter] = useState("all");
+const filteredBids =
+  filter === "all"
+    ? bids
+    : bids.filter((b: Bid) => b.status === filter);
   return (
     <CreatorLayout title="My Bids" subtitle="Manage and track your bids">
       <div className="p-4 md:p-6 space-y-6">
         {/* Info Banner: where to bid */}
-        <div className="bg-gradient-to-r from-blue-50/80 to-purple-50/80 border border-blue-100 rounded-2xl p-4 text-sm text-gray-700">
+        <div className="bg-green-100 border border-green-600 rounded-md p-4 text-sm text-green-700">
           Creators can place bids from the Marketplace or a campaign’s detail page. This view shows your submitted bids.
         </div>
 
+        
+
+<div className="flex flex-wrap gap-2">
+  {[
+    { label: "All", value: "all" },
+    { label: "Applied", value: "applied" },
+    { label: "Pending", value: "pending" },
+    { label: "Accepted", value: "accepted" },
+    { label: "Rejected", value: "rejected" },
+    { label: "Completed", value: "completed" },
+  ].map(tab => (
+    <button
+      key={tab.value}
+      onClick={() => setFilter(tab.value)}
+      className={`px-3 py-1.5 text-xs rounded-xl border transition-all ${
+        filter === tab.value
+          ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+          : "   hover:bg-white-300 border border-blue-600 bg-blue-50 text-blue-600 hover:shadow-md transition-all duration-150"
+      }`}
+    >
+      {tab.label}
+    </button>
+  ))}
+</div>
+
+
         {/* Summary Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-          <div className="bg-white rounded-xl border border-gray-200/70 p-4 shadow-sm">
+          <div className="rounded-xl  hover:shadow-md transition-all duration-200 bg-white/80  p-5 border border-gray-200/100">
             <div className="text-xs text-gray-500 mb-1">Applied</div>
             <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200/70 p-4 shadow-sm">
+         <div className="rounded-xl  hover:shadow-md transition-all duration-200 bg-white/80  p-5 border border-gray-200/100">
             <div className="text-xs text-gray-500 mb-1">Available</div>
             <div className="text-2xl font-bold text-gray-900">{stats.available}</div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200/70 p-4 shadow-sm">
+              <div className="rounded-xl  hover:shadow-md transition-all duration-200 bg-white/80  p-5 border border-gray-200/100">
             <div className="text-xs text-gray-500 mb-1">Pending</div>
             <div className="text-2xl font-bold text-amber-700">{stats.pending}</div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200/70 p-4 shadow-sm">
+             <div className="rounded-xl  hover:shadow-md transition-all duration-200 bg-white/80  p-5 border border-gray-200/100">
             <div className="text-xs text-gray-500 mb-1">Accepted</div>
             <div className="text-2xl font-bold text-green-700">{stats.accepted}</div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200/70 p-4 shadow-sm">
+             <div className="rounded-xl  hover:shadow-md transition-all duration-200 bg-white/80  p-5 border border-gray-200/100">
             <div className="text-xs text-gray-500 mb-1">Rejected</div>
             <div className="text-2xl font-bold text-red-700">{stats.rejected}</div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200/70 p-4 shadow-sm">
+             <div className="rounded-xl  hover:shadow-md transition-all duration-200 bg-white/80 p-5 border border-gray-200/100">
             <div className="text-xs text-gray-500 mb-1">Completed</div>
             <div className="text-2xl font-bold text-blue-700">{stats.completed}</div>
           </div>
         </div>
 
         {/* Bids List */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-gray-200/50 shadow-sm">
+        <div className="bg-white/60  rounded-sm p-4 md:p-6 border border-gray-200/70 hover:shadow-sm">
           <div className="flex items-center justify-between mb-3 md:mb-4 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-gray-900">My Bids</h2>
@@ -100,7 +134,7 @@ export default function CreatorBidsPage() {
           {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
-            {bids.map((b: Bid) => (
+            {filteredBids.map((b: Bid) => (
               <div key={b._id} className="bg-white rounded-xl border border-gray-200/70 p-4 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
@@ -140,9 +174,9 @@ export default function CreatorBidsPage() {
           </div>
 
           {!loading && bids.length === 0 && (
-            <div className="flex items-center justify-between bg-gradient-to-r from-blue-50/60 to-purple-50/60 border border-blue-100 rounded-xl p-4 mt-2">
+            <div className="flex items-center justify-between bg-orange-100 border border-orange-600 rounded-sm p-4 mt-2">
               <div>
-                <p className="text-sm text-gray-700 font-medium">No bids yet</p>
+                <p className="text-sm text-orange-700 font-medium ">No bids yet</p>
                 <p className="text-xs text-gray-500">Browse Marketplace campaigns and place your first bid.</p>
               </div>
             </div>

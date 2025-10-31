@@ -287,7 +287,7 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
       subtitle="Track your content performance and engagement metrics"
     >
       {/* Page Title */}
-      <h2 className="hidden md:block text-2xl font-bold mb-6 text-gray-200">Analytics Overview</h2>
+      {/* <h2 className="hidden md:block text-2xl font-bold mb-6 text-gray-200">Analytics Overview</h2> */}
 
       {/* States */}
       {loading && (
@@ -301,13 +301,13 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
         </div>
       )}
       {!loading && !error && analytics.length === 0 && (
-        <div className="mb-4 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+        <div className="mb-4 rounded-md border border-orange-700 bg-orange-50  px-3 py-2 text-sm text-orange-700">
           No analytics available yet. Connect your social accounts and start posting to see insights.
         </div>
       )}
 
       {/* Date Range Selection */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 md:p-4 mb-6 shadow-sm border">
+      <div className="bg-white/80  rounded-sm p-3 md:p-4 mb-6 hover:shadow-sm border border-gray-200/100">
         <h3 className="text-sm font-medium mb-2">Data Range Selection</h3>
         <p className="text-xs text-gray-700 mb-3">Select the period for your analytics data</p>
         <div className="flex flex-wrap items-center gap-2">
@@ -332,7 +332,7 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
           title="Total Engagements"
           value={totals.totalEngagements.toLocaleString()}
           subtitle="Live from your posts"
-          color="bg-green-100"
+          color="bg-green-200"
           icon={<span className="text-green-600">💬</span>}
         />
         <MetricCard
@@ -361,7 +361,7 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
       {/* Charts Row */}
       <div className="grid grid-cols-1 gap-4 md:gap-6 mb-6">
         {/* Engagement Trends */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 md:p-6 shadow-sm border">
+        <div className="bg-white/80  rounded-sm p-3 md:p-6 shadow-sm border border-gray-200/100 hover:shadow:sm">
           <div className="mb-4">
             <h3 className="text-base md:text-lg font-semibold">Engagement Trends</h3>
             <p className="text-xs md:text-sm text-gray-700">Likes, comments and shares over the last {rangeDays} days</p>
@@ -375,7 +375,7 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
       {/* Bottom Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Platform Breakdown */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 md:p-6 shadow-sm border">
+        <div className="rounded-sm p-3 md:p-6 shadow-sm border border-gray-200/100 hover:shadow:sm">
           <div className="mb-4">
             <h3 className="text-base md:text-lg font-semibold">Platform Breakdown</h3>
             <p className="text-xs md:text-sm text-gray-700">Engagement distribution across social media platforms</p>
@@ -386,7 +386,7 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
         </div>
 
         {/* Post Type Performance */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 md:p-6 shadow-sm border">
+        <div className="rounded-sm p-3 md:p-6 shadow-sm border border-gray-200/100 hover:shadow:sm">
           <div className="mb-4">
             <h3 className="text-base md:text-lg font-semibold">Post Type Performance</h3>
             <p className="text-xs md:text-sm text-gray-700">Engagement by post content type</p>

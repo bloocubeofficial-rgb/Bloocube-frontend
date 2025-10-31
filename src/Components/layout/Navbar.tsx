@@ -37,7 +37,7 @@ const Navbar = () => {
     >
       <div className="relative">
         {/* Elevated container with rounded sides */}
-        <div className="relative r border border-white/10 backdrop-blur-3xl  shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] transition-all duration-500 hover:border-white/20 bg-gradient-to-r from-fuchsia-500/40 via-indigo-500/20 to-indigo-500/20">
+        <div className="relative r border border-white/10 backdrop-blur-3xl">
           {/* Premium gradient border */}
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-bl from-fuchsia-500/20 via-purple-500/20 to-indigo-500/20 opacity-0 hover:opacity-100 transition-opacity duration-500" />
           
@@ -92,13 +92,13 @@ const Navbar = () => {
               <div className="hidden md:flex items-center gap-3">
                 {isAuthenticated ? (
                   <Link href={user?.role === 'brand' ? '/brand' : '/creator'}>
-                    <Button variant="outline" size="sm" className="px-4 py-2 border-white/20 hover:border-white/40 hover:bg-white/5 transition-all duration-300">
+                    <Button variant="ghost"  className="px-4 py-3 rounded-2xl hover:text-white border border-white/20  bg-transparent hover:border-white/40 hover:bg-white/5 transition-all duration-300">
                       My Profile
                     </Button>
                   </Link>
                 ) : (
                   <Link href="/login">
-                    <Button variant="outline" size="sm" className="px-4 py-2 border-white/20 hover:border-white/40 hover:bg-white/5 transition-all duration-300">
+                    <Button variant="ghost"  className="px-4 py-3 rounded-2xl hover:text-white border border-white/20 bg-transparent  hover:border-white/40 hover:bg-white/5 transition-all duration-300">
                       Sign In
                     </Button>
                   </Link>
@@ -151,13 +151,13 @@ const Navbar = () => {
             <div className="pt-2 border-t border-white/10 space-y-2">
               {isAuthenticated ? (
                 <Link href={user?.role === 'brand' ? '/brand' : '/creator'} onClick={() => setOpen(false)}>
-                  <Button variant="outline" size="sm" className="w-full border-white/20 hover:border-white/40 py-3 text-base">
+                  <Button variant="outline" size="sm" className="w-full  rounded-full border-white/20 hover:border-white/40 py-3 text-base">
                     My Profile
                   </Button>
                 </Link>
               ) : (
                 <Link href="/login" onClick={() => setOpen(false)}>
-                  <Button variant="outline" size="sm" className="w-full border-white/20 hover:border-white/40 py-3 text-base">
+                  <Button variant="outline" size="sm" className="w-full rounded-full border-white/20 hover:border-white/40 py-3 text-base">
                     Sign In
                   </Button>
                 </Link>
