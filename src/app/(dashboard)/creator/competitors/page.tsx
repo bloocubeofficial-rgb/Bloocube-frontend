@@ -223,7 +223,31 @@ const CompetitorAnalysisPage = () => {
     }
   };
 
+  // Auto-detect platform from an entered URL
+  const detectPlatformFromInput = (input: string): string | null => {
+    const trimmed = input.trim();
+    if (!trimmed) return null;
+    try {
+      const url = new URL(trimmed);
+      const hostname = url.hostname.toLowerCase();
+      if (hostname.includes('instagram.com')) return 'instagram';
+      if (hostname.includes('twitter.com') || hostname.includes('x.com')) return 'twitter';
+      if (hostname.includes('youtube.com')) return 'youtube';
+      if (hostname.includes('linkedin.com')) return 'linkedin';
+      if (hostname.includes('facebook.com')) return 'facebook';
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
   const fetchCompetitorData = async () => {
+    const blocked = new Set(['instagram', 'facebook', 'linkedin']);
+    if (blocked.has(quickPlatform)) {
+      setQuickError('Fetching for Instagram, Facebook, and LinkedIn is currently unavailable.');
+      setShowPreview(false);
+      return;
+    }
     const profileUrl = buildProfileUrl(quickPlatform, quickInput);
     if (!profileUrl) {
       setQuickError('Enter a valid username or full profile URL');
@@ -444,11 +468,11 @@ const CompetitorAnalysisPage = () => {
               value={quickPlatform}
               onChange={(e) => setQuickPlatform(e.target.value)}
             >
-              <option value="instagram">📸 Instagram</option>
+              <option value="instagram" disabled>📸 Instagram (disabled)</option>
               <option value="youtube">🎥 YouTube</option>
               <option value="twitter">🐦 Twitter</option>
-              <option value="linkedin">💼 LinkedIn</option>
-              <option value="facebook">👥 Facebook</option>
+              <option value="linkedin" disabled>💼 LinkedIn (disabled)</option>
+              <option value="facebook" disabled>👥 Facebook (disabled)</option>
             </select>
           </div>
           <div className="space-y-2 md:col-span-2">
@@ -456,30 +480,25 @@ const CompetitorAnalysisPage = () => {
             <input
               type="text"
               value={quickInput}
-              onChange={(e) => setQuickInput(e.target.value)}
-              placeholder="e.g. https://instagram.com/creator or @creator"
+              onChange={(e) => {
+                const val = e.target.value;
+                setQuickInput(val);
+                const detected = detectPlatformFromInput(val);
+                if (detected) setQuickPlatform(detected);
+              }}
+              placeholder="e.g. https://youtube.com/@channel or https://twitter.com/username"
               className="w-full border text-black border-gray-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-800 transition-colors duration-200"
             />
             {quickError && <div className="text-sm text-red-600">{quickError}</div>}
           </div>
           <div>
-            {!showPreview ? (
-              <button
-                onClick={fetchCompetitorData}
-                disabled={quickLoading}
-                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-800 text-sm"
-              >
-                {quickLoading ? 'Fetching Data…' : 'Fetch Competitor Data'}
-              </button>
-            ) : (
-              <button
-                onClick={startQuickAnalysis}
-                disabled={analysisLoading}
-                className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-800 text-sm"
-              >
-                {analysisLoading ? 'AI Analyzing…' : 'Start AI Analysis'}
-              </button>
-            )}
+            <button
+              onClick={fetchCompetitorData}
+              disabled={quickLoading || !quickInput.trim()}
+              className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70 text-sm"
+            >
+              {quickLoading ? 'Fetching Data…' : showPreview ? 'Refetch Competitor Data' : 'Fetch Competitor Data'}
+            </button>
           </div>
         </div>
       </div>
@@ -606,15 +625,24 @@ const CompetitorAnalysisPage = () => {
             </div>
           </div>
 
-          {/* AI Services Status */}
+          {/* AI Services Section */}
           <div className="mt-2 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-            <div className="flex items-center">
-              <Zap className="w-4 h-4 text-yellow-600 mr-2" />
-              <span className="text-sm font-medium text-yellow-800">
-                AI Services: Ready for Analysis
-              </span>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center">
+                <Zap className="w-4 h-4 text-yellow-600 mr-2" />
+                <span className="text-sm font-medium text-yellow-800">
+                  AI Services: Ready for Analysis
+                </span>
+              </div>
+              <button
+                onClick={startQuickAnalysis}
+                disabled={analysisLoading}
+                className="bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-800 text-xs"
+              >
+                {analysisLoading ? 'AI Analyzing…' : 'Start AI Analysis'}
+              </button>
             </div>
-            <p className="text-xs text-yellow-700 mt-1">
+            <p className="text-xs text-yellow-700 mt-2">
               Enhanced AI analysis will be performed. If AI services are unavailable, basic analysis will be provided.
             </p>
           </div>
@@ -622,6 +650,7 @@ const CompetitorAnalysisPage = () => {
       )}
 
       {/* Enhanced Filters Section */}
+      {!loading && filteredCompetitors.length > 0 && (
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-800/50 p-5 mb-8 hover:shadow-md transition-all duration-200">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div className="flex items-center space-x-3">
@@ -719,6 +748,7 @@ const CompetitorAnalysisPage = () => {
           </button>
         </div>
       </div>
+      )}
 
       {/* Analysis History Section */}
       {showHistory && (

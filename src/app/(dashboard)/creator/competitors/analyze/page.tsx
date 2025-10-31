@@ -173,25 +173,46 @@ const CompetitorAnalysisPage = () => {
     setFetchedData([]);
 
     try {
-      const fetchPromises = validUrls.map(async (comp) => {
-        const url = new URL(comp.url);
-        const hostname = url.hostname.toLowerCase();
-        let platform = 'unknown';
-        
-        if (hostname.includes('instagram.com')) platform = 'instagram';
-        else if (hostname.includes('twitter.com') || hostname.includes('x.com')) platform = 'twitter';
-        else if (hostname.includes('youtube.com')) platform = 'youtube';
-        else if (hostname.includes('linkedin.com')) platform = 'linkedin';
-        else if (hostname.includes('facebook.com')) platform = 'facebook';
+      const blocked = new Set(['instagram', 'facebook', 'linkedin']);
+      // Pre-parse platforms and filter out blocked ones
+      const parsed = validUrls.map(comp => {
+        try {
+          const url = new URL(comp.url);
+          const hostname = url.hostname.toLowerCase();
+          let platform = 'unknown';
+          if (hostname.includes('instagram.com')) platform = 'instagram';
+          else if (hostname.includes('twitter.com') || hostname.includes('x.com')) platform = 'twitter';
+          else if (hostname.includes('youtube.com')) platform = 'youtube';
+          else if (hostname.includes('linkedin.com')) platform = 'linkedin';
+          else if (hostname.includes('facebook.com')) platform = 'facebook';
+          return { url: comp.url, platform };
+        } catch {
+          return { url: comp.url, platform: 'unknown' };
+        }
+      });
 
+      const blockedList = parsed.filter(p => blocked.has(p.platform));
+      const allowed = parsed.filter(p => !blocked.has(p.platform));
+
+      if (blockedList.length > 0) {
+        const names = Array.from(new Set(blockedList.map(b => b.platform))).join(', ');
+        setError(`Fetching for ${names} is currently unavailable. Those entries were skipped.`);
+      }
+
+      if (allowed.length === 0) {
+        setShowPreview(false);
+        setFetchedData([]);
+        return;
+      }
+
+      const fetchPromises = allowed.map(async (item) => {
         const response = await apiRequest<{ success: boolean; data: any }>('/api/competitor/fetch', {
           method: 'POST',
           body: JSON.stringify({
-            competitorUrl: comp.url,
-            platform: platform
+            competitorUrl: item.url,
+            platform: item.platform
           })
         });
-
         return response.success ? response.data : null;
       });
 
