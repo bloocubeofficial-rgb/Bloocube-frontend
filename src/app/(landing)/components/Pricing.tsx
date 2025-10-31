@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { motion } from 'framer-motion';
-import Button from '@/Components/ui/Button';
+import { Button } from '@/Components/ui/Button';
 import { CheckCircle } from 'lucide-react';
 
 type Plan = {
@@ -60,10 +60,18 @@ const Pricing: React.FC = () => {
                 ))}
               </ul>
               {plan.popular ? (
-                <Button size="md" className="w-full group-hover:scale-105 transition-transform duration-300">Choose Pro</Button>
+                <Button
+                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 group-hover:scale-105 transition-transform duration-300 text-white hover:bg-white/20 shadow-md hover:shadow-lg"
+                >
+                  Choose Pro
+                </Button>
               ) : (
-                <Button variant="outline" size="md" className="w-full group-hover:scale-105 transition-transform duration-300">Get Started</Button>
-              )}
+                <Button
+                  variant="outline"
+                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 group-hover:scale-105 transition-transform duration-300 text-white hover:text-white hover:bg-white/20 shadow-md hover:shadow-lg"
+                >
+                  Get Started
+                </Button>)}
             </div>
           </motion.div>
         ))}
