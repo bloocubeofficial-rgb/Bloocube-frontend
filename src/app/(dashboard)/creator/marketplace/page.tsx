@@ -371,15 +371,13 @@ const [isExpanded, setIsExpanded] = useState(false);
     </button>
   )}
 </div> 
-
-                  </div>
-                </div>
+ </div>
+  </div>
               
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center text-green-600">
                   <IndianRupee className="w-4 h-4 mr-1" />
                     <span className="text-lg font-bold">{c.budget.toLocaleString()}</span>
-                   
                 </div>
                 <div className="flex items-center text-gray-500 text-sm">
                   <Calendar className="w-4 h-4 mr-1" />
