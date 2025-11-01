@@ -114,12 +114,22 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
     if (showLoading) loadingManager.start();
     return measureApiCall(async (): Promise<T> => {
     try {
+      // Check if body is FormData - if so, don't set Content-Type header
+      const isFormData = init.body instanceof FormData;
+      const headers: Record<string, string> = {};
+      
+      if (!isFormData) {
+        headers['Content-Type'] = 'application/json';
+      }
+      
+      // Merge any additional headers
+      if (init.headers) {
+        Object.assign(headers, init.headers);
+      }
+      
       const res = await fetch(`${base}${path}`, {
         ...init,
-        headers: {
-          'Content-Type': 'application/json',
-          ...(init.headers || {})
-        },
+        headers,
         credentials: 'include' // This sends HttpOnly cookies automatically
       });
 

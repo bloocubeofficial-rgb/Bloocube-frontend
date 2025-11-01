@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import React, { useState, useEffect, useCallback } from 'react';
 import { cookieAuthUtils } from '@/lib/cookieAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { getAvatarUrl } from '@/lib/profile';
 
 const sidebarItems = [
   { name: 'Overview', icon: Home, href: '/creator' },
@@ -36,6 +38,7 @@ interface SidebarProps {
 // Accept the 'sidebarOpen' prop
 const Sidebar = React.memo(({ sidebarOpen }: SidebarProps) => { 
   const [user, setUser] = useState<{ name?: string, email?: string, avatar_url?: string } | null>(null);
+  const { profile } = useUserProfile();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -129,11 +132,11 @@ const Sidebar = React.memo(({ sidebarOpen }: SidebarProps) => {
               <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-200 rounded-full flex items-center justify-center animate-pulse">
                 <User className="w-5 h-5 md:w-6 md:h-6 text-gray-400" />
               </div>
-            ) : user?.avatar_url ? (
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300">
+            ) : getAvatarUrl(profile?.profile?.avatar_url || user?.avatar_url) ? (
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-gray-200">
                 <Image
-                  src={user.avatar_url}
-                  alt={user.name || 'User Avatar'}
+                  src={getAvatarUrl(profile?.profile?.avatar_url || user?.avatar_url) || ''}
+                  alt={user.name || profile?.name || 'User Avatar'}
                   width={48}
                   height={48}
                   className="w-full h-full object-cover"
@@ -141,7 +144,9 @@ const Sidebar = React.memo(({ sidebarOpen }: SidebarProps) => {
               </div>
             ) : (
               <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <User className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                <span className="text-white text-lg md:text-xl font-semibold">
+                  {(user.name || profile?.name || 'U').charAt(0).toUpperCase()}
+                </span>
               </div>
             )}
             <div className="absolute -bottom-1 -right-1 w-3 h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-2 border-white shadow-sm"></div>

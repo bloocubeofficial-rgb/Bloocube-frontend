@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect, Suspense } from "react";
-import { Eye, EyeOff, User, Mail, Phone, MapPin, Globe, Calendar, Languages, Clock, Save, Upload, Trash2, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, User, Mail, Phone, MapPin, Globe, Calendar, Languages, Clock, Save, Upload, Trash2, AlertTriangle, Image as ImageIcon, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 import { TwitterIntegrationWithSuspense } from "@/Components/LazyComponents";
@@ -14,8 +14,9 @@ import type { YouTubeIntegrationRef } from "@/Components/YouTube/YouTubeIntegrat
 import type { InstagramIntegrationRef } from "@/Components/Instagram/InstagramIntegration";
 import type { FacebookIntegrationRef } from "@/Components/Facebook/FacebookIntegration";
 import { useRef } from "react";
-import { profileApi, UserProfile, ProfileUpdateData, ChangePasswordData, formatPhoneNumber, parsePhoneNumber, getProfileCompletenessColor, getProfileCompletenessMessage } from '@/lib/profile';
+import { profileApi, UserProfile, ProfileUpdateData, ChangePasswordData, formatPhoneNumber, parsePhoneNumber, getProfileCompletenessColor, getProfileCompletenessMessage, getAvatarUrl } from '@/lib/profile';
 import { useTextPersistence } from '@/hooks/useTextPersistence';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 interface NotificationState {
   type: 'success' | 'error' | 'warning' | null;
@@ -47,6 +48,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ enabled, onToggle, disabled
 
 function SettingsPageContent() {
   const searchParams = useSearchParams();
+  const { profile: userProfileFromHook, refreshProfile } = useUserProfile();
   
   // State management
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -56,6 +58,23 @@ function SettingsPageContent() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [notification, setNotification] = useState<NotificationState>({ type: null, message: '' });
   const [tokenPresent, setTokenPresent] = useState<boolean>(true);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState<string | null>(null);
+  
+  // Use profile from hook if available (for latest avatar data)
+  const displayUser = userProfileFromHook || user;
+  
+  // Debug: Log avatar URL when it changes
+  useEffect(() => {
+    if (displayUser?.profile?.avatar_url) {
+      console.log('🔍 Display User Avatar URL:', displayUser.profile.avatar_url);
+      console.log('🔍 Processed Avatar URL:', getAvatarUrl(displayUser.profile.avatar_url));
+    } else {
+      console.log('⚠️ No avatar URL found in displayUser:', displayUser);
+    }
+  }, [displayUser?.profile?.avatar_url]);
   
   // Notification preferences state (maps to backend-supported fields)
   const [marketingEmails, setMarketingEmails] = useState(true);
@@ -124,6 +143,8 @@ function SettingsPageContent() {
       const response = await profileApi.getProfile();
       if (response.success) {
         setUser(response.data.user);
+        // Log avatar URL for debugging
+        console.log('Profile loaded, avatar_url:', response.data.user.profile?.avatar_url);
         setProfileData({
           name: response.data.user.name,
           email: response.data.user.email,
@@ -137,7 +158,8 @@ function SettingsPageContent() {
             language: response.data.user.profile.language,
             timezone: response.data.user.profile.timezone,
             social_links: response.data.user.profile.social_links,
-            preferences: response.data.user.profile.preferences
+            preferences: response.data.user.profile.preferences,
+            avatar_url: response.data.user.profile.avatar_url
           }
         });
 
@@ -186,6 +208,95 @@ function SettingsPageContent() {
       setNotification({ type: 'error', message: error.message || 'Failed to change password' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Handle avatar upload
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setNotification({ type: 'error', message: 'Please upload an image file' });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setNotification({ type: 'error', message: 'Image size must be less than 5MB' });
+      return;
+    }
+
+    try {
+      setUploadingAvatar(true);
+      const response = await profileApi.uploadAvatar(file);
+      if (response.success) {
+        console.log('Avatar upload response:', response);
+        // Update local user state immediately with the new avatar URL
+        if (response.data?.avatar_url) {
+          setUser(prev => prev ? {
+            ...prev,
+            profile: {
+              ...prev.profile,
+              avatar_url: response.data.avatar_url
+            }
+          } : null);
+        }
+        // Reload profile to get updated avatar - refresh both local state and hook
+        await Promise.all([
+          loadProfile(),
+          refreshProfile()
+        ]);
+        setNotification({ type: 'success', message: 'Profile picture updated successfully!' });
+        setTimeout(() => setNotification({ type: null, message: '' }), 5000);
+      }
+    } catch (error: any) {
+      console.error('Avatar upload error:', error);
+      setNotification({ type: 'error', message: error.message || 'Failed to upload profile picture' });
+    } finally {
+      setUploadingAvatar(false);
+      // Reset input
+      e.target.value = '';
+    }
+  };
+
+  // Handle forgot password
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotPasswordEmail) {
+      setNotification({ type: 'error', message: 'Please enter your email address' });
+      return;
+    }
+
+    try {
+      setForgotPasswordLoading(true);
+      setForgotPasswordMessage(null);
+      
+      const base = process.env.NEXT_PUBLIC_API_URL || '';
+      const res = await fetch(`${base}/api/auth/request-password-reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotPasswordEmail }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || data.error || 'Failed to send reset email');
+      }
+
+      setForgotPasswordMessage('If an account exists, a password reset link has been sent to your email.');
+      setForgotPasswordEmail('');
+      setNotification({ type: 'success', message: 'Password reset email sent successfully!' });
+      setTimeout(() => {
+        setNotification({ type: null, message: '' });
+        setForgotPasswordMessage(null);
+      }, 5000);
+    } catch (error: any) {
+      setNotification({ type: 'error', message: error.message || 'Failed to send reset email' });
+    } finally {
+      setForgotPasswordLoading(false);
     }
   };
 
@@ -281,6 +392,13 @@ function SettingsPageContent() {
   useEffect(() => {
     loadProfile();
   }, []);
+
+  // Sync with userProfileFromHook when it updates
+  useEffect(() => {
+    if (userProfileFromHook && userProfileFromHook !== user) {
+      setUser(userProfileFromHook);
+    }
+  }, [userProfileFromHook]);
 
   // Handle URL parameters for social media connection status
   useEffect(() => {
@@ -578,6 +696,98 @@ function SettingsPageContent() {
             </p>
 
             <div className="space-y-6">
+              {/* Profile Picture */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
+                  <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
+                  Profile Picture
+                </h3>
+                <div className="pl-4 space-y-4">
+                  <p className="text-xs text-gray-900">
+                    Upload a profile picture to personalize your account
+                  </p>
+
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      {(() => {
+                        // Check both sources for avatar URL
+                        const rawAvatarUrl = displayUser?.profile?.avatar_url || user?.profile?.avatar_url;
+                        const avatarUrl = rawAvatarUrl ? getAvatarUrl(rawAvatarUrl) : null;
+                        const userName = displayUser?.name || user?.name || 'User';
+                        const firstLetter = userName.charAt(0).toUpperCase();
+                        
+                        // Debug logging
+                        if (rawAvatarUrl) {
+                          console.log('🖼️ Settings Page - Raw avatar URL:', rawAvatarUrl);
+                          console.log('🖼️ Settings Page - Processed URL:', avatarUrl);
+                        }
+                        
+                        if (avatarUrl) {
+                          return (
+                            <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100" key={avatarUrl}>
+                              <img
+                                src={avatarUrl}
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                                style={{ display: 'block', width: '100%', height: '100%' }}
+                                onLoad={() => {
+                                  console.log('✅ Avatar image loaded successfully:', avatarUrl);
+                                }}
+                                onError={(e) => {
+                                  console.error('❌ Avatar image failed to load:', avatarUrl);
+                                  // Fallback to first letter if image fails to load
+                                  const target = e.target as HTMLImageElement;
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = `
+                                      <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-semibold">
+                                        ${firstLetter}
+                                      </div>
+                                    `;
+                                  }
+                                }}
+                              />
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-semibold">
+                              {firstLetter}
+                            </div>
+                          );
+                        }
+                      })()}
+                    </div>
+                    <div className="flex-1">
+                      <label className="block">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarUpload}
+                          disabled={uploadingAvatar}
+                          className="hidden"
+                          id="avatar-upload"
+                        />
+                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors cursor-pointer text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                          {uploadingAvatar ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4" />
+                              {displayUser?.profile?.avatar_url ? 'Change Picture' : 'Upload Picture'}
+                            </>
+                          )}
+                        </span>
+                      </label>
+                      <p className="text-xs text-gray-500 mt-1">JPG, PNG or GIF. Max size 5MB</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Account Details */}
               <div>
                 <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
@@ -653,6 +863,45 @@ function SettingsPageContent() {
                   >
                     {saving ? 'Updating...' : 'Update Password'}
                   </button>
+                </div>
+              </div>
+
+              {/* Forgot Password */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
+                  <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
+                  Forgot Password
+                </h3>
+                <div className="pl-4 space-y-4">
+                  <p className="text-xs text-gray-900">
+                    Request a password reset link via email verification
+                  </p>
+
+                  <form onSubmit={handleForgotPassword} className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={forgotPasswordEmail}
+                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                        placeholder="Enter your email"
+                        className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        disabled={forgotPasswordLoading}
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={forgotPasswordLoading || !forgotPasswordEmail}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+                    >
+                      {forgotPasswordLoading ? 'Sending...' : 'Send Reset Link'}
+                    </button>
+                    {forgotPasswordMessage && (
+                      <p className="text-sm text-green-600">{forgotPasswordMessage}</p>
+                    )}
+                  </form>
                 </div>
               </div>
 

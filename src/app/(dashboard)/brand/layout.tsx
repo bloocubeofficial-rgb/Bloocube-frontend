@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { cookieAuthUtils } from '@/lib/cookieAuth';
+import { getAvatarUrl } from '@/lib/profile';
 import NotificationDropdown from '@/Components/Brand/NotificationDropdown';
 import HeaderRow from '@/Components/layout/HeaderRow';
 import Sidebar from '@/Components/Brand/Sidebar';
@@ -141,9 +142,23 @@ export default function BrandLayout({ children }: { children: React.ReactNode })
             <div className="relative" ref={userDropdownRef}>
               <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="p-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200"
+                className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden border-2 border-gray-200"
               >
-                <User className="w-3.5 h-3.5" />
+                {profile && getAvatarUrl(profile.profile?.avatar_url) ? (
+                  <Image
+                    src={getAvatarUrl(profile.profile?.avatar_url) || ''}
+                    alt={profile?.name || 'User'}
+                    width={32}
+                    height={32}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                    <span className="text-white text-xs font-semibold">
+                      {(profile?.name || ((user as Record<string, unknown>)?.name as string) || 'B').charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
               </button>
               {userDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[10000]">

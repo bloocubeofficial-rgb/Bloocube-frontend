@@ -7,6 +7,7 @@ import { Bell, Briefcase, Home, Settings, Users, Store, BarChart3, User, LogOut 
 import React from 'react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { cookieAuthUtils } from '@/lib/cookieAuth';
+import { getAvatarUrl } from '@/lib/profile';
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -92,13 +93,15 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen }) => {
               <div className="w-12 h-12 bg-gray-200 rounded-2xl flex items-center justify-center animate-pulse">
                 <User className="w-6 h-6 text-gray-400" />
               </div>
-            ) : profile?.profile?.avatar_url ? (
-              <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <Image src={profile.profile.avatar_url} alt={profile.name || 'User Avatar'} width={48} height={48} className="w-full h-full object-cover" />
+            ) : profile && getAvatarUrl(profile.profile?.avatar_url) ? (
+              <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-gray-200">
+                <Image src={getAvatarUrl(profile.profile?.avatar_url) || ''} alt={profile?.name || 'User Avatar'} width={48} height={48} className="w-full h-full object-cover" />
               </div>
             ) : (
               <div className="w-12 h-12 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <User className="w-6 h-6 text-white" />
+                <span className="text-white text-xl font-semibold">
+                  {(profile?.name || 'B').charAt(0).toUpperCase()}
+                </span>
               </div>
             )}
             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-sm"></div>

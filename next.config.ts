@@ -53,6 +53,30 @@ const nextConfig: NextConfig = {
   images: {
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5000',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api-backend.bloocube.com',
+        pathname: '/uploads/**',
+      },
+      // Allow any hostname for GCS or other cloud storage
+      {
+        protocol: 'https',
+        hostname: '**.googleapis.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+        pathname: '/**',
+      },
+    ],
   },
 
   // Compression

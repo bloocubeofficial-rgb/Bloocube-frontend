@@ -156,6 +156,49 @@ export const formatPhoneNumber = (phone: string): string => {
   return phone;
 };
 
+// Get full avatar URL - handles both absolute and relative URLs
+export const getAvatarUrl = (avatarUrl: string | undefined | null): string | undefined => {
+  if (!avatarUrl || typeof avatarUrl !== 'string' || avatarUrl.trim() === '') {
+    return undefined;
+  }
+  
+  const trimmedUrl = avatarUrl.trim();
+  
+  // If it's already a full URL (http:// or https://), return as is
+  if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+    return trimmedUrl;
+  }
+  
+  // If it's a relative path, prepend the API base URL
+  if (trimmedUrl.startsWith('/')) {
+    // Use getApiBase from config, but remove /api suffix if present for uploads
+    try {
+      const { getApiBase } = require('./config');
+      let apiBase = getApiBase();
+      
+      // Remove /api suffix if present (since uploads are served directly from backend root)
+      apiBase = apiBase.replace(/\/api$/, '');
+      const fullUrl = `${apiBase}${trimmedUrl}`;
+      
+      if (typeof window !== 'undefined') {
+        console.log('🔗 Constructed avatar URL:', fullUrl, 'from base:', apiBase, 'and path:', trimmedUrl);
+      }
+      return fullUrl;
+    } catch (error) {
+      // Fallback if config import fails
+      console.warn('Failed to import config, using fallback');
+      const apiBase = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+        ? 'http://localhost:5000'
+        : 'https://api-backend.bloocube.com';
+      return `${apiBase}${trimmedUrl}`;
+    }
+  }
+  
+  // If URL doesn't start with /, it might be malformed, but return it anyway
+  console.warn('⚠️ Avatar URL does not start with http://, https://, or /:', trimmedUrl);
+  return trimmedUrl;
+};
+
 export const parsePhoneNumber = (formattedPhone: string): string => {
   if (!formattedPhone) return '';
   // Remove all non-digit characters except +

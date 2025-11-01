@@ -8,6 +8,8 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import clsx from "clsx";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { getAvatarUrl } from "@/lib/profile";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -20,6 +22,7 @@ const Navbar = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const { isAuthenticated, user, isLoading } = useAuth();
+  const { profile } = useUserProfile();
 
   useEffect(() => {
     setIsVisible(true);
@@ -91,7 +94,24 @@ const Navbar = () => {
               {/* CTA Buttons */}
               <div className="hidden md:flex items-center gap-3">
                 {isAuthenticated ? (
-                  <Link href={user?.role === 'brand' ? '/brand' : '/creator'}>
+                  <Link href={user?.role === 'brand' ? '/brand' : '/creator'} className="flex items-center gap-2">
+                    {profile && getAvatarUrl(profile.profile?.avatar_url) ? (
+                      <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/30">
+                        <Image
+                          src={getAvatarUrl(profile.profile?.avatar_url) || ''}
+                          alt={profile?.name || 'Profile'}
+                          width={32}
+                          height={32}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center border-2 border-white/30">
+                        <span className="text-white text-xs font-semibold">
+                          {(profile?.name || ((user as Record<string, unknown>)?.name as string) || 'U').charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
                     <Button variant="ghost"  className="px-4 py-3 rounded-2xl hover:text-white border border-white/20  bg-transparent hover:border-white/40 hover:bg-white/5 transition-all duration-300">
                       My Profile
                     </Button>
@@ -150,8 +170,25 @@ const Navbar = () => {
             ))}
             <div className="pt-2 border-t border-white/10 space-y-2">
               {isAuthenticated ? (
-                <Link href={user?.role === 'brand' ? '/brand' : '/creator'} onClick={() => setOpen(false)}>
-                  <Button variant="outline" size="sm" className="w-full  rounded-full border-white/20 hover:border-white/40 py-3 text-base">
+                <Link href={user?.role === 'brand' ? '/brand' : '/creator'} onClick={() => setOpen(false)} className="flex items-center gap-3 w-full">
+                  {profile && getAvatarUrl(profile.profile?.avatar_url) ? (
+                    <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/30 flex-shrink-0">
+                      <Image
+                        src={getAvatarUrl(profile.profile?.avatar_url) || ''}
+                        alt={profile?.name || 'Profile'}
+                        width={32}
+                        height={32}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center border-2 border-white/30 flex-shrink-0">
+                      <span className="text-white text-xs font-semibold">
+                        {(profile?.name || ((user as Record<string, unknown>)?.name as string) || 'U').charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  <Button variant="outline" size="sm" className="flex-1 rounded-full border-white/20 hover:border-white/40 py-3 text-base">
                     My Profile
                   </Button>
                 </Link>
