@@ -4,7 +4,7 @@ import { useCampaigns } from '@/hooks/useCampaigns';
 import { useBids, createBidApi } from '@/hooks/useBids';
 import type { Campaign } from '@/types/campaign';
 import { cookieAuthUtils } from '@/lib/cookieAuth';
-import { Search, Filter, IndianRupee, Calendar, Users, Globe, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Search, Filter, IndianRupee, Calendar, Users, Globe, CheckCircle, Clock, XCircle, Cross, X } from 'lucide-react';
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 import {
   Select,
@@ -25,6 +25,8 @@ export default function CreatorMarketplacePage() {
   const isCreator = user?.role === 'creator';
   const [search, setSearch] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   // Helper function to get bid status for a campaign
   const getBidStatus = (campaignId: string) => {
@@ -132,6 +134,21 @@ export default function CreatorMarketplacePage() {
       setPlacing(null);
     }
   };
+
+
+  const closeDrawer = () => {
+  setDrawerOpen(false);
+  setTimeout(() => {
+  setSelectedCampaign(null);
+  }, 300); // wait for animation to complete
+};
+
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+const [isExpanded, setIsExpanded] = useState(false);
+
+
+
 
   return (
     <CreatorLayout 
@@ -340,14 +357,29 @@ export default function CreatorMarketplacePage() {
                          bidStatus.status === 'not_applied' ? 'Not Applied' : 'Applied'}
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 line-clamp-3 ">{c.description}</p>
+                   <div>
+  <p className={`text-sm text-gray-600 mt-2 mb-1 ${isExpanded ? '' : 'line-clamp-2'}`}>
+    {c.description}
+  </p>
+
+  {c.description.length > 120 && (
+    <button
+      onClick={() => setIsExpanded(!isExpanded)}
+      className="text-blue-600 mt-1  mb-4 text-xs hover:underline"
+    >
+      {isExpanded ? "Read less" : "Read more"}
+    </button>
+  )}
+</div> 
+
                   </div>
                 </div>
               
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center text-green-600">
                   <IndianRupee className="w-4 h-4 mr-1" />
-                  <span className="text-lg font-bold">{c.budget.toLocaleString()}</span>
+                    <span className="text-lg font-bold">{c.budget.toLocaleString()}</span>
+                   
                 </div>
                 <div className="flex items-center text-gray-500 text-sm">
                   <Calendar className="w-4 h-4 mr-1" />
@@ -369,26 +401,43 @@ export default function CreatorMarketplacePage() {
                 </div>
               </div>
 
+                 <div className="text-gray-500 text-sm">
+                {c?.deadline ? (
+  <span>
+    Expiry date : {new Date(c.deadline).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })}
+  </span>
+) : null}
+
+
+
+                  </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center text-gray-500 text-sm">
                   <Users className="w-4 h-4 mr-1" />
                   <span>Target: {(c as Campaign & { targetAudience?: string }).targetAudience || 'General'}</span>
-                </div>
+                  </div>
+                 
                 <button 
-                  className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 ${
-                    bidStatus.status === 'accepted' 
-                      ? 'border-green-700 text-green-700 bg-green-200 hover:bg-green-100 focus:ring-green-500' :
-                    bidStatus.status === 'rejected' 
-                      ? 'border-red-700 text-red-700 bg-red-200 hover:bg-red-200 focus:ring-red-500' :
-                    bidStatus.status === 'pending' 
-                      ? 'border-yellow-700 text-yellow-700 bg-yellow-200 hover:bg-yellow-200 focus:ring-yellow-500' :
-                    bidStatus.status !== 'not_applied'
-                      ? 'border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 focus:ring-blue-500' :
-                    ' text-blue-700 border border-blue-700 bg-blue-200 hover:bg-blue-200 focus:ring-blue-500'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  disabled={!isCreator || bidStatus.status !== 'not_applied'} 
-                  onClick={() => bidStatus.status === 'not_applied' ? setSelectedCampaign(c) : null}
-                >
+                    className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 ${bidStatus.status === 'accepted'
+                        ? 'border-green-700 text-green-700 bg-green-200 hover:bg-green-100 focus:ring-green-500' :
+                        bidStatus.status === 'rejected'
+                          ? 'border-red-700 text-red-700 bg-red-200 hover:bg-red-200 focus:ring-red-500' :
+                          bidStatus.status === 'pending'
+                            ? 'border-yellow-700 text-yellow-700 bg-yellow-200 hover:bg-yellow-200 focus:ring-yellow-500' :
+                            bidStatus.status !== 'not_applied'
+                              ? 'border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 focus:ring-blue-500' :
+                              ' text-blue-700 border border-blue-700 bg-blue-200 hover:bg-blue-200 focus:ring-blue-500'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    disabled={!isCreator || bidStatus.status !== 'not_applied'}
+                    onClick={() => {
+                      bidStatus.status === 'not_applied' ? setSelectedCampaign(c) : null
+                      setDrawerOpen(true);
+                    }
+                    }>
                   {!isCreator ? 'Login Required' :
                    bidStatus.status === 'accepted' ? 'Accepted ✓' :
                    bidStatus.status === 'rejected' ? 'Rejected ✗' :
@@ -414,92 +463,168 @@ export default function CreatorMarketplacePage() {
           <p className="mt-1 text-sm text-gray-500">Try adjusting your filters or check back later.</p>
         </div>
       )}
+{selectedCampaign && (
+  <div className="fixed inset-0 z-[9999] p-2">
 
-      {selectedCampaign && (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 ">Place Your Bid</h2>
-              <button 
-                onClick={() => setSelectedCampaign(null)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-              <h3 className="font-medium text-gray-900">{selectedCampaign.title}</h3>
-              <p className="text-sm text-gray-600 mt-1">Budget: ₹{selectedCampaign.budget.toLocaleString()}</p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Proposal
-                </label>
-                <textarea 
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" 
-                  rows={4} 
-                  value={proposal} 
-                  onChange={e => setProposal(e.target.value)}
-                  placeholder="Describe how you'll approach this campaign..."
-                />
-              </div>
-              
-              <div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">
-    Bid Amount (INR)
-  </label>
-  <div className="relative">
-    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-      <IndianRupee className="h-5 w-5 text-gray-400" />
-    </div>
-    <input
-      type="number"
-      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      value={amountInput}
-      onChange={(e) => {
-        const val = e.target.value;
-        setAmountInput(val);
-        setAmount(val ? Number(val) : 0);  // only update numeric when valid
-      }}
-      placeholder="0"
+    {/* Overlay */}
+    <div
+      className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
+        drawerOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+      }`}
+      onClick={closeDrawer}
     />
-  </div>
-</div>
 
-            </div>
 
-            <div className="flex justify-end space-x-3 mt-6">
-              <button 
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200" 
-                onClick={() => setSelectedCampaign(null)}
-              >
-                Cancel
-              </button>
-              <button 
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200" 
-                disabled={!isCreator || placing === selectedCampaign._id || !proposal || !amount} 
-                onClick={placeBid}
-              >
-                {placing === selectedCampaign._id ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Submitting...
-                  </div>
-                ) : (
-                  'Submit Bid'
-                )}
-              </button>
+    {/* Drawer */}
+    <div
+      className={`fixed right-0 top-0 h-full w-full max-w-lg bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${
+        drawerOpen ? "translate-x-0" : "translate-x-full"
+      }`}
+    >
+      <div className="h-full flex flex-col p-6 space-y-4">
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-2 ">
+          <h2 className="text-xl font-semibold text-gray-900">Place Your Bid</h2>
+          <button onClick={closeDrawer} className="text-gray-500 hover:text-gray-700 text-xl leading-none">
+            ×
+          </button>
+        </div>
+
+        {/* Campaign Card */}
+        <div className="p-4 bg-gray-50 rounded-md border border-gray-200/02">
+                <h3 className="font-medium text-gray-900">{selectedCampaign.title}</h3>
+                
+                <div>
+  <p className={`text-sm text-gray-600 mt-2 mb-1 ${isExpanded ? '' : 'line-clamp-2'}`}>
+    {selectedCampaign.description}
+  </p>
+
+  {selectedCampaign.description.length > 120 && (
+    <button
+      onClick={() => setIsExpanded(!isExpanded)}
+      className="text-blue-600 mt-1  mb-4 text-xs hover:underline"
+    >
+      {isExpanded ? "Read less" : "Read more"}
+    </button>
+  )}
+</div> 
+       
+          <p className="text-sm text-gray-600">Budget: ₹{selectedCampaign.budget.toLocaleString()}</p>
+        </div>
+           
+             
+        {/* Inputs */}
+        <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+
+          {/* Proposal */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block"> Write your proposal</label>
+            <textarea
+              rows={4}
+               className="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg 
+  focus:outline-none resize-none"
+              value={proposal}
+              onChange={e => setProposal(e.target.value)}
+              placeholder="Describe your approach..."
+            />
+          </div>
+
+          {/* Amount */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Bid Amount (INR)</label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center justify-center pl-2 text-gray-400">
+                <IndianRupee className="h-4 w-4" />
+              </span>
+              <input
+                type="number"
+                min="0"
+               className="w-full pl-6 pr-3 py-2 border border-gray-300 rounded-lg 
+   focus:outline-none "
+                value={amountInput}
+                onChange={(e) => {
+                  const val = e.target.value;
+                   setAmountInput(val);
+                    setAmount(val ? Number(val) : 0);
+                }}
+                placeholder="0"
+              />
             </div>
           </div>
+
         </div>
+
+        {/* Buttons */}
+              <div className="space-y-3 w-full">
+                 <button
+            className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-sm hover:opacity-90 disabled:opacity-50"
+            disabled={!isCreator || placing === selectedCampaign._id || !proposal || !amount}
+           onClick={() => {
+    placeBid();
+             closeDrawer();
+    setShowConfirmation(true);         // ✅ drawer close
+  }}
+          >
+            {placing === selectedCampaign._id ? "Submitting..." : "Submit Bid"}
+                </button>
+                
+          <button
+            className="w-full border border-gray-300 px-4 py-2 rounded-sm hover:bg-gray-50"
+            onClick={closeDrawer}
+          >
+            Cancel
+          </button>
+
+         
+        </div>
+
       </div>
-      )}
+    </div>
+  </div>
+)}
+
+{showConfirmation && (
+  <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex justify-center items-center z-[9999]">
+    <div className="bg-white w-110 p-6 rounded-sm shadow-xl relative">
+
+      {/* Close Button */}
+      <button
+        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-lg"
+        onClick={() => setShowConfirmation(false)}
+      >
+        <X/>
+      </button>
+
+      <h2 className="text-lg font-semibold mb-2 text-center">Confirm Bid Submission</h2>
+      <p className="text-md text-gray-600 mb-6 text-center">
+        Are you sure you want to submit this bid?
+      </p>
+
+      <div className="flex flex-col gap-3">
+        <button
+          className="w-full px-4 py-2  text-white rounded-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+          onClick={() => {
+            setShowConfirmation(false);
+            placeBid();
+          }}
+        >
+          Yes, Submit
+        </button>
+
+        <button
+          className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-sm hover:bg-gray-300"
+          onClick={() => setShowConfirmation(false)}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
     </CreatorLayout>
   );
 }

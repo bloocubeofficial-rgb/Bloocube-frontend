@@ -39,7 +39,8 @@ import { persistentCache } from "@/lib/cache";
 import { getFriendlyMessage } from "@/lib/errors";
 
 import Link from "next/link";
-import RecentPosts from "./recentpost";
+import RecentPosts from "./posts/recentpost";
+import Scheduled from "./posts/scheduled";
 type AnalyticsItem = {
   post_id?: string;
   platform?: string;
@@ -367,90 +368,11 @@ const Dashboard = () => {
 
       )}
       
-      
-
-      {/* Enhanced Stats Cards */}
-      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-md transition-all duration-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-              <Target className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex items-center text-green-600 text-sm font-medium">
-              <ArrowUpRight className="w-4 h-4 mr-1" />
-              <span>+12%</span>
-            </div>
-          </div>
-          <h3 className="text-sm font-medium text-gray-500 mb-2">
-            Total Posts
-          </h3>
-          <p className="text-3xl font-bold text-gray-900 mb-1">
-            {totals.totalPosts}
-          </p>
-          <p className="text-xs text-gray-500">From last month</p>
-        </div>
-
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-md transition-all duration-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex items-center text-blue-600 text-sm font-medium">
-              <ArrowUpRight className="w-4 h-4 mr-1" />
-              <span>+5%</span>
-            </div>
-          </div>
-          <h3 className="text-sm font-medium text-gray-500 mb-2">
-            Scheduled Posts
-          </h3>
-          <p className="text-3xl font-bold text-gray-900 mb-1">
-            {totals.scheduledPosts}
-          </p>
-          <p className="text-xs text-gray-500">From last month</p>
-        </div>
-
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-md transition-all duration-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex items-center text-green-600 text-sm font-medium">
-              <ArrowUpRight className="w-4 h-4 mr-1" />
-              <span>+2.1%</span>
-            </div>
-          </div>
-          <h3 className="text-sm font-medium text-gray-500 mb-2">
-            Engagement Rate
-          </h3>
-          <p className="text-3xl font-bold text-gray-900 mb-1">
-            {totals.engagementRate}%
-          </p>
-          <p className="text-xs text-gray-500">From last month</p>
-        </div>
-
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-md transition-all duration-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
-              <Zap className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex items-center text-red-600 text-sm font-medium">
-              <ArrowDownRight className="w-4 h-4 mr-1" />
-              <span>-3%</span>
-            </div>
-          </div>
-          <h3 className="text-sm font-medium text-gray-500 mb-2">
-            Avg. Engagement Score
-          </h3>
-          <p className="text-3xl font-bold text-gray-900 mb-1">
-            {totals.avgEngagementScore}
-          </p>
-          <p className="text-xs text-gray-500">From last month</p>
-        </div>
-      </div> */}
+    
 
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-9">
 {/* Total Posts */}
-<Card className="rounded-sm  hover:shadow-md transition-all duration-200 bg-white/80 ">
+<Card className="rounded-sm  hover:shadow-md transition-all duration-200  border border-gray-200/04 ">
   <CardContent className="p-3">
     <div className="flex justify-between items-start mb-1">
       <div>
@@ -471,7 +393,7 @@ const Dashboard = () => {
 
 {/* Scheduled Posts */}
 
-<Card className="rounded-sm  hover:shadow-md transition-all duration-200 bg-white/80 ">
+<Card className="rounded-sm  hover:shadow-md transition-all duration-200 border border-gray-200/04 ">
   <CardContent className="p-3">
     
     <div className="flex justify-between items-start mb-1">
@@ -491,7 +413,7 @@ const Dashboard = () => {
 </Card>
 
 {/* Engagement Rate */}
- <Card className="rounded-sm  hover:shadow-md transition-all duration-200 bg-white/80 ">
+ <Card className="rounded-sm  hover:shadow-md transition-all duration-200 border border-gray-200/04 ">
   <CardContent className="p-3">
     <div className="flex justify-between items-start mb-1">
       <div>
@@ -513,7 +435,7 @@ const Dashboard = () => {
         
 
 {/* Avg Engagement Score */}
- <Card className="rounded-xl  hover:shadow-md transition-all duration-200 bg-white/80 ">
+ <Card className="rounded-xl  hover:shadow-md transition-all duration-200 border border-gray-200/04 ">
   <CardContent className="p-3">
     <div className="flex justify-between items-start mb-1">
       <div>
@@ -533,18 +455,24 @@ const Dashboard = () => {
 
 </div>
       
-      
-
-
       {/* recent post  */}
-      <RecentPosts/>
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div>
+ <RecentPosts />
+</div>
+<div>
+<Scheduled />
+</div>
+</div>
+
+     
       {/* KPI Cards: Views, Likes, Comments, Shares */}
    
 
       {/* Enhanced Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 mt-8">
         {/* Engagement Trends */}
-        <div  className="rounded-sm  p-4 shadow-md hover:shadow-md transition-all duration-200 bg-white/80 border border-gray-200/10">
+        <div  className="rounded-sm  bg-card text-card-foreground flex flex-col gap-6  border py-6  p-4  hover:shadow-md transition-all duration-200  border border-gray-200/04">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-lg font-bold text-gray-900">
@@ -634,7 +562,7 @@ const Dashboard = () => {
         </div>
 
         {/* Views by Month */}
-       <div  className="rounded-sm  p-4 shadow-md hover:shadow-md transition-all duration-200 bg-white/80 border border-gray-200/50">
+       <div  className="rounded-sm  bg-card text-card-foreground flex flex-col gap-6  border py-6  p-4  hover:shadow-md transition-all duration-200  border border-gray-200/04">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-lg font-bold text-gray-900">
@@ -705,7 +633,7 @@ const Dashboard = () => {
       </div>
 
       {/* Enhanced Top Performing Posts */}
-      <div  className="rounded-sm  p-4 shadow-md hover:shadow-md transition-all duration-200 bg-white/80 border border-gray-200/50">
+      {/* <div  className="rounded-sm  p-4 shadow-md hover:shadow-md transition-all duration-200 bg-white/80 border border-gray-200/50">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-lg font-bold text-gray-900">
@@ -782,7 +710,7 @@ const Dashboard = () => {
             </tbody>
           </table>
         </div>
-      </div>
+      </div> */}
     </CreatorLayout>
   );
 };
