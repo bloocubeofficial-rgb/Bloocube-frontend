@@ -55,8 +55,15 @@ export default function ResetPasswordForm({ token }: { token: string }) {
         throw new Error(data.message || data.error || "Failed to reset password");
       }
 
-      setMessage("Password reset successful! Redirecting to login...");
-      setTimeout(() => router.push("/login"), 2000);
+      // Determine redirect based on response or default to login
+      const redirectTo = data.redirectTo || 'login';
+      const redirectPath = redirectTo === 'settings' ? '/creator/settings' : '/login';
+      const redirectMessage = redirectTo === 'settings' 
+        ? "Password reset successful! Redirecting to settings..." 
+        : "Password reset successful! Redirecting to login...";
+      
+      setMessage(redirectMessage);
+      setTimeout(() => router.push(redirectPath), 2000);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

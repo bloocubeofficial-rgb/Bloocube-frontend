@@ -135,6 +135,13 @@ export const profileApi = {
     });
   },
 
+  // Remove avatar
+  removeAvatar: async (): Promise<{ success: boolean; data: { avatar_url: string } }> => {
+    return apiRequest('/api/profile/avatar', {
+      method: 'DELETE'
+    });
+  },
+
   // Delete account
   deleteAccount: async (data: DeleteAccountData): Promise<{ success: boolean; message: string }> => {
     return apiRequest('/api/profile/account', {

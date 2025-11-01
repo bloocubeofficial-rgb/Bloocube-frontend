@@ -2,6 +2,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { Eye, EyeOff, User, Mail, Phone, MapPin, Globe, Calendar, Languages, Clock, Save, Upload, Trash2, AlertTriangle, Image as ImageIcon, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 import { TwitterIntegrationWithSuspense } from "@/Components/LazyComponents";
 import { LinkedInIntegrationWithSuspense } from "@/Components/LazyComponents";
@@ -54,11 +55,11 @@ function SettingsPageContent() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [notification, setNotification] = useState<NotificationState>({ type: null, message: '' });
   const [tokenPresent, setTokenPresent] = useState<boolean>(true);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [removingAvatar, setRemovingAvatar] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [forgotPasswordMessage, setForgotPasswordMessage] = useState<string | null>(null);
@@ -143,8 +144,14 @@ function SettingsPageContent() {
       const response = await profileApi.getProfile();
       if (response.success) {
         setUser(response.data.user);
-        // Log avatar URL for debugging
-        console.log('Profile loaded, avatar_url:', response.data.user.profile?.avatar_url);
+        // Enhanced logging for avatar URL
+        const avatarUrl = response.data.user.profile?.avatar_url;
+        console.log('📥 Profile loaded:', {
+          hasAvatar: !!avatarUrl,
+          avatarUrl: avatarUrl,
+          processedUrl: avatarUrl ? getAvatarUrl(avatarUrl) : null,
+          fullUser: response.data.user
+        });
         setProfileData({
           name: response.data.user.name,
           email: response.data.user.email,
@@ -181,13 +188,107 @@ function SettingsPageContent() {
   const saveProfile = async () => {
     try {
       setSaving(true);
-      const response = await profileApi.updateProfile(profileData);
+      
+      // Build update payload - ensure all account details are included
+      // Get current values from formData to ensure we have the latest
+      const currentName = profileName || profileData.name || user?.name || '';
+      const currentPhone = profilePhone || profileData.profile?.phone || user?.profile?.phone || '';
+      
+      const updateData: ProfileUpdateData = {};
+      
+      // Include name if it exists
+      if (currentName.trim()) {
+        updateData.name = currentName.trim();
+      }
+      
+      // Build profile object with phone and other fields
+      // Only include fields that have actual values (not empty strings or null)
+      const profileFields: any = {};
+      
+      // Include phone if it has a value (allow empty string to clear it, but filter out undefined/null)
+      if (currentPhone !== undefined && currentPhone !== null && currentPhone !== '') {
+        profileFields.phone = currentPhone;
+      }
+      
+      // Include other profile fields only if they have actual values
+      // Filter out empty strings and null values to avoid validation errors
+      if (profileData.profile?.bio !== undefined && profileData.profile.bio !== '' && profileData.profile.bio !== null) {
+        profileFields.bio = profileData.profile.bio;
+      }
+      if (profileData.profile?.location !== undefined && profileData.profile.location !== '' && profileData.profile.location !== null) {
+        profileFields.location = profileData.profile.location;
+      }
+      if (profileData.profile?.website !== undefined && profileData.profile.website !== '' && profileData.profile.website !== null) {
+        profileFields.website = profileData.profile.website;
+      }
+      // Only include dateOfBirth if it's a valid date string
+      if (profileData.profile?.dateOfBirth !== undefined && profileData.profile.dateOfBirth !== null && profileData.profile.dateOfBirth !== '') {
+        profileFields.dateOfBirth = profileData.profile.dateOfBirth;
+      }
+      if (profileData.profile?.gender !== undefined && profileData.profile.gender !== null) {
+        const genderValue = profileData.profile.gender;
+        // Only include if it's a valid non-empty string
+        if (typeof genderValue === 'string' && genderValue.trim() !== '') {
+          profileFields.gender = genderValue;
+        }
+      }
+      if (profileData.profile?.language !== undefined && profileData.profile.language !== '' && profileData.profile.language !== null) {
+        profileFields.language = profileData.profile.language;
+      }
+      if (profileData.profile?.timezone !== undefined && profileData.profile.timezone !== '' && profileData.profile.timezone !== null) {
+        profileFields.timezone = profileData.profile.timezone;
+      }
+      // Social links and preferences - only include if they exist and have values
+      if (profileData.profile?.social_links && Object.keys(profileData.profile.social_links).length > 0) {
+        profileFields.social_links = profileData.profile.social_links;
+      }
+      if (profileData.profile?.preferences && Object.keys(profileData.profile.preferences).length > 0) {
+        profileFields.preferences = profileData.profile.preferences;
+      }
+      
+      // Only add profile object if it has fields
+      if (Object.keys(profileFields).length > 0) {
+        updateData.profile = profileFields;
+      }
+      
+      // Email is excluded - it cannot be changed
+      
+      console.log('Saving profile data:', updateData);
+      
+      const response = await profileApi.updateProfile(updateData);
       if (response.success) {
         setUser(response.data.user);
+        
+        // Update local profile data with server response
+        setProfileData({
+          name: response.data.user.name,
+          profile: {
+            bio: response.data.user.profile.bio,
+            phone: response.data.user.profile.phone,
+            location: response.data.user.profile.location,
+            website: response.data.user.profile.website,
+            dateOfBirth: response.data.user.profile.dateOfBirth,
+            gender: response.data.user.profile.gender,
+            language: response.data.user.profile.language,
+            timezone: response.data.user.profile.timezone,
+            social_links: response.data.user.profile.social_links,
+            preferences: response.data.user.profile.preferences,
+            avatar_url: response.data.user.profile.avatar_url
+          }
+        });
+        
+        // Update persisted values
+        setProfileName(response.data.user.name);
+        setProfilePhone(response.data.user.profile.phone || '');
+        
+        // Refresh profile from hook to ensure consistency
+        await refreshProfile();
+        
         setNotification({ type: 'success', message: 'Profile updated successfully!' });
         setTimeout(() => setNotification({ type: null, message: '' }), 5000);
       }
     } catch (error: any) {
+      console.error('Profile update error:', error);
       setNotification({ type: 'error', message: error.message || 'Failed to update profile' });
     } finally {
       setSaving(false);
@@ -233,6 +334,7 @@ function SettingsPageContent() {
       const response = await profileApi.uploadAvatar(file);
       if (response.success) {
         console.log('Avatar upload response:', response);
+        
         // Update local user state immediately with the new avatar URL
         if (response.data?.avatar_url) {
           setUser(prev => prev ? {
@@ -243,13 +345,16 @@ function SettingsPageContent() {
             }
           } : null);
         }
-        // Reload profile to get updated avatar - refresh both local state and hook
-        await Promise.all([
-          loadProfile(),
-          refreshProfile()
-        ]);
-        setNotification({ type: 'success', message: 'Profile picture updated successfully!' });
-        setTimeout(() => setNotification({ type: null, message: '' }), 5000);
+        
+        // Force refresh both local state and hook - use await to ensure completion
+        await refreshProfile();
+        await loadProfile();
+        
+        // Small delay to ensure state updates propagate
+        setTimeout(() => {
+          setNotification({ type: 'success', message: 'Profile picture updated successfully!' });
+          setTimeout(() => setNotification({ type: null, message: '' }), 5000);
+        }, 100);
       }
     } catch (error: any) {
       console.error('Avatar upload error:', error);
@@ -261,11 +366,56 @@ function SettingsPageContent() {
     }
   };
 
+  // Handle avatar removal
+  const handleRemoveAvatar = async () => {
+    if (!displayUser?.profile?.avatar_url) {
+      setNotification({ type: 'error', message: 'No profile picture to remove' });
+      return;
+    }
+
+    if (!confirm('Are you sure you want to remove your profile picture?')) {
+      return;
+    }
+
+    try {
+      setRemovingAvatar(true);
+      const response = await profileApi.removeAvatar();
+      if (response.success) {
+        // Update local user state immediately
+        setUser(prev => prev ? {
+          ...prev,
+          profile: {
+            ...prev.profile,
+            avatar_url: ''
+          }
+        } : null);
+        
+        // Force refresh both local state and hook - use await to ensure completion
+        await refreshProfile();
+        await loadProfile();
+        
+        // Small delay to ensure state updates propagate
+        setTimeout(() => {
+          setNotification({ type: 'success', message: 'Profile picture removed successfully!' });
+          setTimeout(() => setNotification({ type: null, message: '' }), 5000);
+        }, 100);
+      }
+    } catch (error: any) {
+      console.error('Avatar removal error:', error);
+      setNotification({ type: 'error', message: error.message || 'Failed to remove profile picture' });
+    } finally {
+      setRemovingAvatar(false);
+    }
+  };
+
   // Handle forgot password
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!forgotPasswordEmail) {
+    const email = forgotPasswordEmail || formData.email;
+    
+    if (!email) {
       setNotification({ type: 'error', message: 'Please enter your email address' });
+      setForgotPasswordMessage('Please enter your email address');
       return;
     }
 
@@ -273,28 +423,44 @@ function SettingsPageContent() {
       setForgotPasswordLoading(true);
       setForgotPasswordMessage(null);
       
-      const base = process.env.NEXT_PUBLIC_API_URL || '';
-      const res = await fetch(`${base}/api/auth/request-password-reset`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      console.log('Sending password reset request to:', `${apiUrl}/api/auth/request-password-reset`);
+      
+      const res = await fetch(`${apiUrl}/api/auth/request-password-reset`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotPasswordEmail }),
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, fromSettings: true }), // Indicate this is from settings page
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || data.error || 'Failed to send reset email');
+      // Try to parse JSON, but handle non-JSON responses
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseError) {
+        const text = await res.text();
+        throw new Error(text || `Server error: ${res.status} ${res.statusText}`);
       }
 
-      setForgotPasswordMessage('If an account exists, a password reset link has been sent to your email.');
-      setForgotPasswordEmail('');
-      setNotification({ type: 'success', message: 'Password reset email sent successfully!' });
+      if (!res.ok) {
+        throw new Error(data.message || data.error || `Failed to send reset email (${res.status})`);
+      }
+
+      setForgotPasswordMessage('If an account exists with this email, a password reset link has been sent. Please check your inbox and follow the instructions to reset your password.');
+      setNotification({ type: 'success', message: 'Password reset link sent successfully! Check your email.' });
       setTimeout(() => {
         setNotification({ type: null, message: '' });
-        setForgotPasswordMessage(null);
       }, 5000);
+      
+      // Clear the email field after successful submission
+      setForgotPasswordEmail('');
     } catch (error: any) {
-      setNotification({ type: 'error', message: error.message || 'Failed to send reset email' });
+      console.error('Password reset error:', error);
+      const errorMessage = error.message || 'Failed to send reset email. Please try again.';
+      setForgotPasswordMessage(`Error: ${errorMessage}`);
+      setNotification({ type: 'error', message: errorMessage });
     } finally {
       setForgotPasswordLoading(false);
     }
@@ -367,8 +533,8 @@ function SettingsPageContent() {
       setProfileName(value);
       setProfileData(prev => ({ ...prev, name: value }));
     } else if (field === 'email') {
-      setProfileEmail(value);
-      setProfileData(prev => ({ ...prev, email: value }));
+      // Email cannot be changed - ignore this field
+      return;
     } else if (field === 'currentPassword') {
       setPasswordData(prev => ({ ...prev, currentPassword: value }));
     } else if (field === 'newPassword') {
@@ -393,12 +559,20 @@ function SettingsPageContent() {
     loadProfile();
   }, []);
 
-  // Sync with userProfileFromHook when it updates
+  // Sync with userProfileFromHook when it updates - especially for avatar changes
   useEffect(() => {
-    if (userProfileFromHook && userProfileFromHook !== user) {
-      setUser(userProfileFromHook);
+    if (userProfileFromHook) {
+      // Always update to get the latest avatar data from the hook
+      const currentAvatar = user?.profile?.avatar_url;
+      const hookAvatar = userProfileFromHook.profile?.avatar_url;
+      
+      // Update if user is null or if avatar URL has changed
+      if (!user || currentAvatar !== hookAvatar) {
+        console.log('🔄 Syncing profile from hook:', { currentAvatar, hookAvatar });
+        setUser(userProfileFromHook);
+      }
     }
-  }, [userProfileFromHook]);
+  }, [userProfileFromHook, userProfileFromHook?.profile?.avatar_url, user]);
 
   // Handle URL parameters for social media connection status
   useEffect(() => {
@@ -710,46 +884,56 @@ function SettingsPageContent() {
                   <div className="flex items-center gap-4">
                     <div className="relative">
                       {(() => {
-                        // Check both sources for avatar URL
-                        const rawAvatarUrl = displayUser?.profile?.avatar_url || user?.profile?.avatar_url;
+                        // Use the same pattern as CreatorLayout - prioritize hook profile
+                        const profileAvatar = userProfileFromHook?.profile?.avatar_url;
+                        const userProfileAvatar = user?.profile?.avatar_url;
+                        const rawAvatarUrl = profileAvatar || userProfileAvatar;
                         const avatarUrl = rawAvatarUrl ? getAvatarUrl(rawAvatarUrl) : null;
-                        const userName = displayUser?.name || user?.name || 'User';
+                        
+                        const userName = userProfileFromHook?.name || user?.name || 'User';
                         const firstLetter = userName.charAt(0).toUpperCase();
                         
                         // Debug logging
-                        if (rawAvatarUrl) {
-                          console.log('🖼️ Settings Page - Raw avatar URL:', rawAvatarUrl);
-                          console.log('🖼️ Settings Page - Processed URL:', avatarUrl);
-                        }
+                        console.log('🖼️ Settings Avatar Debug:', {
+                          profileAvatar,
+                          userProfileAvatar,
+                          rawAvatarUrl,
+                          processedUrl: avatarUrl,
+                          hasHook: !!userProfileFromHook,
+                          hasUser: !!user
+                        });
                         
+                        // Render image if we have a valid URL - match CreatorLayout pattern
                         if (avatarUrl) {
                           return (
-                            <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100" key={avatarUrl}>
-                              <img
+                            <div 
+                              className="w-20 h-20 relative rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100" 
+                              key={`avatar-${rawAvatarUrl}`}
+                            >
+                              <Image
                                 src={avatarUrl}
-                                alt="Profile"
+                                alt={userName}
+                                width={80}
+                                height={80}
                                 className="w-full h-full object-cover"
-                                style={{ display: 'block', width: '100%', height: '100%' }}
-                                onLoad={() => {
-                                  console.log('✅ Avatar image loaded successfully:', avatarUrl);
-                                }}
                                 onError={(e) => {
-                                  console.error('❌ Avatar image failed to load:', avatarUrl);
-                                  // Fallback to first letter if image fails to load
-                                  const target = e.target as HTMLImageElement;
-                                  const parent = target.parentElement;
-                                  if (parent) {
-                                    parent.innerHTML = `
-                                      <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-semibold">
-                                        ${firstLetter}
-                                      </div>
-                                    `;
-                                  }
+                                  console.error('❌ Avatar image failed to load:', avatarUrl, e);
+                                  const target = e.currentTarget;
+                                  target.style.display = 'none';
+                                  const fallback = target.nextElementSibling as HTMLElement;
+                                  if (fallback) fallback.style.display = 'flex';
                                 }}
                               />
+                              {/* Fallback that's hidden by default - shown only on image error */}
+                              <div className="hidden absolute inset-0 w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center">
+                                <span className="text-white text-2xl font-semibold">
+                                  {firstLetter}
+                                </span>
+                              </div>
                             </div>
                           );
                         } else {
+                          // Show fallback when no avatar
                           return (
                             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-semibold">
                               {firstLetter}
@@ -758,32 +942,53 @@ function SettingsPageContent() {
                         }
                       })()}
                     </div>
-                    <div className="flex-1">
-                      <label className="block">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleAvatarUpload}
-                          disabled={uploadingAvatar}
-                          className="hidden"
-                          id="avatar-upload"
-                        />
-                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors cursor-pointer text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
-                          {uploadingAvatar ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                              Uploading...
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="w-4 h-4" />
-                              {displayUser?.profile?.avatar_url ? 'Change Picture' : 'Upload Picture'}
-                            </>
-                          )}
-                        </span>
-                      </label>
-                      <p className="text-xs text-gray-500 mt-1">JPG, PNG or GIF. Max size 5MB</p>
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <label className="block flex-1">
+                      <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarUpload}
+                            disabled={uploadingAvatar || removingAvatar}
+                            className="hidden"
+                            id="avatar-upload"
+                          />
+                          <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors cursor-pointer text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                            {uploadingAvatar ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                Uploading...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-4 h-4" />
+                                {displayUser?.profile?.avatar_url ? 'Change Picture' : 'Upload Picture'}
+                              </>
+                            )}
+                          </span>
+                        </label>
+                        {displayUser?.profile?.avatar_url && (
+                      <button
+                            onClick={handleRemoveAvatar}
+                            disabled={removingAvatar || uploadingAvatar}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors cursor-pointer text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                            {removingAvatar ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                Removing...
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 className="w-4 h-4" />
+                                Remove
+                              </>
+                            )}
+                      </button>
+                        )}
                     </div>
+                      <p className="text-xs text-gray-500">JPG, PNG or GIF. Max size 5MB</p>
+                  </div>
                   </div>
                 </div>
               </div>
@@ -796,124 +1001,7 @@ function SettingsPageContent() {
                 </h3>
                 <div className="pl-4 space-y-4">
                   <p className="text-xs text-gray-900">
-                    Change basic account details
-                  </p>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Current Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        value={formData.currentPassword}
-                        onChange={(e) => handleInputChange("currentPassword", e.target.value)}
-                        placeholder="••••••••••••"
-                        className="w-full px-3 py-2 pr-20 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-800 hover:text-gray-600"
-                      >
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      New Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        value={formData.newPassword}
-                        onChange={(e) => handleInputChange("newPassword", e.target.value)}
-                        placeholder="••••••••••••"
-                        className="w-full px-3 py-2 pr-12 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-800 hover:text-gray-600"
-                      >
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                    </div>
-                    <p className="text-xs text-gray-900 mt-1">Minimum 8 characters</p>
-                  </div>
-
-                  <button
-                    onClick={changePassword}
-                    disabled={saving || !formData.currentPassword || !formData.newPassword}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
-                  >
-                    {saving ? 'Updating...' : 'Update Password'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Forgot Password */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
-                  <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
-                  Forgot Password
-                </h3>
-                <div className="pl-4 space-y-4">
-                  <p className="text-xs text-gray-900">
-                    Request a password reset link via email verification
-                  </p>
-
-                  <form onSubmit={handleForgotPassword} className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        value={forgotPasswordEmail}
-                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                        placeholder="Enter your email"
-                        className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        disabled={forgotPasswordLoading}
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={forgotPasswordLoading || !forgotPasswordEmail}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
-                    >
-                      {forgotPasswordLoading ? 'Sending...' : 'Send Reset Link'}
-                    </button>
-                    {forgotPasswordMessage && (
-                      <p className="text-sm text-green-600">{forgotPasswordMessage}</p>
-                    )}
-                  </form>
-                </div>
-              </div>
-
-              {/* Basic Info */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
-                  <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
-                  Basic Info
-                </h3>
-                <div className="pl-4 space-y-4">
-                  <p className="text-xs text-gray-900">
-                    Update your personal information below
+                    Manage your basic account information
                   </p>
 
                   <div>
@@ -925,7 +1013,25 @@ function SettingsPageContent() {
                       value={formData.name}
                       onChange={(e) => handleInputChange("name", e.target.value)}
                       className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter your full name"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      disabled
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-700 rounded-md bg-gray-100 cursor-not-allowed text-gray-600"
+                      placeholder="Enter your email address"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Email address cannot be changed. Please contact support if you need to update your email.
+                    </p>
                   </div>
 
                   <div>
@@ -937,14 +1043,63 @@ function SettingsPageContent() {
                       value={formData.phone}
                       onChange={(e) => handleInputChange("phone", e.target.value)}
                       className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter your phone number"
                     />
                   </div>
+                </div>
+                  </div>
 
+              {/* Password Reset */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
+                  <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
+                  Password Reset
+                </h3>
+                <div className="pl-4 space-y-4">
                   <p className="text-xs text-gray-900">
-                    Update your phone number below in your account.
+                    Forgot your password? Request a password reset link via email verification. You'll receive an email with instructions to reset your password.
                   </p>
+
+                  <form onSubmit={handleForgotPassword} className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={forgotPasswordEmail || formData.email}
+                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                        placeholder="Enter your email"
+                        className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        disabled={forgotPasswordLoading}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        We'll send a password reset link to this email address
+                      </p>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={forgotPasswordLoading || (!forgotPasswordEmail && !formData.email)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+                    >
+                      {forgotPasswordLoading ? (
+                        <>
+                          <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Sending...
+                        </>
+                      ) : (
+                        'Send Reset Link'
+                      )}
+                    </button>
+                    {forgotPasswordMessage && (
+                      <div className={`p-3 rounded-md ${forgotPasswordMessage.includes('error') || forgotPasswordMessage.includes('Error') || forgotPasswordMessage.includes('Failed') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                        <p className="text-sm">{forgotPasswordMessage}</p>
+                      </div>
+                    )}
+                  </form>
                 </div>
               </div>
+
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
