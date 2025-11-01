@@ -13,13 +13,13 @@ export type CreatorListResponse = { success: boolean; data: { users: CreatorUser
 
 export const userService = {
   async listCreators(params: Record<string, string | number | undefined> = {}) {
-    // Prefer a proper creators endpoint if available; fallback to admin users list filtered by role
+    // Use the public creators endpoint (accessible to authenticated brands)
     const qs = new URLSearchParams(
-      Object.entries({ role: 'creator', ...params })
+      Object.entries(params)
         .filter(([, v]) => v !== undefined && v !== null)
         .map(([k, v]) => [k, String(v)])
     ).toString();
-    return apiRequest<CreatorListResponse>(`/api/admin/users?${qs}`);
+    return apiRequest<CreatorListResponse>(`/api/profile/creators?${qs}`);
   }
 };
 

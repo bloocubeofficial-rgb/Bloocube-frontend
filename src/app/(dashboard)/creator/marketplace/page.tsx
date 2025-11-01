@@ -57,9 +57,18 @@ export default function CreatorMarketplacePage() {
   };
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return campaigns;
+    const now = new Date();
+    // First filter out expired campaigns (deadline has passed)
+    const activeCampaigns = campaigns.filter((c) => {
+      if (!c.deadline) return false; // Exclude campaigns without deadline
+      const deadlineDate = new Date(c.deadline);
+      return deadlineDate > now; // Only include campaigns with future deadlines
+    });
+
+    // Then apply search filter if search query exists
+    if (!search.trim()) return activeCampaigns;
     const q = search.toLowerCase();
-    return campaigns.filter((c) => {
+    return activeCampaigns.filter((c) => {
       const titleMatch = c.title?.toLowerCase().includes(q);
       const descMatch = (c.description || '').toLowerCase().includes(q);
       const platformMatch = Array.isArray(c.requirements?.platforms)
@@ -119,8 +128,11 @@ export default function CreatorMarketplacePage() {
       setPlacing(selectedCampaign._id);
       await createBidApi({ campaign_id: selectedCampaign._id, proposal_text: proposal, bid_amount: amount, currency: 'INR' });
       // Close the modal immediately on success
-      setSelectedCampaign(null);
-      setMessage({ type: 'success', text: 'Bid submitted successfully!' });
+      setDrawerOpen(false);
+      setTimeout(() => {
+        setSelectedCampaign(null);
+      }, 300);
+      setMessage({ type: 'success', text: 'Bid submitted successfully! Your platform profiles have been attached to your proposal.' });
       // Reset inputs
       setProposal('');
       setAmount(0);
@@ -331,14 +343,18 @@ const [isExpanded, setIsExpanded] = useState(false);
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map(c => {
           const bidStatus = getBidStatus(c._id);
-          console.log('Rendering campaign:', c.title, 'bid status:', bidStatus);
+          const brandName = (c as any).brand_id?.name || 'Brand';
+          console.log('Rendering campaign:', c.title, 'bid status:', bidStatus, 'brand:', brandName);
           return (
             <div key={c._id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-200">
               <div className="p-6">
                 <div className="flex  items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex  items-center justify-between mb-2">
-                      <h3 className="text-lg flex-2 font-semibold text-gray-900">{c.title}</h3>
+                      <div className="flex-2">
+                        <h3 className="text-lg font-semibold text-gray-900">{c.title}</h3>
+                        <p className="text-xs text-gray-500 mt-1">by {brandName}</p>
+                      </div>
                       {/* Bid Status Badge - Always show */}
                       <div className={`flex flex-1 items-center px-2 py-1.5 rounded-xl text-xs font-medium ${
                         bidStatus.status === 'accepted' ? 'bg-green-100 text-green-800 border border-green-300 items-center' :

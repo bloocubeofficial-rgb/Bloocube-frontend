@@ -538,7 +538,13 @@ export default function BrandMarketplacePage() {
             <h2 className="text-xl font-semibold text-gray-900">All Campaigns</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(campaigns || []).map((c: any) => (
+            {(campaigns || []).filter((c: any) => {
+              // Filter out expired campaigns (only show campaigns with active timeline)
+              if (!c.deadline) return false;
+              const deadlineDate = new Date(c.deadline);
+              const now = new Date();
+              return deadlineDate > now; // Only include campaigns with future deadlines
+            }).map((c: any) => (
               <div key={c._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-3 flex-wrap gap-3">
                   <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{c.title}</h3>
