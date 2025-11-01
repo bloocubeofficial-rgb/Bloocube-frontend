@@ -31,6 +31,7 @@ import {
   X,
   Menu,
   Sparkles,
+  CheckCircle,
 } from "lucide-react";
 import CreatorLayout from "@/Components/Creater/CreatorLayout";
 import { apiRequest } from "@/lib/apiClient";
@@ -81,18 +82,6 @@ const PLATFORM_CONFIGS = {
         maxLength: 5000,
       },
       tags: { required: false, placeholder: "gaming, tutorial, review" },
-      category: {
-        required: false,
-        options: [
-          "Entertainment",
-          "Education",
-          "Gaming",
-          "Music",
-          "News",
-          "Sports",
-          "Technology",
-        ],
-      },
       privacy: {
         required: false,
         options: ["public", "unlisted", "private"],
@@ -383,6 +372,11 @@ export default function PostsPage() {
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
   const [checkingConnections, setCheckingConnections] = useState(true);
   const [lastCheckTime, setLastCheckTime] = useState(0);
+  const [showPublishingDialog, setShowPublishingDialog] = useState<boolean>(false);
+  const [showShortsDialog, setShowShortsDialog] = useState<boolean>(false);
+  const [shortsDialogText, setShortsDialogText] = useState<string>("");
+  const [showPublishResultDialog, setShowPublishResultDialog] = useState<boolean>(false);
+  const [publishResultText, setPublishResultText] = useState<string>("");
 
   // Facebook Pages selection
   const [facebookPages, setFacebookPages] = useState<Array<{ id: string; name: string }>>([]);
@@ -481,37 +475,40 @@ export default function PostsPage() {
 
       const connected: string[] = [];
 
-      // Check each platform individually using their services (same as settings page)
-      const [twitterConn, facebookConn, instagramConn, ytConn] = await Promise.all([
-        twitterService.isConnected(),
-        facebookService.isConnected(),
-        instagramService.isConnected(),
-        youtubeService.isConnected()
+      // Check each platform individually using their services with proper error handling
+      // Use Promise.allSettled to prevent one failure from breaking all checks
+      const results = await Promise.allSettled([
+        twitterService.isConnectedLight().catch(() => false),
+        facebookService.isConnectedLight().catch(() => false),
+        instagramService.isConnectedLight().catch(() => false),
+        youtubeService.isConnectedLight().catch(() => false),
+        linkedInService.isConnectedLight().catch(() => false),
       ]);
 
+      // Extract results with fallback to false on rejection
+      const [twitterConn, facebookConn, instagramConn, ytConn, liConn] = results.map(
+        (result) => (result.status === 'fulfilled' ? result.value : false)
+      );
+
       // Update YouTube connection state for validation and button disabling
-      setYoutubeConnected(ytConn);
+      setYoutubeConnected(!!ytConn);
 
-      // LinkedIn uses getProfile() to check connection
-      let linkedinConnected = false;
-      try {
-        const linkedinProfile = await linkedInService.getProfile();
-        linkedinConnected = linkedinProfile.success && !!linkedinProfile.profile;
-      } catch {
-        linkedinConnected = false;
-      }
-
+      // Build connected platforms array
       if (twitterConn) connected.push("twitter");
       if (facebookConn) connected.push("facebook");
       if (instagramConn) connected.push("instagram");
-      if (linkedinConnected) connected.push("linkedin");
+      if (liConn) connected.push("linkedin");
       if (ytConn) connected.push("youtube");
 
       setConnectedPlatforms(connected);
       saveConnectionsCache(connected);
     } catch (error) {
       console.error("Error checking platform connections:", error);
-      setConnectedPlatforms([]);
+      // Don't clear existing connections on error, just keep current state
+      // Only clear if this was a force refresh
+      if (force) {
+        setConnectedPlatforms([]);
+      }
     } finally {
       setCheckingConnections(false);
     }
@@ -645,11 +642,46 @@ export default function PostsPage() {
     };
   }, []);
 
+  // Visibility-aware background refresh (every 5 minutes while visible)
+  useEffect(() => {
+    let timerId: number | null = null;
+    let inFlight = false;
+
+    const run = () => {
+      if (inFlight || document.hidden) { schedule(); return; }
+      inFlight = true;
+      checkPlatformConnections(true).finally(() => {
+        inFlight = false;
+        schedule();
+      });
+    };
+
+    const schedule = () => {
+      if (timerId) clearTimeout(timerId);
+      const delay = document.hidden ? 60 * 60 * 1000 : 5 * 60 * 1000;
+      timerId = window.setTimeout(run, delay);
+    };
+
+    const onVisibility = () => {
+      if (!document.hidden) {
+        if (timerId) clearTimeout(timerId);
+        timerId = window.setTimeout(run, 250);
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    schedule();
+    return () => {
+      if (timerId) clearTimeout(timerId);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
+
   const checkYouTubeConnection = async () => {
     try {
       setCheckingConnection(true);
-      const response = (await apiRequest("/api/youtube/channel")) as any;
-      setYoutubeConnected(response.success);
+      const connected = await youtubeService.isConnectedLight();
+      setYoutubeConnected(connected);
     } catch (err) {
       setYoutubeConnected(false);
     } finally {
@@ -750,11 +782,12 @@ export default function PostsPage() {
         likelyShorts
       });
 
-      // Show a notification if video is likely to be detected as Shorts
+      // Show a dialog if video is likely to be detected as Shorts
       if (likelyShorts && selectedPostType !== "short") {
-        setSuccess(
+        setShortsDialogText(
           `This video appears to be a YouTube Short (${width}x${height}, ${duration.toFixed(1)}s). Consider selecting "Short" as the post type for better optimization.`
         );
+        setShowShortsDialog(true);
       }
     };
 
@@ -949,6 +982,7 @@ export default function PostsPage() {
   const createPost = async (action: "draft" | "publish" | "schedule") => {
     try {
       setLoading(true);
+      if (action === "publish") setShowPublishingDialog(true);
       setError("");
       setSuccess("");
 
@@ -974,6 +1008,11 @@ export default function PostsPage() {
               : "scheduled"
           } successfully! (Mock Mode)`
         );
+        if (action === "publish") {
+          setPublishResultText("Post published successfully! (Mock Mode)");
+          setShowPublishResultDialog(true);
+          setShowPublishingDialog(false);
+        }
         setLoading(false);
         return;
       }
@@ -1074,7 +1113,6 @@ export default function PostsPage() {
                 : [],
               privacy_status: postData.privacy || "public",
               is_short: isShort,
-              category: postData.category || "Entertainment",
             },
           };
 
@@ -1138,8 +1176,8 @@ export default function PostsPage() {
         // Append media files under field name 'media' expected by backend upload middleware
         mediaFiles.forEach((file) => formData.append("media", file));
 
-        // Append thumbnail file if it exists (for YouTube)
-        if (selectedPlatform === "youtube" && postData.thumbnail) {
+        // Append thumbnail file if it exists (for YouTube, not Shorts)
+        if (selectedPlatform === "youtube" && selectedPostType !== 'short' && postData.thumbnail) {
           formData.append("thumbnail", postData.thumbnail);
         }
 
@@ -1237,6 +1275,8 @@ export default function PostsPage() {
       if (action === "publish") {
         if (publishSuccess) {
           setSuccess("Post created and published successfully!");
+          setPublishResultText("Your post was published successfully.");
+          setShowPublishResultDialog(true);
         } else {
           setSuccess(
             "Post created successfully! (Publish failed - post saved as draft)"
@@ -1273,6 +1313,7 @@ export default function PostsPage() {
       setError(errorMessage);
     } finally {
       setLoading(false);
+      setShowPublishingDialog(false);
     }
   };
 
@@ -1402,6 +1443,10 @@ export default function PostsPage() {
             // Hide LinkedIn article fields when not in article mode
             if (selectedPlatform === 'linkedin' && selectedPostType !== 'article') {
               if (field === 'articleTitle' || field === 'articleBody') return false;
+            }
+            // Hide YouTube thumbnail field for Shorts
+            if (selectedPlatform === 'youtube' && selectedPostType === 'short') {
+              if (field === 'thumbnail') return false;
             }
             return true;
           })
@@ -1593,6 +1638,80 @@ export default function PostsPage() {
       subtitle="Create, schedule, and manage your social media posts"
      
     >
+      {showShortsDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowShortsDialog(false)} />
+          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
+            <div className="mb-4">
+              <p className="text-sm text-gray-900">{shortsDialogText}</p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowShortsDialog(false)}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Keep as Video
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSelectedPostType('short'); setShowShortsDialog(false); }}
+                className="px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Switch to Short
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showPublishingDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-sm p-6 mx-4">
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={() => setShowPublishingDialog(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            >
+              <X size={16} />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Publishing...</p>
+                <p className="text-xs text-gray-600">
+                  {selectedPlatform === 'youtube'
+                    ? 'Uploading to YouTube. This can take a few minutes for videos.'
+                    : 'Your post is being published. Please wait...'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showPublishResultDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowPublishResultDialog(false)} />
+          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-sm p-6 mx-4">
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={() => setShowPublishResultDialog(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            >
+              <X size={16} />
+            </button>
+            <div className="flex items-start gap-3">
+              <CheckCircle className="text-green-600" size={20} />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Published</p>
+                <p className="text-xs text-gray-600">{publishResultText || 'Your post has been published successfully.'}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       {/* <div className="mb-4 md:mb-6">
         <h1 className="hidden md:block text-2xl md:text-3xl font-bold text-gray-300">
@@ -1858,78 +1977,12 @@ export default function PostsPage() {
               </div>
             )}
 
-            {/* YouTube Connection Warning */}
-            {selectedPlatform === "youtube" &&
-              !youtubeConnected &&
-              !checkingConnection && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0">
-                      <svg
-                        className="w-5 h-5 text-yellow-400"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-yellow-800">
-                        YouTube Not Connected
-                      </h3>
-                      <p className="text-sm text-yellow-700 mt-1">
-                        You need to connect your YouTube account before you can
-                        post videos.
-                        <a
-                          href="/creator/settings"
-                          className="font-medium underline hover:text-yellow-900 ml-1"
-                        >
-                          Go to Settings to connect YouTube
-                        </a>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+           
+        
 
-            {/* YouTube Connection Status */}
-            {selectedPlatform === "youtube" && checkingConnection && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  <span className="text-sm text-blue-700">
-                    Checking YouTube connection...
-                  </span>
-                </div>
-              </div>
-            )}
+            {/* YouTube: silently checking connection to avoid noisy UI */}
 
-            {selectedPlatform === "youtube" &&
-              youtubeConnected &&
-              !checkingConnection && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex items-center space-x-3">
-                    <svg
-                      className="w-5 h-5 text-green-400"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span className="text-sm text-green-700">
-                      YouTube account connected successfully!
-                    </span>
-                  </div>
-                </div>
-              )}
+        
 
             {/* Platform-Specific Fields */}
             {renderPlatformFields()}

@@ -137,6 +137,18 @@ class TwitterService {
       return false;
     }
   }
+
+  // Lightweight connected check (uses status endpoint with auto-refresh)
+  async isConnectedLight(): Promise<boolean> {
+    try {
+      const res = await this.request<{ success: boolean; connected: boolean; expired?: boolean }>(
+        '/api/twitter/status'
+      );
+      return !!(res && res.success && res.connected);
+    } catch {
+      return false;
+    }
+  }
 }
 
 export const twitterService = new TwitterService();

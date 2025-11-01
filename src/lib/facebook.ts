@@ -106,6 +106,18 @@ class FacebookService {
     }
   }
 
+  // Lightweight check (uses status endpoint with token validation)
+  async isConnectedLight(): Promise<boolean> {
+    try {
+      const res = await this.request<{ success: boolean; connected: boolean; expired?: boolean }>(
+        '/api/facebook/status'
+      );
+      return !!(res && res.success && res.connected);
+    } catch {
+      return false;
+    }
+  }
+
   // Validate Facebook connection
   async validateConnection(): Promise<FacebookValidationResponse> {
     return this.request<FacebookValidationResponse>('/api/facebook/validate');

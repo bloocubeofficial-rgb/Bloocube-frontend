@@ -419,6 +419,54 @@ function SettingsPageContent() {
     return () => window.removeEventListener('focus', onFocus);
   }, []);
 
+  // Visibility-aware background refresh with in-flight guard (every 5 minutes while visible)
+  useEffect(() => {
+    let timerId: number | null = null;
+    let inFlight = false;
+
+    const tick = () => {
+      if (inFlight || document.hidden) {
+        schedule();
+        return;
+      }
+      inFlight = true;
+      // Stagger calls lightly to avoid bursts
+      youtubeRef.current?.checkConnection?.();
+      setTimeout(() => twitterRef.current?.checkConnection?.(), 200);
+      setTimeout(() => instagramRef.current?.checkConnection?.(), 400);
+      setTimeout(() => linkedinRef.current?.checkConnection?.(), 600);
+      setTimeout(() => facebookRef.current?.checkConnection?.(), 800);
+      // Release lock after a short window; integration components debounce internally
+      setTimeout(() => {
+        inFlight = false;
+        schedule();
+      }, 1500);
+    };
+
+    const schedule = () => {
+      if (timerId) window.clearTimeout(timerId);
+      // 5 minutes cadence when visible; if hidden, wait until visible
+      const delay = document.hidden ? 60 * 60 * 1000 : 5 * 60 * 1000;
+      timerId = window.setTimeout(tick, delay);
+    };
+
+    const onVisibility = () => {
+      if (!document.hidden) {
+        // immediate check when returning visible
+        if (timerId) window.clearTimeout(timerId);
+        timerId = window.setTimeout(tick, 250);
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    // kick off
+    schedule();
+    return () => {
+      if (timerId) window.clearTimeout(timerId);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
+
   if (loading) {
     return (
       <CreatorLayout title="Settings" subtitle="Manage your account settings and integrations">

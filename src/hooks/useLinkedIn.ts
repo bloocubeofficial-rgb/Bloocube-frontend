@@ -47,17 +47,28 @@ export const useLinkedIn = () => {
         return { success: false, error: authError };
       }
 
-      const res = await linkedInService.getProfile();
+      // First check status (with auto-refresh) to ensure connection is valid
+      const statusConnected = await linkedInService.isConnectedLight();
       
-      // ✅ No more 'as any' casts needed, TypeScript understands the shape of 'res'
-      if (res.success && res.profile) {
-        setIsConnected(true);
-        setProfile(res.profile);
+      // Then fetch profile if connected
+      if (statusConnected) {
+        const res = await linkedInService.getProfile();
+        
+        if (res.success && res.profile) {
+          setIsConnected(true);
+          setProfile(res.profile);
+          return res;
+        } else {
+          setIsConnected(false);
+          setProfile(null);
+          return res;
+        }
       } else {
+        // Status check shows disconnected
         setIsConnected(false);
         setProfile(null);
+        return { success: false, error: 'LinkedIn account not connected' };
       }
-      return res;
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Failed to fetch LinkedIn profile';
       setIsConnected(false);

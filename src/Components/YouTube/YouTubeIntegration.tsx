@@ -20,31 +20,40 @@ export const YouTubeIntegration = forwardRef<YouTubeIntegrationRef, YouTubeInteg
   const PROFILE_LOADED_KEY = 'conn_profile_loaded:youtube';
   const [hasCheckedConnection, setHasCheckedConnection] = useState(false);
 
-  // Read cached connection on mount to avoid extra API checks
+  // Read cached connection on mount
   useEffect(() => {
     try {
       const raw = localStorage.getItem('platform_connections_v1');
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed && Array.isArray(parsed.platforms)) {
-          setCachedConnected(parsed.platforms.includes('youtube'));
+          const isCached = parsed.platforms.includes('youtube');
+          setCachedConnected(isCached);
         }
       }
     } catch {}
   }, []);
 
-  // If no cache available, perform a one-time check per session (authenticated only)
+  // Always fetch profile if cached but not loaded yet, or if no cache and authenticated
   useEffect(() => {
     try { if (!cookieAuthUtils.isAuthenticated()) return; } catch {}
-    if (cachedConnected) return;
     if (loading || isConnecting || isDisconnecting) return;
+    
+    // If we have channel already, don't fetch again
+    if (channel) return;
+    
+    // Check if we've already attempted to load in this session
     const loaded = sessionStorage.getItem(PROFILE_LOADED_KEY) === '1';
-    if (!loaded) {
+    
+    // If cached connected, always fetch channel on mount/refresh to get details
+    // If not cached, only fetch if we haven't tried yet this session
+    if (cachedConnected || !loaded) {
       try { sessionStorage.setItem(PROFILE_LOADED_KEY, '1'); } catch {}
       setHasCheckedConnection(true);
+      // checkConnection() now uses status endpoint with auto-refresh internally
       checkConnection();
     }
-  }, [cachedConnected, loading, isConnecting, isDisconnecting, checkConnection]);
+  }, [cachedConnected, loading, isConnecting, isDisconnecting, channel, checkConnection]);
 
   // When connection confirmed, add to cache
   useEffect(() => {
@@ -62,23 +71,6 @@ export const YouTubeIntegration = forwardRef<YouTubeIntegrationRef, YouTubeInteg
     }
   }, [isConnected, channel]);
 
-  // If cached connected but no channel yet, fetch once per session or when invalidated
-  useEffect(() => {
-    if (!cachedConnected) return;
-    if (channel) return;
-    if (loading || isConnecting || isDisconnecting) return;
-    try {
-      const invalidated = sessionStorage.getItem('invalidate_connections_cache') === '1';
-      const loaded = sessionStorage.getItem(PROFILE_LOADED_KEY) === '1';
-      if (!loaded || invalidated) {
-        sessionStorage.setItem(PROFILE_LOADED_KEY, '1');
-        sessionStorage.removeItem('invalidate_connections_cache');
-        checkConnection();
-      }
-    } catch {
-      checkConnection();
-    }
-  }, [cachedConnected, channel, loading, isConnecting, isDisconnecting, checkConnection]);
 
   // Do not purge cache automatically; only explicit Disconnect updates cache
 

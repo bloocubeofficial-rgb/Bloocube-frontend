@@ -18,13 +18,12 @@ export const useFacebook = () => {
       setIsConnected(false);
       setProfile(null);
     } else {
-      // For authenticated users, start with loading true and check connection
-      setLoading(true);
+      // Set initial state - connection will be checked by integration component when needed
+      setLoading(false);
       setIsConnected(false);
       setProfile(null);
-      // Auto-check connection for authenticated users
-      checkConnection();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkConnection = async () => {
@@ -32,13 +31,22 @@ export const useFacebook = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch profile directly; derive connection state from profile presence
-      const profileResponse = await facebookService.getProfile();
+      // First check status (with token validation) to ensure connection is valid
+      const statusConnected = await facebookService.isConnectedLight();
+      
+      if (statusConnected) {
+        // Then fetch profile if connected
+        const profileResponse = await facebookService.getProfile();
 
-      if (profileResponse.success && profileResponse.profile?.name) {
-        setIsConnected(true);
-        setProfile(profileResponse.profile);
+        if (profileResponse.success && profileResponse.profile?.name) {
+          setIsConnected(true);
+          setProfile(profileResponse.profile);
+        } else {
+          setIsConnected(false);
+          setProfile(null);
+        }
       } else {
+        // Status check shows disconnected
         setIsConnected(false);
         setProfile(null);
       }

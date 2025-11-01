@@ -160,8 +160,20 @@ async uploadVideo(
   // Check if YouTube is connected
   async isConnected(): Promise<boolean> {
     try {
-      // Prefer lightweight status endpoint to avoid API calls and token refresh
-      const status = await this.request<{ success: boolean; connected: boolean }>('/api/youtube/status');
+      // Use channel info to avoid false positives from stale tokens
+      const info = await this.getChannelInfo();
+      return !!(info && info.success && info.channel);
+    } catch (error: unknown) {
+      return false;
+    }
+  }
+
+  // Lightweight connection check (DB + backend auto-refresh)
+  async isConnectedLight(): Promise<boolean> {
+    try {
+      const status = await this.request<{ success: boolean; connected: boolean; expired?: boolean }>(
+        '/api/youtube/status'
+      );
       return !!(status && status.success && status.connected);
     } catch (error: unknown) {
       return false;

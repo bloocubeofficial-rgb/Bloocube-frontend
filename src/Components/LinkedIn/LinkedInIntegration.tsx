@@ -19,31 +19,40 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
   const PROFILE_LOADED_KEY = 'conn_profile_loaded:linkedin';
   const [hasCheckedConnection, setHasCheckedConnection] = useState(false);
 
-  // Read cached connection on mount to avoid extra API checks
+  // Read cached connection on mount
   useEffect(() => {
     try {
       const raw = localStorage.getItem('platform_connections_v1');
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed && Array.isArray(parsed.platforms)) {
-          setCachedConnected(parsed.platforms.includes('linkedin'));
+          const isCached = parsed.platforms.includes('linkedin');
+          setCachedConnected(isCached);
         }
       }
     } catch {}
   }, []);
 
-  // If no cache available, perform a one-time check per session (authenticated only)
+  // Always fetch profile if cached but not loaded yet, or if no cache and authenticated
   useEffect(() => {
     try { if (!(cookieAuthUtils as any)?.isAuthenticated?.()) return; } catch {}
-    if (cachedConnected) return;
     if (loading) return;
+    
+    // If we have profile already, don't fetch again
+    if (profile) return;
+    
+    // Check if we've already attempted to load in this session
     const loaded = sessionStorage.getItem(PROFILE_LOADED_KEY) === '1';
-    if (!loaded) {
+    
+    // If cached connected, always fetch profile on mount/refresh to get details
+    // If not cached, only fetch if we haven't tried yet this session
+    if (cachedConnected || !loaded) {
       try { sessionStorage.setItem(PROFILE_LOADED_KEY, '1'); } catch {}
       setHasCheckedConnection(true);
+      // getProfile() now uses status endpoint with auto-refresh internally
       getProfile();
     }
-  }, [cachedConnected, loading, getProfile]);
+  }, [cachedConnected, loading, profile, getProfile]);
 
   // When connection confirmed, add to cache
   useEffect(() => {
@@ -82,23 +91,6 @@ export const LinkedInIntegration = forwardRef<LinkedInIntegrationRef, LinkedInIn
     }
   }, [hasCheckedConnection, loading, isConnected, profile, cachedConnected]);
 
-  // If cached connected but no profile yet, fetch once per session or when invalidated
-  useEffect(() => {
-    if (!cachedConnected) return;
-    if (profile) return;
-    if (loading) return;
-    try {
-      const invalidated = sessionStorage.getItem('invalidate_connections_cache') === '1';
-      const loaded = sessionStorage.getItem(PROFILE_LOADED_KEY) === '1';
-      if (!loaded || invalidated) {
-        sessionStorage.setItem(PROFILE_LOADED_KEY, '1');
-        sessionStorage.removeItem('invalidate_connections_cache');
-        getProfile();
-      }
-    } catch {
-      getProfile();
-    }
-  }, [cachedConnected, profile, loading, getProfile]);
 
   const checkConnectionStatus = async () => {
     // This function now just triggers the hook's getProfile method.

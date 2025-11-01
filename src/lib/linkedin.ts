@@ -55,6 +55,17 @@ class LinkedInService {
     return this.request<LinkedInProfileResponse>('/api/linkedin/profile');
   }
 
+  async isConnectedLight(): Promise<boolean> {
+    try {
+      const res = await this.request<{ success: boolean; connected: boolean; expired?: boolean }>(
+        '/api/linkedin/status'
+      );
+      return !!(res && res.success && res.connected);
+    } catch {
+      return false;
+    }
+  }
+
   async disconnect(): Promise<{ success: boolean; message?: string; error?: string }> {
     return this.request('/api/linkedin/disconnect', {
       method: 'DELETE',

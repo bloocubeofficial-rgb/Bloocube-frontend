@@ -30,13 +30,22 @@ export const useInstagram = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch profile directly; derive connection state from profile presence
-      const profileResponse = await instagramService.getProfile();
+      // First check status (with auto-refresh) to ensure connection is valid
+      const statusConnected = await instagramService.isConnectedLight();
+      
+      if (statusConnected) {
+        // Then fetch profile if connected
+        const profileResponse = await instagramService.getProfile();
 
-      if (profileResponse.success && profileResponse.profile?.username) {
-        setIsConnected(true);
-        setProfile(profileResponse.profile);
+        if (profileResponse.success && profileResponse.profile?.username) {
+          setIsConnected(true);
+          setProfile(profileResponse.profile);
+        } else {
+          setIsConnected(false);
+          setProfile(null);
+        }
       } else {
+        // Status check shows disconnected
         setIsConnected(false);
         setProfile(null);
       }

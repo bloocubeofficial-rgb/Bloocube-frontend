@@ -39,30 +39,31 @@ export const useYouTube = () => {
         return;
       }
 
-      // Fetch channel info directly; derive connection from presence
-      const channelResponse = await youtubeService.getChannelInfo();
+      // First check status (with auto-refresh) to ensure connection is valid
+      const statusConnected = await youtubeService.isConnectedLight();
+      
+      if (statusConnected) {
+        // Then fetch channel info if connected
+        const channelResponse = await youtubeService.getChannelInfo();
 
-      if (channelResponse.success && channelResponse.channel?.id) {
-        console.log('✅ YouTube channel info retrieved successfully:', channelResponse.channel.title);
-        setIsConnected(true);
-        setChannel(channelResponse.channel);
+        if (channelResponse.success && channelResponse.channel?.id) {
+          console.log('✅ YouTube channel info retrieved successfully:', channelResponse.channel.title);
+          setIsConnected(true);
+          setChannel(channelResponse.channel);
+        } else {
+          console.log('❌ Failed to get channel info or invalid response');
+          setIsConnected(false);
+          setChannel(null);
+        }
       } else {
-        console.log('❌ Failed to get channel info or invalid response');
+        // Status check shows disconnected
+        console.log('❌ YouTube status check shows disconnected');
         setIsConnected(false);
         setChannel(null);
       }
     } catch (err: unknown) {
       const errorMessage = (err as Error).message || 'Unknown error';
       console.error("❌ Error checking YouTube connection:", errorMessage);
-      
-      // If it's a "not connected" error and we haven't retried too many times, retry after a delay
-      if (errorMessage.includes('YouTube account not connected') && retryCount < 3) {
-        console.log(`🔄 Retrying YouTube connection check in 2 seconds... (attempt ${retryCount + 1})`);
-        setTimeout(() => {
-          checkConnection(retryCount + 1);
-        }, 2000);
-        return;
-      }
       
       setError(errorMessage);
       setIsConnected(false);
