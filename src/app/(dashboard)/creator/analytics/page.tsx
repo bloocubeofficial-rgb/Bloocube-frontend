@@ -16,7 +16,7 @@ import {
 } from 'chart.js';
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 import { apiRequest } from '@/lib/apiClient';
-import { cookieAuthUtils } from '@/lib/cookieAuth';
+import { getUserId } from '@/lib/userUtils';
 
 ChartJS.register(
   CategoryScale,
@@ -67,30 +67,42 @@ const AnalyticsDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [rangeDays, setRangeDays] = useState<7 | 30 | 90>(30);
 
-  const fetchAnalytics = async () => {
-    try {
-      setError(null);
-      const user = cookieAuthUtils.getUser() as { id?: string; _id?: string; userId?: string } | null;
-      const userId =
-        user?.id ||
-        user?.userId ||
-        (cookieAuthUtils as unknown as { getUserId?: () => string }).getUserId?.();
-      if (!userId) throw new Error('Not authenticated');
-      const res = await apiRequest<{ success: boolean; data: { analytics: AnalyticsItem[] } }>(`/api/analytics/user/${userId}`);
-      setAnalytics(res?.data?.analytics || []);
-    } catch (e) {
-      setError((e as Error).message || 'Failed to load analytics');
-      setAnalytics([]);
-    } finally {
+  const fetchAnalytics = async (maxRetries = 2) => {
+    const userId = getUserId();
+    if (!userId) {
+      setError('Not authenticated');
       setLoading(false);
+      return;
+    }
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        setError(null);
+        // Exponential backoff: 0s, 1s, 2s delays
+        if (attempt > 0) {
+          await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
+        }
+        const res = await apiRequest<{ success: boolean; data: { analytics: AnalyticsItem[] } }>(`/api/analytics/user/${userId}`);
+        setAnalytics(res?.data?.analytics || []);
+        setLoading(false);
+        return; // Success - exit early
+      } catch (e) {
+        if (attempt === maxRetries) {
+          // Final attempt failed
+          setError((e as Error).message || 'Failed to load analytics after retries');
+          setAnalytics([]);
+          setLoading(false);
+        }
+        // Otherwise continue to next retry
+      }
     }
   };
 
   useEffect(() => {
     fetchAnalytics();
-    const interval = setInterval(fetchAnalytics, 30000);
+    const interval = setInterval(() => fetchAnalytics(), 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, []); // fetchAnalytics is stable (no dependencies needed for closure)
 
   // Build day labels for selected range
   const dayLabels = useMemo(() => {

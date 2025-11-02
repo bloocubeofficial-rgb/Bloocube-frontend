@@ -18,6 +18,7 @@ import { useRef } from "react";
 import { profileApi, UserProfile, ProfileUpdateData, ChangePasswordData, formatPhoneNumber, parsePhoneNumber, getProfileCompletenessColor, getProfileCompletenessMessage, getAvatarUrl } from '@/lib/profile';
 import { useTextPersistence } from '@/hooks/useTextPersistence';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { apiRequest } from '@/lib/apiClient';
 
 interface NotificationState {
   type: 'success' | 'error' | 'warning' | null;
@@ -423,30 +424,14 @@ function SettingsPageContent() {
       setForgotPasswordLoading(true);
       setForgotPasswordMessage(null);
       
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      console.log('Sending password reset request to:', `${apiUrl}/api/auth/request-password-reset`);
-      
-      const res = await fetch(`${apiUrl}/api/auth/request-password-reset`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email, fromSettings: true }), // Indicate this is from settings page
-      });
-
-      // Try to parse JSON, but handle non-JSON responses
-      let data;
-      try {
-        data = await res.json();
-      } catch (parseError) {
-        const text = await res.text();
-        throw new Error(text || `Server error: ${res.status} ${res.statusText}`);
-      }
-
-      if (!res.ok) {
-        throw new Error(data.message || data.error || `Failed to send reset email (${res.status})`);
-      }
+      // Use apiRequest instead of direct fetch for consistent error handling, caching, and retry logic
+      await apiRequest<{ success?: boolean; message?: string; error?: string }>(
+        '/api/auth/request-password-reset',
+        {
+          method: 'POST',
+          body: JSON.stringify({ email, fromSettings: true }), // Indicate this is from settings page
+        }
+      );
 
       setForgotPasswordMessage('If an account exists with this email, a password reset link has been sent. Please check your inbox and follow the instructions to reset your password.');
       setNotification({ type: 'success', message: 'Password reset link sent successfully! Check your email.' });

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   BarChart,
   Bar,
@@ -103,7 +103,7 @@ const Dashboard = () => {
       maximumFractionDigits: 1,
     }).format(n);
 
-  const fetchAnalytics = async (options?: { sync?: boolean; showLoading?: boolean }) => {
+  const fetchAnalytics = useCallback(async (options?: { sync?: boolean; showLoading?: boolean }) => {
     try {
       setError(null);
       if (options?.showLoading) setLoading(true);
@@ -145,9 +145,9 @@ const Dashboard = () => {
     } finally {
       if (options?.showLoading) setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchPostCounts = async () => {
+  const fetchPostCounts = useCallback(async () => {
     try {
       // Get total posts count with minimal payload
       const totalRes = await apiRequest<{
@@ -165,13 +165,40 @@ const Dashboard = () => {
       // Non-fatal for dashboard; keep previous values
       console.warn("Failed to load post counts", e);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    // Do not auto-fetch on mount; hydrate from cache only
+    // Load from cache first for instant UI (optimistic loading)
     loadAnalyticsCache();
     loadCountsCache();
-  }, []);
+    
+    // Then fetch fresh data from server
+    fetchAnalytics({ sync: false, showLoading: false });
+    fetchPostCounts();
+
+    // Listen for post changes to refresh dashboard data
+    const handlePostCreated = () => {
+      // Clear cache and refresh
+      persistentCache.remove('creator_dashboard_analytics_v1');
+      persistentCache.remove('creator_dashboard_counts_v1');
+      fetchAnalytics({ sync: false, showLoading: false });
+      fetchPostCounts();
+    };
+    const handlePostDeleted = () => {
+      persistentCache.remove('creator_dashboard_counts_v1');
+      fetchPostCounts();
+    };
+
+    window.addEventListener('postCreated', handlePostCreated);
+    window.addEventListener('postDeleted', handlePostDeleted);
+    window.addEventListener('postUpdated', handlePostCreated);
+
+    return () => {
+      window.removeEventListener('postCreated', handlePostCreated);
+      window.removeEventListener('postDeleted', handlePostDeleted);
+      window.removeEventListener('postUpdated', handlePostCreated);
+    };
+  }, [fetchAnalytics, fetchPostCounts]);
 
   const engagementData = useMemo(() => {
     const byMonth: Record<

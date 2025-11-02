@@ -138,12 +138,21 @@ export default function BrandCompetitorsPage() {
       setLoading(true);
       // Limit detail fetches to avoid flooding; take up to latest 5
       const latest = analyses.slice(0, 5);
-      const detailResponses = await Promise.all(
+      // Use Promise.allSettled for graceful degradation - continue even if some requests fail
+      const detailResponses = await Promise.allSettled(
         latest.map(a => apiRequest<{ success: boolean; data: Record<string, unknown> }>(`/api/competitor/analysis/${a.id}`))
       );
       const items: Competitor[] = [];
       const seen = new Set<string>();
-      for (const resp of detailResponses) {
+      let successCount = 0;
+      for (const result of detailResponses) {
+        // Handle both fulfilled and rejected promises
+        if (result.status === 'rejected') {
+          console.warn('Failed to load competitor analysis:', result.reason);
+          continue; // Skip failed requests but continue processing successful ones
+        }
+        const resp = result.value;
+        successCount++;
         const d = resp?.data as AnalysisDoc;
         const compList = d?.competitor_analysis?.competitors || d?.data?.results?.competitors_data || [];
         for (const c of compList) {
@@ -177,7 +186,11 @@ export default function BrandCompetitorsPage() {
           });
         }
       }
+      // Set competitors even if some requests failed (partial success)
       setCompetitors(items);
+      if (successCount < detailResponses.length) {
+        console.warn(`Loaded ${successCount}/${detailResponses.length} competitor analyses successfully`);
+      }
     } catch (e) {
       console.error('Failed to load competitor details:', e);
       setCompetitors([]);

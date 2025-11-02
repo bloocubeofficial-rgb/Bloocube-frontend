@@ -167,9 +167,11 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
       }
 
       if (!res.ok) {
+        // Read response as text first (response body can only be consumed once)
+        const responseText = await res.text().catch(() => 'Could not read response text');
         let body: unknown = null;
         try {
-          body = await res.json();
+          body = responseText ? JSON.parse(responseText) : { message: `HTTP ${res.status} ${res.statusText}` };
         } catch (e) {
           console.log(`❌ Failed to parse error response as JSON:`, e);
           body = { message: `HTTP ${res.status} ${res.statusText}` };
@@ -188,7 +190,7 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
           details: parsed?.details,
           validationErrors: parsed?.validation_errors || parsed?.errors || parsed?.validation,
           fullResponse: parsed,
-          responseText: await res.text().catch(() => 'Could not read response text')
+          responseText: responseText
         });
         
         // Throw structured ApiError with helpful fields

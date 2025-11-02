@@ -90,8 +90,19 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch notifications';
-      setError(errorMessage);
-      console.error('Error fetching notifications:', err);
+      // Only set error if it's a real error (not a network failure during background refresh)
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        // Network error - might be backend down or CORS issue
+        // Don't show error for background refreshes, only log
+        if (append || pageNum > 1) {
+          console.debug('Network error fetching notifications (background refresh):', err);
+        } else {
+          setError('Unable to connect to server. Please check your connection.');
+        }
+      } else {
+        setError(errorMessage);
+        console.error('Error fetching notifications:', err);
+      }
     } finally {
       setLoading(false);
     }
@@ -219,12 +230,17 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
     if (!autoRefresh) return;
 
     const interval = setInterval(() => {
-      // Fetch unread count with rate limiting
-      fetchUnreadCount(false);
-      
-      // Only refresh notifications if not currently loading
+      // Only fetch if auto-refresh is enabled and not currently loading
       if (!loading) {
-        fetchNotifications(1, false);
+        // Fetch unread count with rate limiting (silent - don't show errors)
+        fetchUnreadCount(false).catch(() => {
+          // Silently handle errors for background refresh
+        });
+        
+        // Only refresh notifications if not currently loading
+        fetchNotifications(1, false).catch(() => {
+          // Silently handle errors for background refresh
+        });
       }
     }, refreshInterval);
 

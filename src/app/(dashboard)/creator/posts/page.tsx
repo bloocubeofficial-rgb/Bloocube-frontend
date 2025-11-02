@@ -32,9 +32,14 @@ import {
   Menu,
   Sparkles,
   CheckCircle,
+  RefreshCw,
+  ExternalLink,
+  Copy,
 } from "lucide-react";
 import CreatorLayout from "@/Components/Creater/CreatorLayout";
 import { apiRequest } from "@/lib/apiClient";
+import { getUserId } from "@/lib/userUtils";
+import { getFriendlyMessage } from "@/lib/errors";
 import { cookieAuthUtils } from "@/lib/cookieAuth";
 import { usePostFormPersistence } from "@/hooks/usePostFormPersistence";
 import { twitterService } from "@/lib/twitter";
@@ -365,6 +370,10 @@ export default function PostsPage() {
   const [openMenuPublishedId, setOpenMenuPublishedId] = useState<string | null>(
     null
   );
+  const [analyticsMap, setAnalyticsMap] = useState<Record<string, any>>({});
+  const [refreshingAnalytics, setRefreshingAnalytics] = useState(false);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [lastLoadTime, setLastLoadTime] = useState(0);
   const [youtubeConnected, setYoutubeConnected] = useState<boolean>(false);
   const [checkingConnection, setCheckingConnection] = useState<boolean>(false);
 
@@ -587,7 +596,12 @@ export default function PostsPage() {
     try {
       await apiRequest(`/api/posts/${postId}`, { method: "DELETE" });
       // Refresh drafts list
-      loadPosts();
+      // Clear cache after delete
+      const { cacheUtils } = await import("@/lib/apiClient");
+      cacheUtils.clearPattern('/api/posts');
+      // Notify other components
+      window.dispatchEvent(new CustomEvent('postDeleted'));
+      loadPosts(false, true); // Force refresh after delete
     } catch (e) {
       console.error("Failed to delete draft:", e);
     }
@@ -614,6 +628,18 @@ export default function PostsPage() {
       }
     }
   }, []);
+
+  // Load analytics when switching to published tab (with debounce)
+  useEffect(() => {
+    if (activeTab === "published" && !loadingPosts) {
+      const timer = setTimeout(() => {
+        loadPosts(false, false); // Load posts and analytics without syncing
+      }, 300); // Small delay to prevent rapid tab switching from triggering multiple calls
+      
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   // Refresh connections when window regains focus (user returns from settings) - with debounce
   useEffect(() => {
@@ -689,8 +715,18 @@ export default function PostsPage() {
     }
   };
 
-  const loadPosts = async () => {
+  const loadPosts = async (syncAnalytics = false, force = false) => {
+    // Prevent duplicate calls within 2 seconds unless forced
+    const now = Date.now();
+    // Basic throttling for non-forced requests (apiClient handles deduplication)
+    if (!force && now - lastLoadTime < 2000) {
+      return; // Too soon since last load
+    }
+
     try {
+      setLoadingPosts(true);
+      setLastLoadTime(now);
+      
       const [publishedRes, scheduledRes, draftsRes, failedRes] =
         await Promise.all([
           apiRequest<{ posts: Post[]; pagination: any }>(
@@ -710,9 +746,175 @@ export default function PostsPage() {
       setScheduledPosts((scheduledRes as any).scheduled || []);
       const draftsList = (draftsRes.posts || []).concat(failedRes.posts || []);
       setDrafts(draftsList);
+
+      // Fetch analytics for published posts
+      const userId = getUserId();
+
+      if (userId) {
+        // Sync analytics from platforms first if requested
+        if (syncAnalytics) {
+          try {
+            await apiRequest<{ success: boolean }>(`/api/analytics/user/${userId}/sync`, {
+              method: 'POST'
+            });
+          } catch (err) {
+            console.warn("Failed to sync analytics:", err);
+          }
+        }
+
+        // Fetch analytics with retry logic
+        const fetchAnalyticsWithRetry = async (maxRetries = 2): Promise<any[]> => {
+          for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+              if (attempt > 0) {
+                // Exponential backoff: 1s, 2s
+                await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
+              }
+              const analyticsRes = await apiRequest<{
+                success: boolean;
+                data: { analytics: any[] };
+              }>(`/api/analytics/user/${userId}`);
+              return analyticsRes?.data?.analytics || [];
+            } catch (error) {
+              if (attempt === maxRetries) {
+                console.error("Failed to fetch analytics after retries:", error);
+                return [];
+              }
+            }
+          }
+          return [];
+        };
+
+        try {
+          const analytics = await fetchAnalyticsWithRetry();
+          
+          // Create a map of analytics by post_id (support multiple key formats)
+          const map: Record<string, any> = {};
+          analytics.forEach((item) => {
+            if (item.post_id) {
+              const postId = String(item.post_id); // Normalize to string
+              map[postId] = item;
+              // Also store by original format if different
+              if (typeof item.post_id !== 'string') {
+                const originalId = String(item.post_id);
+                if (originalId !== postId) {
+                  map[originalId] = item;
+                }
+              }
+            }
+          });
+          setAnalyticsMap(map);
+        } catch (error) {
+          console.error("Failed to process analytics:", error);
+        }
+      }
     } catch (err) {
       console.error("Failed to load posts:", err);
+    } finally {
+      setLoadingPosts(false);
     }
+  };
+
+  const handleRefreshAnalytics = async () => {
+    setRefreshingAnalytics(true);
+    await loadPosts(true, true); // Sync analytics and force refresh
+    setRefreshingAnalytics(false);
+  };
+
+  const getPostAnalytics = (post: Post) => {
+    // First check if post has embedded analytics
+    if (post.analytics && (post.analytics.likes || post.analytics.views || post.analytics.comments || post.analytics.shares)) {
+      return {
+        likes: post.analytics.likes || 0,
+        comments: post.analytics.comments || 0,
+        shares: post.analytics.shares || 0,
+        views: post.analytics.views || 0,
+      };
+    }
+
+    // Try to match with analytics from API by platform_post_id first
+    const platformPostId = post.publishing?.platform_post_id;
+    if (platformPostId) {
+      // Try exact match and stringified match
+      const analytics = analyticsMap[platformPostId] || analyticsMap[String(platformPostId)];
+      if (analytics) {
+        return {
+          likes: analytics.metrics?.likes || 0,
+          comments: analytics.metrics?.comments || 0,
+          shares: analytics.metrics?.shares || 0,
+          views: analytics.metrics?.views || 0,
+        };
+      }
+    }
+
+    // Fallback: try matching by post _id (some analytics use post._id as post_id)
+    if (post._id) {
+      // Try exact match and stringified match
+      const analytics = analyticsMap[post._id] || analyticsMap[String(post._id)];
+      if (analytics) {
+        return {
+          likes: analytics.metrics?.likes || 0,
+          comments: analytics.metrics?.comments || 0,
+          shares: analytics.metrics?.shares || 0,
+          views: analytics.metrics?.views || 0,
+        };
+      }
+    }
+
+    return { likes: 0, comments: 0, shares: 0, views: 0 };
+  };
+
+  const handleViewPost = (post: Post) => {
+    if (post.publishing?.platform_url) {
+      window.open(post.publishing.platform_url, '_blank', 'noopener,noreferrer');
+    } else {
+      // If no platform URL, could navigate to post details or show a message
+      setSuccess("No platform URL available for this post");
+    }
+    setOpenMenuPublishedId(null);
+  };
+
+  const handleCopyLink = async (post: Post) => {
+    const url = post.publishing?.platform_url;
+    if (url) {
+      try {
+        await navigator.clipboard.writeText(url);
+        setSuccess("Link copied to clipboard!");
+        setTimeout(() => setSuccess(""), 3000);
+      } catch (err) {
+        setError("Failed to copy link");
+        setTimeout(() => setError(""), 3000);
+      }
+    } else {
+      setError("No link available for this post");
+      setTimeout(() => setError(""), 3000);
+    }
+    setOpenMenuPublishedId(null);
+  };
+
+  const handleDeletePost = async (post: Post) => {
+    if (!confirm(`Are you sure you want to delete this post? This action cannot be undone.`)) {
+      setOpenMenuPublishedId(null);
+      return;
+    }
+
+    try {
+      await apiRequest(`/api/posts/${post._id}`, {
+        method: 'DELETE'
+      });
+      // Clear cache after delete
+      const { cacheUtils } = await import("@/lib/apiClient");
+      cacheUtils.clearPattern('/api/posts');
+      // Notify other components
+      window.dispatchEvent(new CustomEvent('postDeleted'));
+      setSuccess("Post deleted successfully");
+      await loadPosts(false, true); // Reload posts with force refresh
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err: any) {
+      setError(err.message || "Failed to delete post");
+      setTimeout(() => setError(""), 3000);
+    }
+    setOpenMenuPublishedId(null);
   };
 
   const handlePostTypeSelect = (postType: string) => {
@@ -1269,6 +1471,11 @@ export default function PostsPage() {
       } catch (publishError: any) {
         console.error("❌ Publish/Schedule failed:", publishError);
         publishSuccess = false;
+        
+        // Show prominent error notification
+        const errorMsg = getFriendlyMessage(publishError);
+        setError(`Post created successfully, but ${action} failed: ${errorMsg}. Post has been saved as draft.`);
+        setTimeout(() => setError(""), 8000); // Show error for 8 seconds
       }
 
       // Set appropriate success message
@@ -1278,17 +1485,15 @@ export default function PostsPage() {
           setPublishResultText("Your post was published successfully.");
           setShowPublishResultDialog(true);
         } else {
-          setSuccess(
-            "Post created successfully! (Publish failed - post saved as draft)"
-          );
+          // Error already shown in catch block, but show info message too
+          setSuccess("Post created successfully! (Publish failed - post saved as draft)");
         }
       } else if (action === "schedule") {
         if (publishSuccess) {
           setSuccess("Post created and scheduled successfully!");
         } else {
-          setSuccess(
-            "Post created successfully! (Schedule failed - post saved as draft)"
-          );
+          // Error already shown in catch block, but show info message too
+          setSuccess("Post created successfully! (Schedule failed - post saved as draft)");
         }
       } else {
         setSuccess("Post saved as draft successfully!");
@@ -1300,8 +1505,19 @@ export default function PostsPage() {
       setPostData({});
       setMediaFiles([]);
 
-      // Reload posts
-      loadPosts();
+      // Clear cache before reloading to ensure fresh data
+      const { cacheUtils } = await import("@/lib/apiClient");
+      cacheUtils.clearPattern('/api/posts');
+      cacheUtils.clearPattern('/api/analytics');
+      
+      // Notify other components to refresh
+      window.dispatchEvent(new CustomEvent('postCreated'));
+      if (action === 'schedule') {
+        window.dispatchEvent(new CustomEvent('postScheduled'));
+      }
+      
+      // Reload posts with force refresh
+      loadPosts(false, true);
     } catch (err: unknown) {
       console.error("❌ Post creation failed:", err);
 
@@ -2341,13 +2557,24 @@ export default function PostsPage() {
       {/* Published Posts Tab */}
       {activeTab === "published" && (
         <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Published Posts
-            </h2>
-            <p className="text-sm text-gray-600">
-              View your post history and performance
-            </p>
+          <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Published Posts
+              </h2>
+              <p className="text-sm text-gray-600">
+                View your post history and performance
+              </p>
+            </div>
+            <button
+              onClick={handleRefreshAnalytics}
+              disabled={refreshingAnalytics}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
+              title="Refresh engagement metrics"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshingAnalytics ? "animate-spin" : ""}`} />
+              <span>Refresh Metrics</span>
+            </button>
           </div>
 
           <div className="overflow-x-auto">
@@ -2403,21 +2630,40 @@ export default function PostsPage() {
                         ).toLocaleString()
                         : "Unknown"}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      <div className="flex items-center space-x-4">
-                        <span className="flex items-center">
-                          <Heart size={12} className="mr-1" />
-                          {post.analytics?.likes || 0}
-                        </span>
-                        <span className="flex items-center">
-                          <MessageCircle size={12} className="mr-1" />
-                          {post.analytics?.comments || 0}
-                        </span>
-                        <span className="flex items-center">
-                          <Share size={12} className="mr-1" />
-                          {post.analytics?.shares || 0}
-                        </span>
-                      </div>
+                    <td className="px-6 py-4 text-sm">
+                      {(() => {
+                        const metrics = getPostAnalytics(post);
+                        return (
+                          <div className="flex items-center space-x-4">
+                            <span className="flex items-center" title="Likes">
+                              <Heart size={12} className={`mr-1 ${metrics.likes > 0 ? 'text-red-500 fill-red-500' : 'text-gray-400'}`} />
+                              <span className={metrics.likes > 0 ? 'text-gray-700' : 'text-gray-400'}>
+                                {metrics.likes.toLocaleString()}
+                              </span>
+                            </span>
+                            <span className="flex items-center" title="Comments">
+                              <MessageCircle size={12} className={`mr-1 ${metrics.comments > 0 ? 'text-blue-500' : 'text-gray-400'}`} />
+                              <span className={metrics.comments > 0 ? 'text-gray-700' : 'text-gray-400'}>
+                                {metrics.comments.toLocaleString()}
+                              </span>
+                            </span>
+                            <span className="flex items-center" title="Shares">
+                              <Share size={12} className={`mr-1 ${metrics.shares > 0 ? 'text-green-500' : 'text-gray-400'}`} />
+                              <span className={metrics.shares > 0 ? 'text-gray-700' : 'text-gray-400'}>
+                                {metrics.shares.toLocaleString()}
+                              </span>
+                            </span>
+                            {metrics.views > 0 && (
+                              <span className="flex items-center" title="Views">
+                                <Eye size={12} className="mr-1 text-purple-500" />
+                                <span className="text-gray-700">
+                                  {metrics.views.toLocaleString()}
+                                </span>
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4 relative">
                       <button
@@ -2433,35 +2679,47 @@ export default function PostsPage() {
                         <MoreHorizontal size={16} />
                       </button>
                       {openMenuPublishedId === post._id && (
-                        <div className="absolute right-6 mt-2 w-40 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-md shadow-lg z-10">
+                        <div className="absolute right-6 mt-2 w-48 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-md shadow-lg z-10">
+                          {post.publishing?.platform_url ? (
+                            <button
+                              className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                              onClick={() => handleViewPost(post)}
+                            >
+                              <ExternalLink size={14} />
+                              View on Platform
+                            </button>
+                          ) : (
+                            <button
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-400 cursor-not-allowed"
+                              disabled
+                              title="No platform URL available"
+                            >
+                              View on Platform
+                            </button>
+                          )}
+                          {post.publishing?.platform_url ? (
+                            <button
+                              className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                              onClick={() => handleCopyLink(post)}
+                            >
+                              <Copy size={14} />
+                              Copy Link
+                            </button>
+                          ) : (
+                            <button
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-400 cursor-not-allowed"
+                              disabled
+                              title="No link available"
+                            >
+                              Copy Link
+                            </button>
+                          )}
+                          <div className="border-t border-gray-200 my-1"></div>
                           <button
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                            onClick={() => {
-                              setOpenMenuPublishedId(
-                                null
-                              ); /* TODO: implement view */
-                            }}
+                            className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                            onClick={() => handleDeletePost(post)}
                           >
-                            View
-                          </button>
-                          <button
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                            onClick={() => {
-                              setOpenMenuPublishedId(
-                                null
-                              ); /* TODO: implement copy link */
-                            }}
-                          >
-                            Copy Link
-                          </button>
-                          <button
-                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                            onClick={() => {
-                              setOpenMenuPublishedId(
-                                null
-                              ); /* TODO: implement delete */
-                            }}
-                          >
+                            <Trash2 size={14} />
                             Delete
                           </button>
                         </div>

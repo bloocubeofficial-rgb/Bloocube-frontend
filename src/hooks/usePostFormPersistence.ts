@@ -36,9 +36,12 @@ export function usePostFormPersistence(options: PostFormPersistenceOptions = {})
     timeoutRef.current = setTimeout(() => {
       try {
         // Convert File objects to serializable format
+        // NOTE: Actual File objects cannot be restored from localStorage
+        // This only saves metadata - users will need to re-upload files after refresh
         const serializedData = {
           ...data,
           mediaFiles: data.mediaFiles.map(file => ({
+            _type: 'file_metadata', // Marker to identify this as metadata, not actual file
             name: file.name,
             size: file.size,
             type: file.type,
@@ -65,11 +68,21 @@ export function usePostFormPersistence(options: PostFormPersistenceOptions = {})
       const saved = localStorage.getItem('post_form_data');
       if (saved) {
         const parsed = JSON.parse(saved);
+        
+        // Check if there are file metadata entries that can't be restored
+        const hasFileMetadata = parsed.mediaFiles?.some((f: any) => f._type === 'file_metadata');
+        if (hasFileMetadata) {
+          console.warn('⚠️ Form data contains file metadata that cannot be restored. Files must be re-uploaded.');
+          // Clear mediaFiles since we can't restore actual File objects
+          parsed.mediaFiles = [];
+        }
+        
         console.log('📂 Post form data loaded:', { 
           platform: parsed.selectedPlatform, 
           postType: parsed.selectedPostType,
           hasMedia: parsed.mediaFiles?.length > 0,
-          hasContent: Object.keys(parsed.postData || {}).length > 0
+          hasContent: Object.keys(parsed.postData || {}).length > 0,
+          hadFileMetadata: hasFileMetadata
         });
         return parsed;
       }

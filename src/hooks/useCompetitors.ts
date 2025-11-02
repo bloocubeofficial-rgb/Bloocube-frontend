@@ -119,11 +119,27 @@ export function useCompetitors(options: UseCompetitorsOptions = {}): UseCompetit
   const fetchAnalyses = useCallback(async () => {
     try {
       setError(null);
-      const response = await apiRequest<{ success: boolean; data: { analyses: CompetitorAnalysis[] } }>('/api/competitor/analyses');
+      const response = await apiRequest<{ 
+        success: boolean; 
+        data: { 
+          analyses: CompetitorAnalysis[];
+          pagination?: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+          };
+        } 
+      }>(`/api/competitor/history?limit=${limit}&page=${currentPage}`);
       
       if (response.success) {
         setAnalyses(response.data.analyses);
         await loadCompetitorDataFromAnalyses(response.data.analyses);
+        
+        // Update hasMore based on pagination
+        if (response.data.pagination) {
+          setHasMore(currentPage < response.data.pagination.pages);
+        }
       } else {
         throw new Error('Failed to fetch analyses');
       }
@@ -132,23 +148,77 @@ export function useCompetitors(options: UseCompetitorsOptions = {}): UseCompetit
       setError(errorMessage);
       console.error('Error fetching analyses:', err);
     }
-  }, [loadCompetitorDataFromAnalyses]);
+  }, [loadCompetitorDataFromAnalyses, limit, currentPage]);
 
   const refreshCompetitors = useCallback(async () => {
-    await fetchAnalyses();
-  }, [fetchAnalyses]);
+    setCurrentPage(1);
+    // Fetch with page 1 explicitly
+    try {
+      setError(null);
+      const response = await apiRequest<{ 
+        success: boolean; 
+        data: { 
+          analyses: CompetitorAnalysis[];
+          pagination?: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+          };
+        } 
+      }>(`/api/competitor/history?limit=${limit}&page=1`);
+      
+      if (response.success) {
+        setAnalyses(response.data.analyses);
+        await loadCompetitorDataFromAnalyses(response.data.analyses);
+        
+        if (response.data.pagination) {
+          setHasMore(1 < response.data.pagination.pages);
+        }
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch competitor analyses';
+      setError(errorMessage);
+      console.error('Error fetching analyses:', err);
+    }
+  }, [loadCompetitorDataFromAnalyses, limit]);
 
   const loadMore = useCallback(async () => {
     if (!hasMore || loading) return;
     
     try {
-      setCurrentPage(prev => prev + 1);
-      // For now, just refresh the data
-      await refreshCompetitors();
+      const nextPage = currentPage + 1;
+      setCurrentPage(nextPage);
+      
+      // Fetch with nextPage directly since state update is async
+      setError(null);
+      const response = await apiRequest<{ 
+        success: boolean; 
+        data: { 
+          analyses: CompetitorAnalysis[];
+          pagination?: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+          };
+        } 
+      }>(`/api/competitor/history?limit=${limit}&page=${nextPage}`);
+      
+      if (response.success) {
+        // Append new analyses to existing ones
+        setAnalyses(prev => [...prev, ...response.data.analyses]);
+        await loadCompetitorDataFromAnalyses(response.data.analyses);
+        
+        if (response.data.pagination) {
+          setHasMore(nextPage < response.data.pagination.pages);
+        }
+      }
     } catch (err) {
       console.error('Error loading more competitors:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load more competitors');
     }
-  }, [hasMore, loading, refreshCompetitors]);
+  }, [hasMore, loading, currentPage, limit, loadCompetitorDataFromAnalyses]);
 
   // Initial load
   useEffect(() => {
