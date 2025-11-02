@@ -158,8 +158,29 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
         }
       }
 
-      // Exponential backoff for 429 and 5xx
-      if ((res.status === 429 || (res.status >= 500 && res.status <= 599)) && retries > 0) {
+      // Handle 429 (Too Many Requests) with Retry-After header support
+      if (res.status === 429 && retries > 0) {
+        const retryAfterHeader = res.headers.get('retry-after');
+        let delay: number;
+        
+        if (retryAfterHeader) {
+          // Respect server's Retry-After header (in seconds)
+          const retryAfterSeconds = Number.parseInt(retryAfterHeader, 10);
+          delay = retryAfterSeconds > 0 ? retryAfterSeconds * 1000 : 60000; // Default to 60s if invalid
+          console.log(`⏸️ Rate limited. Retrying after ${retryAfterSeconds}s as per Retry-After header`);
+        } else {
+          // Exponential backoff if no Retry-After header
+          const attempt = Math.max(1, 2 - retries + 1);
+          delay = Math.min(1000 * Math.pow(2, attempt), 60000); // Cap at 60 seconds
+          console.log(`⏸️ Rate limited. Retrying after ${delay}ms (exponential backoff)`);
+        }
+        
+        await sleep(delay);
+        return apiRequest<T>(path, init, retries - 1);
+      }
+
+      // Exponential backoff for 5xx errors
+      if (res.status >= 500 && res.status <= 599 && retries > 0) {
         const attempt = Math.max(1, 2 - retries + 1);
         const delay = Math.min(300 * Math.pow(2, attempt - 1), 3000);
         await sleep(delay);

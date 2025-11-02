@@ -1,6 +1,6 @@
 // pages/analytics.tsx
 'use client'
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { Line, Pie, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -17,6 +17,8 @@ import {
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 import { apiRequest } from '@/lib/apiClient';
 import { getUserId } from '@/lib/userUtils';
+import { RefreshCw } from 'lucide-react';
+import { getFriendlyMessage, ApiError } from '@/lib/errors';
 
 ChartJS.register(
   CategoryScale,
@@ -66,14 +68,79 @@ const AnalyticsDashboard: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [rangeDays, setRangeDays] = useState<7 | 30 | 90>(30);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const hasSyncedRef = useRef<boolean>(false); // Track if we've synced on initial load
+  const lastSyncTimeRef = useRef<number>(0); // Track last sync time to throttle
+  const SYNC_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes cooldown between syncs to avoid rate limits
 
-  const fetchAnalytics = async (maxRetries = 2) => {
+  // Sync analytics from linked accounts with throttling to prevent rate limits
+  const syncAnalytics = useCallback(async (userId: string, days: number, force = false) => {
+    const now = Date.now();
+    const timeSinceLastSync = now - lastSyncTimeRef.current;
+    
+    // Throttle syncs: only allow sync if forced (manual refresh) or if cooldown period has passed
+    if (!force && timeSinceLastSync < SYNC_COOLDOWN_MS) {
+      const minutesRemaining = Math.ceil((SYNC_COOLDOWN_MS - timeSinceLastSync) / 60000);
+      console.log(`⏸️ Sync throttled. Please wait ${minutesRemaining} minute(s) before syncing again.`);
+      return; // Skip sync to avoid rate limits
+    }
+
+    try {
+      lastSyncTimeRef.current = now;
+      // Sync analytics from all linked social accounts (Instagram, Twitter, LinkedIn, YouTube, Facebook)
+      // Note: This endpoint requires POST method and can trigger rate limits from social media APIs
+      await apiRequest<{ success: boolean; data?: { synced: boolean } }>(
+        `/api/analytics/user/${userId}/sync?days=${days}&limit=100`,
+        { method: 'POST' }
+      );
+      console.log('✅ Analytics synced from linked accounts');
+    } catch (e) {
+      // Check if it's a rate limit error
+      const err = e as { status?: number; message?: string; retryAfter?: number };
+      if (err.status === 429) {
+        const retryAfter = err.retryAfter || 60;
+        const minutes = Math.ceil(retryAfter / 60);
+        console.warn(`⏸️ Rate limit reached. Please try again in ${minutes} minute(s).`);
+        // Update last sync time to respect the rate limit
+        lastSyncTimeRef.current = now + (retryAfter * 1000);
+      } else {
+        // Log other sync errors but don't block analytics fetch
+        console.warn('Failed to sync analytics from linked accounts:', e);
+      }
+    }
+  }, []);
+
+  // Memoized fetch function that syncs from linked accounts first, then fetches analytics
+  const fetchAnalytics = useCallback(async (maxRetries = 2, isManualRefresh = false) => {
     const userId = getUserId();
     if (!userId) {
       setError('Not authenticated');
       setLoading(false);
+      setRefreshing(false);
       return;
     }
+
+    // Show refreshing state for manual refreshes
+    if (isManualRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
+    // First, sync analytics from linked accounts to get latest engagement data
+    // This ensures we're using real-time metrics from Instagram, Twitter, LinkedIn, YouTube, Facebook
+    // Only sync on manual refresh or first load to avoid rate limits
+    // Throttling: syncs are limited to once per 5 minutes to respect social media API rate limits
+    if (isManualRefresh) {
+      // Always sync on manual refresh (user explicitly requested)
+      await syncAnalytics(userId, rangeDays, true);
+      hasSyncedRef.current = true;
+    } else if (!hasSyncedRef.current) {
+      // Only sync on first load if we haven't synced yet
+      await syncAnalytics(userId, rangeDays, false);
+      hasSyncedRef.current = true;
+    }
+    // Don't sync on auto-refresh to avoid rate limits - use cached synced data
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -82,27 +149,47 @@ const AnalyticsDashboard: React.FC = () => {
         if (attempt > 0) {
           await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
         }
-        const res = await apiRequest<{ success: boolean; data: { analytics: AnalyticsItem[] } }>(`/api/analytics/user/${userId}`);
+        // Fetch analytics - backend prioritizes synced data from linked accounts
+        // This includes engagement metrics from Instagram, Twitter, LinkedIn, YouTube, Facebook
+        const res = await apiRequest<{ success: boolean; data: { analytics: AnalyticsItem[] } }>(
+          `/api/analytics/user/${userId}?days=${rangeDays}`
+        );
+        // All analytics come from synced linked accounts data (stored in Analytics collection)
         setAnalytics(res?.data?.analytics || []);
         setLoading(false);
+        setRefreshing(false);
         return; // Success - exit early
       } catch (e) {
         if (attempt === maxRetries) {
-          // Final attempt failed
-          setError((e as Error).message || 'Failed to load analytics after retries');
+          // Final attempt failed - use friendly error message
+          const errorMessage = e instanceof ApiError 
+            ? getFriendlyMessage(e)
+            : (e as Error).message || 'Failed to load analytics after retries';
+          setError(errorMessage);
           setAnalytics([]);
           setLoading(false);
+          setRefreshing(false);
         }
-        // Otherwise continue to next retry
+        // Otherwise continue to next retry (with exponential backoff)
       }
     }
-  };
+  }, [rangeDays, syncAnalytics]); // Sync when rangeDays changes
 
+  // Refetch when rangeDays changes or on mount
+  // Note: We don't reset sync flag on rangeDays change to avoid excessive syncs
+  // The backend already filters by date range, so we can use existing synced data
   useEffect(() => {
-    fetchAnalytics();
-    const interval = setInterval(() => fetchAnalytics(), 30000);
+    fetchAnalytics(2, false);
+    // Increase auto-refresh interval to 5 minutes (300000ms) to avoid rate limits
+    // Analytics data doesn't need to be refreshed every 30 seconds
+    const interval = setInterval(() => fetchAnalytics(2, false), 5 * 60 * 1000); // 5 minutes
     return () => clearInterval(interval);
-  }, []); // fetchAnalytics is stable (no dependencies needed for closure)
+  }, [fetchAnalytics]); // Now includes rangeDays dependency through fetchAnalytics
+
+  // Manual refresh handler
+  const handleRefresh = useCallback(() => {
+    fetchAnalytics(2, true);
+  }, [fetchAnalytics]);
 
   // Build day labels for selected range
   const dayLabels = useMemo(() => {
@@ -117,15 +204,18 @@ const AnalyticsDashboard: React.FC = () => {
   }, [rangeDays]);
 
   const engagementData = useMemo(() => {
+    // Calculate engagement trends from synced linked accounts data
+    // All metrics (likes, comments, shares) come from Instagram, Twitter, LinkedIn, YouTube, Facebook
     const byDay: Record<string, { likes: number; comments: number; shares: number }> = {};
     dayLabels.forEach(l => (byDay[l] = { likes: 0, comments: 0, shares: 0 }));
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - (rangeDays - 1));
+    
+    // Process analytics items from synced linked accounts (filtered by backend by date range)
     analytics.forEach(a => {
       const date = a?.timing?.posted_at ? new Date(a.timing.posted_at) : null;
-      if (!date || date < cutoff) return;
+      if (!date) return;
       const key = `${date.getMonth() + 1}/${date.getDate()}`;
       if (!byDay[key]) return;
+      // Aggregate engagement metrics from all linked social accounts
       byDay[key].likes += a.metrics?.likes || 0;
       byDay[key].comments += a.metrics?.comments || 0;
       byDay[key].shares += a.metrics?.shares || 0;
@@ -162,9 +252,10 @@ const AnalyticsDashboard: React.FC = () => {
         }
       ]
     };
-  }, [analytics, dayLabels, rangeDays]);
+  }, [analytics, dayLabels]);
 
   const platformData = useMemo(() => {
+    // Platform breakdown from linked accounts (Instagram, Twitter, LinkedIn, YouTube, Facebook)
     const counts: Record<string, number> = {};
     analytics.forEach(a => {
       const p = String(a.platform || '').toLowerCase();
@@ -185,6 +276,7 @@ const AnalyticsDashboard: React.FC = () => {
   }, [analytics]);
 
   const postTypeData = useMemo(() => {
+    // Post type performance from linked accounts data
     const counts: Record<string, number> = {};
     analytics.forEach(a => {
       const t = String(a.content?.media_type || 'unknown');
@@ -205,18 +297,35 @@ const AnalyticsDashboard: React.FC = () => {
   }, [analytics]);
 
   const totals = useMemo(() => {
-    const sum = (key: 'likes' | 'comments' | 'shares' | 'views') => analytics.reduce((s, a) => s + (a.metrics?.[key] || 0), 0);
+    // Calculate totals from synced linked accounts data (Instagram, Twitter, LinkedIn, YouTube, Facebook)
+    // All metrics come from real-time engagement data synced from social platforms
+    const sum = (key: 'likes' | 'comments' | 'shares' | 'views') => 
+      analytics.reduce((s, a) => s + (a.metrics?.[key] || 0), 0);
+    
     const totalEngagements = sum('likes') + sum('comments') + sum('shares');
-    const avgEngRate = analytics.length ? (((totalEngagements) / Math.max(sum('views'), 1)) * 100).toFixed(1) : '0.0';
+    const totalViews = sum('views');
+    const avgEngRate = analytics.length ? (((totalEngagements) / Math.max(totalViews, 1)) * 100).toFixed(1) : '0.0';
+    
+    // Find top performing post from linked accounts based on total engagement
+    // Engagement = likes + comments + shares (from synced social platforms)
     const topPost = [...analytics]
-      .map(a => ({
-        engagement: (a.metrics?.likes || 0) + (a.metrics?.comments || 0) + (a.metrics?.shares || 0),
-        title: a.content?.caption || a.content?.title || a.post_id || 'Post'
-      }))
+      .map(a => {
+        const engagement = (a.metrics?.likes || 0) + (a.metrics?.comments || 0) + (a.metrics?.shares || 0);
+        const platform = a.platform || 'Unknown';
+        const title = a.content?.caption || a.content?.title || a.post_id || 'Post';
+        const truncatedTitle = title.length > 50 ? title.substring(0, 50) + '...' : title;
+        return {
+          engagement,
+          title: `${truncatedTitle} (${platform})`,
+          platform,
+          postId: a.post_id
+        };
+      })
       .sort((a, b) => b.engagement - a.engagement)[0];
+    
     return {
       totalEngagements,
-      audienceGrowth: sum('views'),
+      audienceGrowth: totalViews, // Total views from linked accounts
       topPostTitle: topPost?.title || '—',
       avgEngagementRate: avgEngRate
     };
@@ -308,8 +417,23 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
         </div>
       )}
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
+        <div className={`mb-4 rounded-md border px-3 py-2 text-sm ${
+          error.toLowerCase().includes('rate limit') || error.toLowerCase().includes('too many requests') || error.toLowerCase().includes('429')
+            ? 'border-yellow-200 bg-yellow-50 text-yellow-800'
+            : 'border-red-200 bg-red-50 text-red-700'
+        }`}>
+          <div className="flex items-start gap-2">
+            <span>⚠️</span>
+            <div className="flex-1">
+              <p className="font-medium">{error}</p>
+              {(error.toLowerCase().includes('rate limit') || error.toLowerCase().includes('too many requests') || error.toLowerCase().includes('429')) && (
+                <p className="text-xs mt-1 opacity-90">
+                  Analytics are synced from linked social accounts. To avoid rate limits, syncs are limited to once every 5 minutes. 
+                  Use the Refresh button to force a sync when needed.
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       )}
       {!loading && !error && analytics.length === 0 && (
@@ -318,22 +442,54 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
         </div>
       )}
 
-      {/* Date Range Selection */}
+      {/* Date Range Selection with Refresh */}
       <div className="bg-white/80  rounded-sm p-3 md:p-4 mb-6 hover:shadow-sm border border-gray-200/100">
-        <h3 className="text-sm font-medium mb-2">Data Range Selection</h3>
-        <p className="text-xs text-gray-700 mb-3">Select the period for your analytics data</p>
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
+          <div>
+            <h3 className="text-sm font-medium mb-1">Data Range Selection</h3>
+            <p className="text-xs text-gray-700">Select the period for your analytics data</p>
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={loading || refreshing}
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs md:text-sm rounded-md border transition-colors ${
+              loading || refreshing
+                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+            }`}
+            title="Refresh analytics data"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setRangeDays(7)}
-            className={`px-3 py-1.5 text-xs md:text-sm rounded-md border ${rangeDays === 7 ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-50'}`}
+            disabled={loading || refreshing}
+            className={`px-3 py-1.5 text-xs md:text-sm rounded-md border transition-colors ${
+              rangeDays === 7 
+                ? 'bg-blue-600 text-white border-blue-600' 
+                : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+            } ${loading || refreshing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           >7d</button>
           <button
             onClick={() => setRangeDays(30)}
-            className={`px-3 py-1.5 text-xs md:text-sm rounded-md border ${rangeDays === 30 ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-50'}`}
+            disabled={loading || refreshing}
+            className={`px-3 py-1.5 text-xs md:text-sm rounded-md border transition-colors ${
+              rangeDays === 30 
+                ? 'bg-blue-600 text-white border-blue-600' 
+                : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+            } ${loading || refreshing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           >30d</button>
           <button
             onClick={() => setRangeDays(90)}
-            className={`px-3 py-1.5 text-xs md:text-sm rounded-md border ${rangeDays === 90 ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-50'}`}
+            disabled={loading || refreshing}
+            className={`px-3 py-1.5 text-xs md:text-sm rounded-md border transition-colors ${
+              rangeDays === 90 
+                ? 'bg-blue-600 text-white border-blue-600' 
+                : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+            } ${loading || refreshing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           >90d</button>
         </div>
       </div>
@@ -343,21 +499,21 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
         <MetricCard
           title="Total Engagements"
           value={totals.totalEngagements.toLocaleString()}
-          subtitle="Live from your posts"
+          subtitle="From linked accounts (Instagram, Twitter, LinkedIn, YouTube, Facebook)"
           color="bg-green-200"
           icon={<span className="text-green-600">💬</span>}
         />
         <MetricCard
           title="Audience Growth"
           value={totals.audienceGrowth.toLocaleString()}
-          subtitle="Total views (last 30 days)"
+          subtitle={`Total views from linked accounts (last ${rangeDays} days)`}
           color="bg-blue-100"
           icon={<span className="text-blue-600">👥</span>}
         />
         <MetricCard
           title="Top Performing Post"
           value={`"${totals.topPostTitle}"`}
-          subtitle="Based on total engagement"
+          subtitle="Highest engagement from linked accounts"
           color="bg-yellow-100"
           icon={<span className="text-yellow-600">⭐</span>}
         />
