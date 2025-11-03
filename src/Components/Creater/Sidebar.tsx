@@ -13,11 +13,13 @@ import {
   LogOut,
   Bell,
   User,
+  Divide,
 } from 'lucide-react';
 import React, { useState, useEffect, useCallback } from 'react';
 import { cookieAuthUtils } from '@/lib/cookieAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { getAvatarUrl } from '@/lib/profile';
+import LogoutModal from './LogoutModel';
 
 const sidebarItems = [
   { name: 'Overview', icon: Home, href: '/creator' },
@@ -58,11 +60,19 @@ const Sidebar = React.memo(({ sidebarOpen }: SidebarProps) => {
     return normalizedPathname.startsWith(normalizedHref);
   }, [pathname]);
 
-  const onLogout = useCallback(() => {
+ 
+ const [openLogoutModal, setOpenLogoutModal] = useState(false);
+ const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const handleOpenLogoutModal = () => {
+     setOpenLogoutModal(true);
+    };
+  
+   const onLogout = useCallback(() => {
     cookieAuthUtils.clearAuth();
     router.push('/login');
   }, [router]);
 
+    
   const getNavItemClasses = (item: typeof sidebarItems[0], isActive: boolean) => {
     const baseClasses = "group relative flex items-center px-4 py-3.5 text-sm font-semibold rounded-2xl transition-all duration-500 ease-out transform hover:scale-[1.02] hover:shadow-lg";
     const activeClasses = `bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl shadow-sm  before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-r before:from-white/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300`;
@@ -81,7 +91,8 @@ const Sidebar = React.memo(({ sidebarOpen }: SidebarProps) => {
 
   return (
     // This className controls the mobile slide-in and fixed width
-    <aside 
+    <>
+       <aside 
       className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed left-0 top-0 z-50 w-64 sm:w-72 md:w-80 h-screen bg-white/95 backdrop-blur-2xl shadow-2xl border-r border-gray-200/30 flex flex-col transition-transform duration-500 ease-out will-change-transform`}
     >
       {/* Logo */}
@@ -168,12 +179,22 @@ const Sidebar = React.memo(({ sidebarOpen }: SidebarProps) => {
               </div>
             )}
           </div>
-          <button onClick={onLogout} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-300 hover:scale-105 group">
+          <button  onClick={handleOpenLogoutModal} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-300 hover:scale-105 group">
             <LogOut className="w-4 h-4 md:w-5 md:h-5" />
           </button>
+
+          
         </div>
       </div>
     </aside>
+    {openLogoutModal && (
+  <LogoutModal 
+    open={openLogoutModal}
+    onOpenChange={setOpenLogoutModal}
+    onConfirm={onLogout}
+  />
+)}
+    </>
   );
 });
 

@@ -394,26 +394,26 @@ export default function BrandCampaignsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen ">
+      <div className="max-w-7xl mx-auto  mt-4 ">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Campaign Management</h1>
-            <p className="mt-2 text-gray-600">Create compelling campaigns and connect with talented creators to bring your brand vision to life</p>
+            <p className="mt-3 text-gray-600 mb-3">Create compelling campaigns and connect with talented creators to bring your brand vision to life</p>
           </div>
           <Link
             href="/brand/marketplace"
-            className="inline-flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-sm hover:shadow-md transition-all duration-200 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 w-full sm:w-auto justify-center"
+            className="inline-flex items-center gap-3 px-4 py-3 rounded-sm text-sm font-semibold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:shadow-md transition-all duration-200 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 w-full sm:w-auto justify-center"
           >
-            <span className="w-2 h-2 rounded-full bg-white/90 animate-pulse"></span>
+            {/* <span className="w-2 h-2 rounded-full bg-white/90 animate-pulse"></span> */}
             View all campaigns
           </Link>
         </div>
 
         {/* Create Campaign Form */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex items-center gap-3 mb-6">
+        <div className="bg-white rounded-sm hover:shadow-sm border border-gray-200/04 p-6 mb-8">
+          <div className="flex  items-center gap-3 mb-6">
             <div className="p-2 bg-blue-100 rounded-lg">
               {editingDraft ? (
                 <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -423,7 +423,7 @@ export default function BrandCampaignsPage() {
               <PlusIcon className="h-5 w-5 text-blue-600" />
               )}
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-sm lg:text-xl font-semibold text-gray-900">
               {editingDraft ? `Edit Campaign: ${editingDraft.title}` : 'Launch Your Next Campaign'}
             </h2>
             {editingDraft && (
@@ -435,7 +435,7 @@ export default function BrandCampaignsPage() {
                   setDeadlineTime('23:59');
                   setPublishActive(true);
                 }}
-                className="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                className="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition-colors"
               >
                 <XMarkIcon className="h-4 w-4" />
                 Cancel Edit
@@ -466,7 +466,7 @@ export default function BrandCampaignsPage() {
               <label htmlFor="campaign-title" className="block text-sm font-medium text-gray-700 mb-2">Campaign Title</label>
               <input 
                 id="campaign-title"
-                className="w-full text-black px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors " 
+                className="w-full text-black px-4 py-3 border border-gray-200/04 rounded-sm  focus:outline-none transition-colors " 
                 placeholder="e.g., Summer Fashion Collection 2024 "  
                 value={draft.title || ''} 
                 onChange={e => setDraft(d => ({ ...d, title: e.target.value }))} 
@@ -482,7 +482,8 @@ export default function BrandCampaignsPage() {
                 </div>
                 <input 
                   id="campaign-budget"
-                  className="w-full text-black pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
+                  min={0}
+                  className="w-full text-black pl-8 pr-4 py-3 g-2 border border-gray-200/04 rounded-sm  focus:outline-none transition-colors" 
                   type="number" 
                   placeholder="50,000" 
                   value={draft.budget || ''} 
@@ -491,26 +492,36 @@ export default function BrandCampaignsPage() {
         </div>
       </div>
 
-            {/* Deadline */}
-              <div>
-              <label htmlFor="campaign-deadline" className="block text-sm font-medium text-gray-700 mb-2">Deadline</label>
-            <div className="flex gap-3 flex-wrap">
-                <input 
-                  id="campaign-deadline"
-                  className="flex-1 px-4 text-black py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
-                  type="date" 
-                  value={deadlineDate} 
-                  onChange={e => setDeadlineDate(e.target.value)} 
-                />
-                <input 
-                  id="campaign-time"
-                  className="w-32 px-4 text-black py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
-                  type="time" 
-                  value={deadlineTime} 
-                  onChange={e => setDeadlineTime(e.target.value)} 
-                />
-              </div>
-            </div>
+           <div>
+  <label htmlFor="campaign-deadline" className="block text-sm font-medium text-gray-700 mb-2">
+    Deadline
+  </label>
+
+  <div className="flex flex-col sm:flex-row gap-3">
+
+    {/* Date */}
+    <input
+      id="campaign-deadline"
+      type="date"
+      value={deadlineDate}
+      onChange={e => setDeadlineDate(e.target.value)}
+      className="flex-1 cursor-pointer w-full px-4 text-gray-500 py-3 border border-gray-300 rounded-md 
+                 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+    />
+
+    {/* Time */}
+    <input
+      id="campaign-time"
+      type="time"
+      value={deadlineTime}
+      onChange={e => setDeadlineTime(e.target.value)}
+      className="sm:w-40 cursor-pointer w-full px-4 text-gray-500 py-3 border border-gray-300 rounded-md 
+                 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+    />
+
+  </div>
+</div>
+
 
             {/* Platform Selection */}
             <div className="lg:col-span-2">
@@ -518,10 +529,10 @@ export default function BrandCampaignsPage() {
               <div className="relative" data-dropdown>
                 <button
                   type="button"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-left flex items-center justify-between"
+                  className="w-full px-4 py-3 text-sm  border border-gray-200/04 rounded-sm  focus:outline-none transition-colors text-left flex items-center justify-between"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
-                  <span className="text-gray-700">
+                  <span className="text-gray-500">
                     {(draft.requirements?.platforms?.length || 0) > 0 
                       ? `${draft.requirements?.platforms?.length || 0} platform(s) selected`
                       : 'Choose your target social media platforms'
@@ -531,7 +542,7 @@ export default function BrandCampaignsPage() {
                 </button>
                 
                 {isDropdownOpen && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg">
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200/04 rounded-sm  focus:outline-none ">
                     <div className="p-2">
                       {platformOptions.map((option) => (
                         <label key={option.value} className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer">
@@ -539,7 +550,7 @@ export default function BrandCampaignsPage() {
                             type="checkbox"
                             checked={draft.requirements?.platforms?.includes(option.value as PlatformType) || false}
                             onChange={() => togglePlatform(option.value as PlatformType)}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            className="h-4 w-4 text-blue-600 border border-gray-200/04 rounded-sm  focus:outline-none"
                           />
                           <span className="ml-3 text-sm text-gray-700 flex items-center gap-2">
                             <span>{option.icon}</span>
@@ -579,8 +590,8 @@ export default function BrandCampaignsPage() {
               <label htmlFor="campaign-description" className="block text-sm font-medium text-gray-700 mb-2">Description</label>
               <textarea 
                 id="campaign-description"
-                className="w-full px-4 text-black py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none" 
-                rows={4}
+                className="w-full px-4 text-sm text-gray-800 py-3 border border-gray-200/04 rounded-sm  focus:outline-none  resize-none" 
+                rows={8}
                 placeholder="Describe your campaign goals, target audience, content requirements, and any specific deliverables you expect from creators..." 
                 value={draft.description || ''} 
                 onChange={e => setDraft(d => ({ ...d, description: e.target.value }))} 
@@ -608,7 +619,7 @@ export default function BrandCampaignsPage() {
 
           {/* Error Messages */}
           {formError && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-sm">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -624,7 +635,7 @@ export default function BrandCampaignsPage() {
 
           {/* Validation Messages */}
           {!isValid && invalidReasons.length > 0 && (
-            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-500 rounded-sm">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
@@ -644,7 +655,8 @@ export default function BrandCampaignsPage() {
           )}
 
           {/* Submit Button */}
-          <div className="mt-6 flex justify-end gap-3">
+         <div className="mt-6 flex flex-col sm:flex-row sm:justify-end sm:gap-3 gap-2 items-center">
+
             {editingDraft && (
               <button 
                 className="inline-flex items-center gap-2 px-6 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" 
@@ -670,7 +682,7 @@ export default function BrandCampaignsPage() {
               </button>
             )}
             <button 
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" 
+              className="flex justify-center items-center gap-2 px-6 py-3  bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-sm hover:bg-gradient-to-r from-blue-600 to-purple-600  disabled:opacity-50 disabled:cursor-not-allowed transition-colors" 
               disabled={creating || !isValid} 
               onClick={editingDraft ? onUpdateDraft : onCreate}
             >
@@ -701,7 +713,7 @@ export default function BrandCampaignsPage() {
         {/* Draft Campaigns Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-            <h2 className="text-2xl font-bold text-gray-900">Draft Campaigns</h2>
+            <h2 className="text-2xl font-semibold  text-gray-900">Draft Campaigns</h2>
             <button
               onClick={() => {
                 setDraftToggleLoading(true);
@@ -711,7 +723,7 @@ export default function BrandCampaignsPage() {
                 }, 300);
               }}
               disabled={draftToggleLoading}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200/04 rounded-sm hover:bg-gray-50 focus:outline-none  transition-colors disabled:opacity-50 cursor-pointer"
             >
               {draftToggleLoading ? (
                 <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -726,7 +738,7 @@ export default function BrandCampaignsPage() {
           </div>
           
           {showDrafts && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-sm hover:shadow-sm border border-gray-200/04 p-6">
               {campaigns.filter(c => c.status === 'draft').length === 0 ? (
                 <div className="text-center py-8">
                   <div className="mx-auto h-12 w-12 text-gray-400">
@@ -830,7 +842,7 @@ export default function BrandCampaignsPage() {
 
         {/* Campaigns List */}
           <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Active Campaigns</h2>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Active Campaigns</h2>
           
           {loading && (
             <div className="flex items-center justify-center py-12">

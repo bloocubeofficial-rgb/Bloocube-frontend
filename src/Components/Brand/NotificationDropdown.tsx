@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { BellIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useNotifications } from '@/hooks/useNotifications';
 import { type Notification } from '@/lib/notificationService';
-
+import { Bell } from 'lucide-react';
 interface NotificationDropdownProps {
   className?: string;
 }
@@ -30,11 +30,11 @@ export default function NotificationDropdown({ className = '' }: NotificationDro
         return <CheckIcon className="w-4 h-4 text-green-600" />;
       case 'bid_received':
       case 'campaign_created':
-        return <BellIcon className="w-4 h-4 text-blue-600" />;
+        return <Bell className="w-4 h-4 text-blue-600" />;
       case 'bid_rejected':
         return <XMarkIcon className="w-4 h-4 text-red-600" />;
       default:
-        return <BellIcon className="w-4 h-4 text-gray-600" />;
+        return <Bell className="w-4 h-4 text-gray-600" />;
     }
   };
 
@@ -92,18 +92,32 @@ export default function NotificationDropdown({ className = '' }: NotificationDro
     <div className={`relative ${className}`} data-notification-dropdown>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+        className="relative p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 "
       >
-        <BellIcon className="w-6 h-6" />
+        <Bell className="w-4 h-4" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full text-[9px] text-white flex items-center justify-center font-semibold leading-none">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
+      {/* dropdown menu */}
+
       {isOpen && (
-        <div className="absolute right-1 md:right-0 mt-2 w-80 md:w-96 max-w-[90vw] bg-white rounded-xl shadow-xl border border-gray-200 z-50">
+        <div
+          className="
+      fixed 
+      top-14 left-1/2 -translate-x-1/2 
+
+      sm:absolute  sm:right-0 sm:left-auto sm:translate-x-0
+      
+      w-[92vw] sm:w-80 md:w-96 
+      bg-white rounded-xl shadow-xl border border-gray-200 
+      z-[99999]
+      max-h-[75vh] sm:max-h-96 overflow-hidden
+      animate-in fade-in slide-in-from-top-2 
+    ">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
@@ -182,7 +196,7 @@ export default function NotificationDropdown({ className = '' }: NotificationDro
               </div>
             ) : (
               <div className="text-center py-8">
-                <BellIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <Bell className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-sm text-gray-500">No notifications</p>
               </div>
             )}

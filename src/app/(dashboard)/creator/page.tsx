@@ -482,7 +482,7 @@ const Dashboard = () => {
 
 </div>
       
-      {/* recent post  */}
+      {/* recent post  and scheduling post */}
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 <div>
  <RecentPosts />
