@@ -25,7 +25,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { TrendingUp } from 'lucide-react';
 import Link from 'next/link';
-import BrandLayout from './layout';
+import BrandLayout from './layout'
 import { Plus } from 'lucide-react';
 export default function BrandDashboard() {
   const { user, isLoading } = useAuth();
@@ -290,7 +290,7 @@ export default function BrandDashboard() {
 
   return (
    
-    <>
+    <div>
       
   <div className='mb-6 mt-4 lg:mt-1 md:mt-1 flex justify-start lg:justify-end '>
      <Link href="/creator/posts" >
@@ -790,7 +790,7 @@ export default function BrandDashboard() {
           </div>
         </Link>
       </div>
-</>
+</div>
    
   );
 }
