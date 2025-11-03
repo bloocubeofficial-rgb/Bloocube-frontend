@@ -152,7 +152,7 @@ export default function BrandNotificationsPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-7xl mx-auto mt-4">
       <div className="mb-8">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
@@ -163,7 +163,7 @@ export default function BrandNotificationsPage() {
             <button
               onClick={handleRefresh}
               disabled={notificationsLoading}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-sm transition-colors disabled:opacity-50"
             >
               <ArrowPathIcon className={`w-5 h-5 ${notificationsLoading ? 'animate-spin' : ''}`} />
             </button>
@@ -190,7 +190,7 @@ export default function BrandNotificationsPage() {
 
       {/* Filter Tabs */}
       <div className="mb-6">
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+        <div className="flex space-x-1 bg-gray-100 p-1 rounded-sm border border-gray-200/04 w-fit">
           {[
             { key: 'all', label: 'All', count: notifications.length },
             { key: 'unread', label: 'Unread', count: unreadCount },
@@ -200,7 +200,7 @@ export default function BrandNotificationsPage() {
               key={key}
               onClick={() => setFilter(key as any)}
               disabled={notificationsLoading}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors disabled:opacity-50 ${
+              className={`px-4 py-2 text-sm font-medium rounded-sm transition-colors disabled:opacity-50 ${
                 filter === key
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
@@ -353,7 +353,7 @@ export default function BrandNotificationsPage() {
       </div>
 
       {/* Notification Settings */}
-      <div className="mt-12 bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+      <div className="mt-12 bg-white rounded-sm p-6 hover:shadow-sm border border-gray-200/04">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Notification Settings</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">

@@ -105,11 +105,11 @@ export default function BrandBidsPage() {
   }
 
   const statusOptions = [
-    { value: '', label: 'All Bids', icon: '📋', color: 'gray' },
-    { value: 'pending', label: 'Pending', icon: '⏳', color: 'yellow' },
-    { value: 'accepted', label: 'Accepted', icon: '✅', color: 'green' },
-    { value: 'rejected', label: 'Rejected', icon: '❌', color: 'red' },
-    { value: 'withdrawn', label: 'Withdrawn', icon: '↩️', color: 'gray' }
+    { value: '', label: 'All Bids',color: 'gray' },
+    { value: 'pending', label: 'Pending', color: 'yellow' },
+    { value: 'accepted', label: 'Accepted',  color: 'green' },
+    { value: 'rejected', label: 'Rejected',  color: 'red' },
+    { value: 'withdrawn', label: 'Withdrawn',  color: 'gray' }
   ];
 
   const getStatusColor = (status: string) => {
@@ -173,8 +173,8 @@ export default function BrandBidsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen ">
+      <div className="max-w-7xl mx-auto mt-4 sm:mt-2">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
@@ -187,13 +187,13 @@ export default function BrandBidsPage() {
             <div className="relative w-full sm:w-auto" data-dropdown>
               <button
                 type="button"
-                className="inline-flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-left min-w-[160px] bg-white w-full sm:w-auto"
+                className="inline-flex items-center gap-2 px-4 py-3 border border-gray-200/04 rounded-sm focus:outline-none  transition-colors text-left min-w-[160px] bg-white w-full sm:w-auto"
                 onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
               >
                 <span className="text-gray-700">
-                  {statusOptions.find(opt => opt.value === status)?.icon} {statusOptions.find(opt => opt.value === status)?.label}
+                   {statusOptions.find(opt => opt.value === status)?.label}
                 </span>
-                <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ${isStatusDropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ml-auto ${isStatusDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
               
               {isStatusDropdownOpen && (
@@ -202,16 +202,16 @@ export default function BrandBidsPage() {
                     {statusOptions.map((option) => (
                       <button
                         key={option.value}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded text-left transition-colors"
+                       className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded text-left transition-colors"
                         onClick={() => {
                           setStatus(option.value);
                           setIsStatusDropdownOpen(false);
                         }}
                       >
-                        <span>{option.icon}</span>
+                        {/* <span>{option.icon}</span> */}
                         <span className="text-sm text-gray-700">{option.label}</span>
                         {status === option.value && (
-                          <CheckIcon className="w-4 h-4 text-blue-600 ml-auto" />
+                          <CheckIcon className="w-4 h-4 text-blue-600 ml-auto " />
                         )}
                       </button>
                     ))}

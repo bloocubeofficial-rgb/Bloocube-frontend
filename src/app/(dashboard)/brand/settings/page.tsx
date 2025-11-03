@@ -193,9 +193,9 @@ export default function BrandSettingsPage() {
   };
 
   const renderProfileTab = () => (
-    <div className="space-y-8">
-      <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+    <div className="space-y-2">
+      <div className="">
+        <h3 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
           <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
             <UserIcon className="w-6 h-6 text-white" />
           </div>
@@ -209,7 +209,7 @@ export default function BrandSettingsPage() {
               type="text"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              className="w-full text-gray-900 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
+              className="w-full text-gray-900 px-4 py-3 border border-gray-200/04 rounded-sm  focus:outline-none transition-all duration-200 bg-white hover:shadow-sm"
               placeholder="Enter your name"
             />
           </div>
@@ -220,7 +220,7 @@ export default function BrandSettingsPage() {
               type="email"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              className="w-full text-gray-900 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
+              className="w-full text-gray-900 px-4 py-3 border border-gray-200/04 rounded-sm  focus:outline-none transition-all duration-200 bg-white hover:shadow-sm"
               placeholder="Enter your email"
             />
           </div>
@@ -231,7 +231,7 @@ export default function BrandSettingsPage() {
               type="tel"
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
-              className="w-full text-gray-900 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
+  className="w-full text-gray-900 px-4 py-3 border border-gray-200/04 rounded-sm  focus:outline-none transition-all duration-200 bg-white hover:shadow-sm"
               placeholder="Enter your phone number"
             />
           </div>
@@ -242,7 +242,7 @@ export default function BrandSettingsPage() {
               type="url"
               value={formData.website}
               onChange={(e) => handleInputChange('website', e.target.value)}
-              className="w-full text-gray-900 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
+            className="w-full text-gray-900 px-4 py-3 border border-gray-200/04 rounded-sm  focus:outline-none transition-all duration-200 bg-white hover:shadow-sm"
               placeholder="Enter your website URL"
             />
           </div>
@@ -254,7 +254,7 @@ export default function BrandSettingsPage() {
             rows={4}
             value={formData.bio}
             onChange={(e) => handleInputChange('bio', e.target.value)}
-            className="w-full text-gray-900 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm hover:shadow-md resize-none"
+         className="w-full text-gray-900 px-4 py-3 border border-gray-200/04 rounded-sm  focus:outline-none transition-all duration-200 bg-white hover:shadow-sm"
             placeholder="Tell us about yourself..."
           />
         </div>
@@ -264,9 +264,9 @@ export default function BrandSettingsPage() {
 
   const renderCompanyTab = () => (
     <div className="space-y-8">
-      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg">
+      <div className="">
+        <h3 className="text-xl lg:text-2xl  font-semibold text-gray-900 mb-6 flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-sm">
             <BuildingOfficeIcon className="w-6 h-6 text-white" />
           </div>
           Company Details
@@ -279,7 +279,7 @@ export default function BrandSettingsPage() {
               type="text"
               value={formData.location}
               onChange={(e) => handleInputChange('location', e.target.value)}
-              className="w-full text-gray-900 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-100 focus:border-green-500 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
+              className="w-full text-gray-900 px-4 py-3 border border-gray-200/04 rounded-sm focus:outline-none transition-all duration-200 bg-white hover:shadow-sm"
               placeholder="Enter your city, state, country..."
             />
           </div>
@@ -290,7 +290,7 @@ export default function BrandSettingsPage() {
               rows={4}
               value={formData.address}
               onChange={(e) => handleInputChange('address', e.target.value)}
-              className="w-full text-gray-900 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-100 focus:border-green-500 transition-all duration-200 bg-white shadow-sm hover:shadow-md resize-none"
+              className="w-full text-gray-900 px-4 py-3 border border-gray-200 rounded-sm focus:outline-none transition-all duration-200 bg-white  hover:shadow-sm resize-none"
               placeholder="Enter your complete company address..."
             />
           </div>
@@ -301,19 +301,19 @@ export default function BrandSettingsPage() {
 
   const renderNotificationsTab = () => (
     <div className="space-y-8">
-      <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg">
+      <div className="">
+        <h3 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-sm">
             <BellIcon className="w-6 h-6 text-white" />
           </div>
           Notification Preferences
         </h3>
         <div className="space-y-6">
           {Object.entries(formData.notifications).map(([key, value]) => (
-            <div key={key} className="flex items-center justify-between p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900 capitalize text-lg mb-2">{key} Notifications</h4>
-                <p className="text-sm text-gray-600">
+            <div key={key} className="flex items-center justify-between p-6 bg-white rounded-sm hover:shadow-sm border border-gray-200/04  transition-all duration-200">
+              <div className="flex-1 ">
+                <h4 className="font-semibold text-gray-900 capitalize text-md lg:text-lg mb-2">{key} Notifications</h4>
+                <p className="text-sm text-gray-600 ">
                   {key === 'email' && 'Receive notifications via email'}
                   {key === 'push' && 'Receive push notifications in browser'}
                   {key === 'sms' && 'Receive SMS notifications'}
@@ -327,7 +327,7 @@ export default function BrandSettingsPage() {
                   onChange={(e) => handleNotificationChange(key, e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-orange-500 peer-checked:to-red-600"></div>
+                <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none  rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-500 peer-checked:to-purple-600"></div>
                 <span className="sr-only">Toggle {key} notifications</span>
               </label>
             </div>
@@ -339,26 +339,26 @@ export default function BrandSettingsPage() {
 
   const renderSecurityTab = () => (
     <div className="space-y-8">
-      <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg">
+      <div className="">
+        <h3 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-sm">
             <ShieldCheckIcon className="w-6 h-6 text-white" />
           </div>
           Security Settings
         </h3>
         <div className="space-y-6">
-          <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-100 rounded-lg">
+          <div className="p-6 bg-white rounded-sm hover:shadow-sm border border-gray-200/04  transition-all duration-200">
+            <div className="flex flex-col lg:flex-row   items-center justify-start">
+              <div className="flex flex-col  lg:flex-row  justify-center items-center gap-4">
+                <div className="p-3 bg-blue-100 rounded-sm">
                   <KeyIcon className="w-6 h-6 text-blue-600" />
                 </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900 text-lg">Change Password</h4>
-                  <p className="text-sm text-gray-600">Update your account password to keep your account secure</p>
+                <div className='text-ceter '>
+                  <h4 className="font-semibold text-gray-900 text-lg text-center">Change Password</h4>
+                  <p className="text-sm text-gray-600 text-center">Update your account password to keep your account secure</p>
                 </div>
               </div>
-              <button className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
+              <button className="px-6 py-3 mt-4 lg:mt-0 bg-gradient-to-r from-purple-500 to-indigo-600  text-white rounded-sm hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
                 Change Password
               </button>
             </div>
@@ -370,40 +370,40 @@ export default function BrandSettingsPage() {
 
   const renderBillingTab = () => (
     <div className="space-y-8">
-      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg">
+      <div className="">
+        <h3 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-r from-purple-500 to-indigo-600  rounded-sm">
             <CreditCardIcon className="w-6 h-6 text-white" />
           </div>
           Billing Information
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
+          <div className="p-6 bg-white rounded-sm hover:shadow-sm border border-gray-200/04 transition-all duration-200">
             <div className="flex items-center gap-4 mb-4">
               <div className="p-3 bg-blue-100 rounded-lg">
                 <CreditCardIcon className="w-6 h-6 text-blue-600" />
               </div>
               <h4 className="font-semibold text-gray-900 text-lg">Current Plan</h4>
             </div>
-            <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">Pro Plan</p>
-            <p className="text-lg text-gray-600">₹2,999/month</p>
+            <p className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">Pro Plan</p>
+            <p className="text-md text-gray-600">₹2,999/month</p>
           </div>
-          <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
+            <div className="p-6 bg-white rounded-sm hover:shadow-sm border border-gray-200/04 transition-all duration-200">
             <div className="flex items-center gap-4 mb-4">
               <div className="p-3 bg-green-100 rounded-lg">
                 <CreditCardIcon className="w-6 h-6 text-green-600" />
               </div>
               <h4 className="font-semibold text-gray-900 text-lg">Next Billing</h4>
             </div>
-            <p className="text-2xl font-bold text-gray-900 mb-2">Dec 15, 2024</p>
-            <p className="text-lg text-gray-600">Auto-renewal enabled</p>
+            <p className="text-xl font-bold text-gray-900 mb-2">Dec 15, 2024</p>
+            <p className="text-md text-gray-600">Auto-renewal enabled</p>
           </div>
         </div>
         <div className="mt-8 flex flex-col sm:flex-row gap-4">
-          <button className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
+          <button className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-sm hover: bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
             Update Payment Method
           </button>
-          <button className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium">
+          <button className="flex-1 px-6 py-3 border border-gray-200/04 text-gray-700 rounded-sm hover:bg-gray-50  transition-all duration-200 font-medium">
             Download Invoice
           </button>
         </div>
@@ -430,17 +430,17 @@ export default function BrandSettingsPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-6xl mx-auto ">
       {/* Enhanced Notification Banner */}
       {notification && (
-        <div className={`mb-6 p-6 rounded-2xl shadow-lg border-2 flex items-center gap-4 animate-in slide-in-from-top-2 duration-300 ${
+        <div className={`mb-6  rounded-sm  border flex items-center gap-4 animate-in slide-in-from-top-2 duration-300 ${
           notification.type === 'success' 
             ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-300 text-green-800' 
             : notification.type === 'error'
             ? 'bg-gradient-to-r from-red-50 to-rose-50 border-red-300 text-red-800'
             : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-300 text-blue-800'
         }`}>
-          <div className={`p-2 rounded-full ${
+          <div className={`p-2 rounded-sm ${
             notification.type === 'success' 
               ? 'bg-green-100' 
               : notification.type === 'error'
@@ -480,13 +480,13 @@ export default function BrandSettingsPage() {
 
       {/* Header */}
       <div className="mb-8">
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
+        <div className="  text-gray-800 mt-4">
           <h1 className="text-3xl font-bold mb-2">Settings</h1>
-          <p className="text-blue-100 text-lg">Manage your brand account settings and preferences</p>
+          <p className="text-gray-800 text-lg">Manage your brand account settings and preferences</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-sm hover:shadow-sm border border-gray-200/04 overflow-hidden">
         <div className="flex flex-col lg:flex-row">
           {/* Sidebar */}
           <div className="lg:w-80 bg-gradient-to-b from-gray-50 to-gray-100 border-b lg:border-b-0 lg:border-r border-gray-200">
@@ -509,22 +509,40 @@ export default function BrandSettingsPage() {
           </div>
 
           {/* Content */}
-          <div className="flex-1 p-8">
+          <div className="flex-1 p-6">
             {renderTabContent()}
             
             {/* Save Button */}
             <div className="mt-10 pt-8 border-t border-gray-200">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-center justify-start gap-4">
+               
+                  <button 
+                    onClick={saveProfile}
+                    disabled={saving}
+                    className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-sm hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2 w-full sm:w-auto justify-center"
+                  >
+                    {saving ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Saving Changes...
+                      </>
+                    ) : (
+                      <>
+                        <CheckIcon className="w-4 h-4" />
+                    Save Changes
+                      </>
+                    )}
+                </button>
                 <button 
-                  className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none w-full sm:w-auto justify-center"
+                  className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-sm hover:from-red-600 hover:to-red-700 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none w-full sm:w-auto justify-center"
                   disabled={saving}
                 >
                   <TrashIcon className="w-4 h-4" />
                   Delete Account
                 </button>
-                <div className="flex gap-4 w-full sm:w-auto justify-end">
-                  <button 
-                    className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+                
+                 <button 
+                    className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-sm hover:bg-gray-50  transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                     disabled={saving}
                     onClick={() => {
                       // Reset form to original values
@@ -550,24 +568,6 @@ export default function BrandSettingsPage() {
                   >
                     Reset
                   </button>
-                  <button 
-                    onClick={saveProfile}
-                    disabled={saving}
-                    className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2 w-full sm:w-auto justify-center"
-                  >
-                    {saving ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Saving Changes...
-                      </>
-                    ) : (
-                      <>
-                        <CheckIcon className="w-4 h-4" />
-                    Save Changes
-                      </>
-                    )}
-                  </button>
-                </div>
               </div>
               
               {/* Status indicator */}

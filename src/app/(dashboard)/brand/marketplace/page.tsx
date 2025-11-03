@@ -58,7 +58,7 @@ export default function BrandMarketplacePage() {
   const [isPlatformDropdownOpen, setIsPlatformDropdownOpen] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
-
+const [isExpanded, setIsExpanded] = useState(false);
   // Dynamic load creators
   useEffect(() => {
     let cancelled = false;
@@ -207,31 +207,31 @@ export default function BrandMarketplacePage() {
   }
 
   const platformOptions = [
-    { value: 'all', label: 'All Platforms', icon: '🌐' },
-    { value: 'instagram', label: 'Instagram', icon: '📷' },
-    { value: 'youtube', label: 'YouTube', icon: '🎥' },
-    { value: 'twitter', label: 'Twitter', icon: '🐦' },
-    { value: 'linkedin', label: 'LinkedIn', icon: '💼' },
-    { value: 'tiktok', label: 'TikTok', icon: '🎵' }
+    { value: 'all', label: 'All Platforms' },
+    { value: 'instagram', label: 'Instagram' },
+    { value: 'youtube', label: 'YouTube' },
+    { value: 'twitter', label: 'Twitter'},
+    { value: 'linkedin', label: 'LinkedIn' },
+    { value: 'tiktok', label: 'TikTok' }
   ];
 
   const categoryOptions = [
-    { value: 'all', label: 'All Categories', icon: '📂' },
-    { value: 'fashion', label: 'Fashion', icon: '👗' },
-    { value: 'technology', label: 'Technology', icon: '💻' },
-    { value: 'fitness', label: 'Fitness', icon: '💪' },
-    { value: 'lifestyle', label: 'Lifestyle', icon: '🌟' },
-    { value: 'beauty', label: 'Beauty', icon: '💄' },
-    { value: 'food', label: 'Food', icon: '🍽️' },
-    { value: 'travel', label: 'Travel', icon: '✈️' }
+    { value: 'all', label: 'All Categories'},
+    { value: 'fashion', label: 'Fashion' },
+    { value: 'technology', label: 'Technology' },
+    { value: 'fitness', label: 'Fitness' },
+    { value: 'lifestyle', label: 'Lifestyle'},
+    { value: 'beauty', label: 'Beauty' },
+    { value: 'food', label: 'Food' },
+    { value: 'travel', label: 'Travel' }
   ];
 
   const sortOptions = [
-    { value: 'rating', label: 'Highest Rated', icon: '⭐' },
-    { value: 'followers', label: 'Most Followers', icon: '👥' },
-    { value: 'engagement', label: 'Best Engagement', icon: '📈' },
-    { value: 'price-low', label: 'Price: Low to High', icon: '💰' },
-    { value: 'price-high', label: 'Price: High to Low', icon: '💎' }
+    { value: 'rating', label: 'Highest Rated' },
+    { value: 'followers', label: 'Most Followers' },
+    { value: 'engagement', label: 'Best Engagement' },
+    { value: 'price-low', label: 'Price: Low to High' },
+    { value: 'price-high', label: 'Price: High to Low' }
   ];
 
   if (loading) {
@@ -246,8 +246,8 @@ export default function BrandMarketplacePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen ">
+      <div className="max-w-7xl mx-auto mt-4 sm:mt-2 ">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
@@ -263,10 +263,10 @@ export default function BrandMarketplacePage() {
                   placeholder="Search creators, categories, or skills..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full sm:w-80 pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full sm:w-80 pl-10 pr-4 py-3 border border-gray-300 rounded-sm  focus:outline-none transition-colors"
                 />
               </div>
-              <button className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 w-full sm:w-auto">
+              <button className="inline-flex items-center justify-center px-6 py-3  bg-gradient-to-r from-blue-600 to-purple-600  text-white font-medium rounded-sm hover:bg-blue-700 focus:outline-none  transition-colors duration-200 w-full sm:w-auto">
                 <Plus className="w-5 h-5 mr-2" />
                 Create Campaign
               </button>
@@ -275,32 +275,64 @@ export default function BrandMarketplacePage() {
         </div>
 
         {/* Filters Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center gap-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Filter className="w-5 h-5 text-blue-600" />
-              </div>
-              <span className="text-lg font-semibold text-gray-900">Filter & Sort</span>
-            </div>
-            
-            <div className="flex flex-wrap items-center gap-4 flex-1">
+        <div className="bg-white rounded-sm hove:shadow-sm  border border-gray-200/04 p-6 mb-8">
+        <div className="flex mb-5 item-center justify-center sm:flex-row sm:items-center sm:justify-between gap-6 w-full ">
+
+
+         <div className="flex items-center gap-3">
+  <div className="p-2 bg-blue-100 rounded-sm flex items-center justify-center">
+    <Filter className="w-5 h-5 text-blue-600" />
+  </div>
+  <span className="text-sm font-semibold text-gray-900 lg:text-lg">Filter & Sort</span>
+</div>
+
+           {/* View Mode Toggle */}
+           <div className="flex items-center gap-2">
+  <span className="text-sm text-gray-500">View:</span>
+  <div className="flex items-center bg-gray-300 rounded-sm p-1">
+    <button
+      onClick={() => setViewMode('grid')}
+      className={`p-1 rounded transition-colors ${viewMode === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+    >
+      <div className="w-3 h-3 grid grid-cols-2 gap-0.5">
+        <div className="bg-current rounded-sm"></div>
+        <div className="bg-current rounded-sm"></div>
+        <div className="bg-current rounded-sm"></div>
+        <div className="bg-current rounded-sm"></div>
+      </div>
+    </button>
+    <button
+      onClick={() => setViewMode('list')}
+      className={`p-1 rounded transition-colors ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+    >
+      <div className="w-3 h-3 flex flex-col gap-0.5">
+        <div className="bg-current h-0.5 rounded"></div>
+        <div className="bg-current h-0.5 rounded"></div>
+        <div className="bg-current h-0.5 rounded"></div>
+      </div>
+    </button>
+  </div>
+</div>
+
+        </div>
+           <div className="flex flex-col lg:flex-row gap-3 w-full">
               {/* Platform Filter */}
               <div className="relative" data-dropdown>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-left min-w-[160px]"
+             className="w-full inline-flex items-center gap-2 px-4 py-3 border border-gray-200/04 rounded-sm focus:outline-none transition-colors text-left"
+
                   onClick={() => setIsPlatformDropdownOpen(!isPlatformDropdownOpen)}
                 >
                   <span className="text-gray-700">
-                    {platformOptions.find(opt => opt.value === selectedPlatform)?.icon} {platformOptions.find(opt => opt.value === selectedPlatform)?.label}
+                    {platformOptions.find(opt => opt.value === selectedPlatform)?.label}
                   </span>
-                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ${isPlatformDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ml-auto ${isPlatformDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 
                 {isPlatformDropdownOpen && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg">
-                    <div className="p-2">
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200/04 rounded-sm shadow-sm">
+                    <div className="p-1">
                       {platformOptions.map((option) => (
                         <button
                           key={option.value}
@@ -310,10 +342,10 @@ export default function BrandMarketplacePage() {
                             setIsPlatformDropdownOpen(false);
                           }}
                         >
-                          <span>{option.icon}</span>
+                        
                           <span className="text-sm text-gray-700">{option.label}</span>
                           {selectedPlatform === option.value && (
-                            <CheckIcon className="w-4 h-4 text-blue-600 ml-auto" />
+                            <CheckIcon className="w-4 h-4 text-blue-600 " />
                           )}
                         </button>
                       ))}
@@ -326,17 +358,18 @@ export default function BrandMarketplacePage() {
               <div className="relative" data-dropdown>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-left min-w-[160px]"
+              className="w-full inline-flex items-center gap-2 px-4 py-3 border border-gray-200/04 rounded-sm focus:outline-none transition-colors text-left"
+
                   onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
                 >
-                  <span className="text-gray-700">
-                    {categoryOptions.find(opt => opt.value === selectedCategory)?.icon} {categoryOptions.find(opt => opt.value === selectedCategory)?.label}
-                  </span>
-                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} />
+                 <span className="text-gray-700">
+  {categoryOptions.find(opt => opt.value === selectedCategory)?.label}
+</span>
+                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 ml-auto transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 
                 {isCategoryDropdownOpen && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg">
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200/04 rounded-sm shadow-lg">
                     <div className="p-2">
                       {categoryOptions.map((option) => (
                         <button
@@ -347,8 +380,8 @@ export default function BrandMarketplacePage() {
                             setIsCategoryDropdownOpen(false);
                           }}
                         >
-                          <span>{option.icon}</span>
-                          <span className="text-sm text-gray-700">{option.label}</span>
+                          {/* <span>{option.icon}</span> */}
+                          <span className="text-sm text-gray-700 ">{option.label}</span>
                           {selectedCategory === option.value && (
                             <CheckIcon className="w-4 h-4 text-blue-600 ml-auto" />
                           )}
@@ -363,17 +396,18 @@ export default function BrandMarketplacePage() {
               <div className="relative" data-dropdown>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-left min-w-[160px]"
+              className="w-full inline-flex items-center gap-2 px-4 py-3 border border-gray-200/04 rounded-sm focus:outline-none transition-colors text-left"
+
                   onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
                 >
                   <span className="text-gray-700">
-                    {sortOptions.find(opt => opt.value === sortBy)?.icon} {sortOptions.find(opt => opt.value === sortBy)?.label}
+                    {sortOptions.find(opt => opt.value === sortBy)?.label}
                   </span>
-                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 ml-auto transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 
                 {isSortDropdownOpen && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg">
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200/04 rounded-sm shadow-lg">
                     <div className="p-2">
                       {sortOptions.map((option) => (
                         <button
@@ -384,7 +418,7 @@ export default function BrandMarketplacePage() {
                             setIsSortDropdownOpen(false);
                           }}
                         >
-                          <span>{option.icon}</span>
+                          {/* <span>{option.icon}</span> */}
                           <span className="text-sm text-gray-700">{option.label}</span>
                           {sortBy === option.value && (
                             <CheckIcon className="w-4 h-4 text-blue-600 ml-auto" />
@@ -396,35 +430,6 @@ export default function BrandMarketplacePage() {
                 )}
               </div>
             </div>
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">View:</span>
-              <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  <div className="w-4 h-4 grid grid-cols-2 gap-0.5">
-                    <div className="bg-current rounded-sm"></div>
-                    <div className="bg-current rounded-sm"></div>
-                    <div className="bg-current rounded-sm"></div>
-                    <div className="bg-current rounded-sm"></div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  <div className="w-4 h-4 flex flex-col gap-0.5">
-                    <div className="bg-current h-0.5 rounded"></div>
-                    <div className="bg-current h-0.5 rounded"></div>
-                    <div className="bg-current h-0.5 rounded"></div>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Loading State */}
@@ -545,12 +550,23 @@ export default function BrandMarketplacePage() {
               const now = new Date();
               return deadlineDate > now; // Only include campaigns with future deadlines
             }).map((c: any) => (
-              <div key={c._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div key={c._id} className="bg-white rounded-sm hover:shadow-sm border border-gray-200/04 p-6  transition-shadow">
                 <div className="flex items-start justify-between mb-3 flex-wrap gap-3">
                   <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{c.title}</h3>
-                  <span className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">{c.status}</span>
+                  <span className="text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 border border-green-200">{c.status}</span>
                 </div>
-                <p className="text-sm text-gray-600 line-clamp-2 mb-3">{c.description}</p>
+ <div className='m-auto '><p className={`text-sm text-gray-600 mt-2 mb-3  break-words whitespace-normal ${isExpanded ? '' : 'line-clamp-2'}`}>
+    {c.description}
+  </p>
+
+  {c.description.length > 120 && (
+    <button
+      onClick={() => setIsExpanded(!isExpanded)}
+      className="text-blue-600 mt-1  mb-4 text-xs hover:underline"
+    >
+      {isExpanded ? "Read less" : "Read more"}
+    </button>
+  )}</div>
                 <div className="flex items-center justify-between text-sm flex-wrap gap-2">
                   <span className="text-gray-700 font-medium">₹{Number(c.budget || 0).toLocaleString()}</span>
                   <span className="text-gray-500">{c.deadline ? new Date(c.deadline).toLocaleDateString() : ''}</span>
@@ -575,7 +591,7 @@ export default function BrandMarketplacePage() {
                 setSelectedCategory('all');
                 setSortBy('rating');
               }}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600   text-white rounded-sm hover:bg-blue-700 transition-colors"
             >
               Clear Filters
             </button>
