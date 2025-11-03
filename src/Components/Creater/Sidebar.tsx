@@ -64,8 +64,7 @@ const Sidebar = React.memo(({ sidebarOpen }: SidebarProps) => {
  const [openLogoutModal, setOpenLogoutModal] = useState(false);
  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const handleOpenLogoutModal = () => {
-     
-      setOpenLogoutModal(true);
+     setOpenLogoutModal(true);
     };
   
    const onLogout = useCallback(() => {
