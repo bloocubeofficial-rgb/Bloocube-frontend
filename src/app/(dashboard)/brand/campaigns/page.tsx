@@ -394,8 +394,8 @@ export default function BrandCampaignsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen ">
+      <div className="max-w-7xl mx-auto py-2 ">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between gap-3 flex-wrap">
           <div>
@@ -404,16 +404,16 @@ export default function BrandCampaignsPage() {
           </div>
           <Link
             href="/brand/marketplace"
-            className="inline-flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-sm hover:shadow-md transition-all duration-200 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 w-full sm:w-auto justify-center"
+            className="inline-flex items-center gap-3 px-4 py-3 rounded-sm text-sm font-semibold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-sm hover:shadow-md transition-all duration-200 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 w-full sm:w-auto justify-center"
           >
-            <span className="w-2 h-2 rounded-full bg-white/90 animate-pulse"></span>
+            {/* <span className="w-2 h-2 rounded-full bg-white/90 animate-pulse"></span> */}
             View all campaigns
           </Link>
         </div>
 
         {/* Create Campaign Form */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex items-center gap-3 mb-6">
+        <div className="bg-white rounded-sm hover:shadow-sm border border-gray-200/04 p-6 mb-8">
+          <div className="flex  items-center gap-3 mb-6">
             <div className="p-2 bg-blue-100 rounded-lg">
               {editingDraft ? (
                 <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -423,7 +423,7 @@ export default function BrandCampaignsPage() {
               <PlusIcon className="h-5 w-5 text-blue-600" />
               )}
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-sm lg:text-xl font-semibold text-gray-900">
               {editingDraft ? `Edit Campaign: ${editingDraft.title}` : 'Launch Your Next Campaign'}
             </h2>
             {editingDraft && (
@@ -435,7 +435,7 @@ export default function BrandCampaignsPage() {
                   setDeadlineTime('23:59');
                   setPublishActive(true);
                 }}
-                className="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                className="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition-colors"
               >
                 <XMarkIcon className="h-4 w-4" />
                 Cancel Edit
