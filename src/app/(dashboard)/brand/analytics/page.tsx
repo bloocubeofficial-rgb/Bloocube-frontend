@@ -81,7 +81,7 @@ type AnalysisDoc = {
   };
 };
 
-export default function BrandCompetitorsPage() {
+export default function BrandAnalyticsPage() {
   const { user, isLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState('all');

@@ -77,9 +77,9 @@ export const FacebookIntegrationWithSuspense = (props: Record<string, unknown>) 
   </Suspense>
 );
 
-export const SidebarWithSuspense = (props: { sidebarOpen: boolean }) => (
+export const SidebarWithSuspense = (props: { sidebarOpen: boolean ,setSidebarOpen: (value: boolean) => void }) => (
   <Suspense fallback={<LoadingSpinner />}>
-    <LazySidebar {...props} />
+    <LazySidebar {...props}  />
   </Suspense>
 );
 
