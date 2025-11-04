@@ -9,6 +9,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { cookieAuthUtils } from '@/lib/cookieAuth';
 import { getAvatarUrl } from '@/lib/profile';
 import LogoutModal from '../Creater/LogoutModel';
+import { ChevronLeft,ChevronRight } from 'lucide-react';
 import { useCallback } from 'react';
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -26,7 +27,7 @@ const nav = [
 ];
 
 const getNavItemClasses = (item: typeof nav[0], isActive: boolean) => {
-  const baseClasses = "group relative flex items-center px-4 py-3.5 text-sm font-semibold rounded-2xl transition-all duration-500 ease-out transform hover:scale-[1.02] hover:shadow-lg";
+  const baseClasses = "group relative flex items-center px-4 py-3.5 text-sm font-semibold rounded-md transition-all duration-500 ease-out transform hover:scale-[1.02] hover:shadow-lg";
   const activeClasses = `bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl shadow-sm  before:absolute before:inset-0 before:rounded-sm before:bg-gradient-to-r before:from-white/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300`;
   const inactiveClasses = "text-gray-700 hover:bg-white/80 hover:text-gray-900 hover:shadow-md backdrop-blur-sm border border-transparent hover:border-gray-200/50";
   return `${baseClasses} ${isActive ? activeClasses : inactiveClasses}`;
@@ -57,25 +58,30 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen ,setSidebarOpen}) => {
   
   return (
     <>
-    <aside
-      className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
-      lg:translate-x-0 fixed left-0 top-0 z-[9999] w-64 sm:w-72 md:w-80 h-screen
-      bg-white/80 backdrop-blur-2xl shadow-2xl border-r border-gray-200/30 flex flex-col
-       transition-transform duration-500 ease-out will-change-transform`}
-    >
-       {/* Top Section */}
-  <div className="flex items-center justify-between border-b p-3 lg:p-1">
+     <aside 
+  className={`${sidebarOpen ? 'lg:w-64' : 'lg:w-20'} 
+  ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+  lg:translate-x-0 fixed left-0 top-0 z-[9999] w-64 sm:w-72 md:w-80 h-screen
+  bg-white/80 backdrop-blur-2xl shadow-2xl border-r border-gray-200/30 flex flex-col
+  transition-all duration-500 ease-out`}
+>
+       
+    <div className="flex items-center justify-between p-3 lg:p-3">
 
           {/* Logo */}
-           <Link href ="/"> 
-    <div className="flex items-center gap-2">
+            <Link href ="/"> 
+    <div className="flex items-center gap-2 ">
       <img
         src="/logo.png"
         alt="Bloocube Logo"
         className="w-10 h-10 sm:w-16 sm:h-16 object-contain"
       />
-    <span className="font-bold text-lg sm:text-xl  lg:inline">Bloocube</span>
+   <span className={`font-bold text-lg sm:text-xl transition-all duration-300 
+  ${sidebarOpen ? 'lg:inline' : 'lg:hidden'}`}>
+  Bloocube
+</span>
             </div>
+            
             </Link>
 
     {/* Close button - only mobile */}
@@ -85,7 +91,26 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen ,setSidebarOpen}) => {
     >
       ✕
     </button>
-  </div>
+        </div>     
+{/* Toggle Button (Desktop only) */}
+<div 
+  className={`hidden lg:flex transition-all duration-300 
+    ${sidebarOpen 
+      ? "absolute top-6 right-3"  // ✅ expanded → near logo
+      : "flex justify-center mt-4" // ✅ collapsed → below logo
+    }`}
+>
+  <button
+    onClick={() => setSidebarOpen(!sidebarOpen)}
+    className="p-2 rounded-lg hover:bg-gray-200 transition"
+  >
+    {sidebarOpen ? (
+      <ChevronLeft className="w-5 h-5 text-gray-600" />
+    ) : (
+      <ChevronRight className="w-5 h-5 text-gray-600" />
+    )}
+  </button>
+</div>
 
   {/* Nav */}
   <nav className="flex-1 py-3 px-2 sm:px-4 mt-3 sm:mt-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-100">
@@ -101,7 +126,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen ,setSidebarOpen}) => {
             <div className="relative">
               <item.icon className={getIconClasses(item, isActive)} />
               {isActive && (
-                <div className="absolute bg-gradient-to-r from-blue-600 to-purple-600 bg-white/20 rounded-sm blur-sm"></div>
+                <div className="absolute bg-gradient-to-r from-blue-600 to-purple-600 bg-white/20 rounded-md blur-sm"></div>
               )}
             </div>
             <span className="ml-3 text-sm sm:text-base font-medium truncate">

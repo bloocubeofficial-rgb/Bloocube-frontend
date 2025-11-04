@@ -1562,7 +1562,7 @@ export default function PostsPage() {
                 value={(postData as any).articleTitle || ""}
                 onChange={(e) => handleFieldChange("articleTitle", e.target.value)}
                 placeholder="Enter article title"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -1766,7 +1766,7 @@ export default function PostsPage() {
                   placeholder={(fieldConfig as any).placeholder}
                   maxLength={(fieldConfig as any).maxLength}
                   rows={4}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
                 {(fieldConfig as any).maxLength && (
                   <div className="text-xs text-gray-500 mt-1">
@@ -1857,7 +1857,7 @@ export default function PostsPage() {
       {showShortsDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50" onClick={() => setShowShortsDialog(false)} />
-          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
+          <div className="relative bg-white rounded-sm border border-gray-200/04 w-full max-w-md p-6 mx-4">
             <div className="mb-4">
               <p className="text-sm text-gray-900">{shortsDialogText}</p>
             </div>
@@ -1883,7 +1883,7 @@ export default function PostsPage() {
       {showPublishingDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50" />
-          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-sm p-6 mx-4">
+          <div className="relative bg-white rounded-sm hover:shadow-sm w-full max-w-sm p-6 mx-4">
             <button
               type="button"
               aria-label="Close"
@@ -1909,7 +1909,7 @@ export default function PostsPage() {
       {showPublishResultDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50" onClick={() => setShowPublishResultDialog(false)} />
-          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-sm p-6 mx-4">
+          <div className="relative bg-white rounded-sm hover:shadow-sm w-full max-w-sm p-6 mx-4">
             <button
               type="button"
               aria-label="Close"
@@ -1938,16 +1938,16 @@ export default function PostsPage() {
         </p>
       </div> */}
 
-      <div className="flex justify-between">
+      <div className="flex flex-col lg:flex-row justify-between">
          {/* Tabs */}
-      <div className="mb-4  flex flex-wrap gap-2 mt-5">
+      <div className="mb-5  flex flex-wrap gap-2 mt-5">
        
           <button
             onClick={() => setActiveTab("create")}
             className={`px-4 py-1 text-xs rounded-xl border transition-all ${
               activeTab === "create"
                 ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                : " hover:bg-white-300 border border-blue-600 bg-blue-50 text-blue-600 hover:shadow-md transition-all duration-150"
+                : " hover:bg-white-300 border border-blue-600 bg-blue-50 text-blue-600 hover:shadow-sm transition-all duration-150"
             }`}
           >
             Create
@@ -1957,7 +1957,7 @@ export default function PostsPage() {
              className={`px-4 py-1 text-xs rounded-xl border transition-all ${
               activeTab === "drafts"
                 ? "bg-blue-50 text-blue-700 border-blue-700 shadow-sm"
-                : " hover:bg-white-300 border border-blue-600 bg-blue-50 text-blue-600 hover:shadow-md transition-all duration-150"
+                : " hover:bg-white-300 border border-blue-600 bg-blue-50 text-blue-600 hover:shadow-sm transition-all duration-150"
             }`}
           >
             Drafts {drafts.length > 0 ? `(${drafts.length})` : ""}
@@ -1977,7 +1977,7 @@ export default function PostsPage() {
              className={`px-4 py-1 text-xs rounded-xl border transition-all ${
               activeTab === "create"
                 ? "bg-blue-50 text-blue-700 border-blue-700 shadow-sm"
-                : " hover:bg-white-300 border border-blue-600 bg-blue-50 text-blue-600 hover:shadow-md transition-all duration-150"
+                : " hover:bg-white-300 border border-blue-600 bg-blue-50 text-blue-600 hover:shadow-sm transition-all duration-150"
             }`}
           >
             Published {posts.length > 0 ? `(${posts.length})` : ""}
@@ -1995,7 +1995,7 @@ export default function PostsPage() {
 
       {/* Create Post Tab */}
       {activeTab === "create" && (
-        <div className="rounded-sm p-3 md:p-6 shadow-sm border border-gray-200/100 hover:shadow:sm mt-11">
+        <div className="rounded-sm p-3 md:p-6 hover:shadow-sm border border-gray-200/04  mt-11">
           <div className="p-2 md:p-2 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">
               Create New Post
@@ -2043,7 +2043,7 @@ export default function PostsPage() {
                     <div
                       key={platform}
                       className={`p-4 rounded-sm border transition-all duration-200 ${isSelected
-                          ? `border-${config.color}-500 bg-${config.color}-50 shadow-sm hover:shadow:md`
+                          ? `border-${config.color}-500 bg-${config.color}-50  hover:shadow:sm`
                           : "border-gray-200/80 bg-white"
                         }`}
                     >
