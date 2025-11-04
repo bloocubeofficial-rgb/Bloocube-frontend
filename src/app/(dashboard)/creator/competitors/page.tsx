@@ -7,6 +7,8 @@ import { AnalysisResultModal } from '@/Components/AnalysisResultModal';
 import { apiRequest } from '@/lib/apiClient';
 import Link from 'next/link';
 
+import { CheckIcon } from 'lucide-react';
+import { ChevronDownIcon } from 'lucide-react';
 interface Competitor {
   id: string;
   name: string;
@@ -82,7 +84,7 @@ type AnalysisDoc = {
 
 const CompetitorAnalysisPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPlatform, setSelectedPlatform] = useState('all');
+ 
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,7 +98,8 @@ const CompetitorAnalysisPage = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [aiTestStatus, setAiTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [aiTestMessage, setAiTestMessage] = useState<string>('');
-  
+  const [selectedPlatform, setSelectedPlatform] = useState('all');
+  const [isPlatformDropdownOpen, setIsPlatformDropdownOpen] = useState(false);
   // Modal state for AI analysis results
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<any>(null);
@@ -385,6 +388,14 @@ const CompetitorAnalysisPage = () => {
     }
   };
 
+  const platformOptions = [
+    { value: 'all', label: 'All Platforms' },
+    { value: 'instagram', label: 'Instagram' },
+    { value: 'youtube', label: 'YouTube' },
+    { value: 'twitter', label: 'Twitter'},
+    { value: 'linkedin', label: 'LinkedIn' },
+    { value: 'tiktok', label: 'TikTok' }
+  ];
   return (
     <CreatorLayout 
       title="Competitors"
@@ -399,12 +410,13 @@ const CompetitorAnalysisPage = () => {
           </div> */}
           <div className="flex items-center space-x-4 w-full sm:w-auto sm:justify-end">
             <Link href="/creator/competitors/analyze">
-              <button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1.5 rounded-sm  transition-all duration-150  flex items-center space-x-2 text-sm">
+              <button className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white px-4 py-1.5 rounded-sm  transition-colors flex items-center space-x-2 text-sm">
                 <Plus className="w-4 h-4" />
                 <span>New Analysis</span>
               </button>
             </Link>
-
+          </div>
+          <div className='flex gap-2'>
             <button
               onClick={testAIServices}
               disabled={aiTestStatus === 'testing'}
@@ -413,7 +425,7 @@ const CompetitorAnalysisPage = () => {
                   ? 'bg-green-100 text-green-700 border border-green-300' 
                   : aiTestStatus === 'error'
                   ? 'bg-red-100 text-red-700 border border-red-300'
-                  : 'border border-gray-200/80 shadow-sm hover:shadow-md text-gray-800 hover:bg-gray-50'
+                  : 'border border-gray-200/08 text-gray-800 hover:bg-gray-50'
               }`}
             >
               <Zap className="w-4 h-4" />
@@ -425,11 +437,12 @@ const CompetitorAnalysisPage = () => {
             </button>
             <button
               onClick={() => setShowHistory(!showHistory)}
-              className="border  border-gray-200/80 shadow-sm hover:shadow-md text-gray-800 px-3 py-1.5 rounded-sm hover:bg-gray-50 transition-colors flex items-center space-x-2 text-sm"
+              className="border border-gray-200/08 text-gray-800 px-3 py-1.5 rounded-sm hover:bg-gray-50 transition-colors flex items-center space-x-2 text-sm"
             >
               <BarChart3 className="w-4 h-4" />
               <span>History</span>
             </button>
+           </div>
             <div className="relative w-full sm:w-auto">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-800 w-4 h-4" />
               <input
@@ -437,10 +450,9 @@ const CompetitorAnalysisPage = () => {
                 placeholder="Search competitors..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-3 py-2 border  border-gray-200/12 shadow-sm hover:shadow-md rounded-sm   focus:border-none bg-white  transition-colors duration-200 w-full sm:min-w-[260px] text-sm"
+                className="pl-10 pr-3 py-2 border border-gray-200/04 rounded-sm  bg-white  focus:outline-none transition-colors duration-200 w-full sm:min-w-[260px] text-sm"
               />
             </div>
-          </div>
         </div>
       </div>
 
@@ -461,33 +473,63 @@ const CompetitorAnalysisPage = () => {
       )}
 
       {/* Quick Analysis Form */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-800/50 p-5 mb-8">
+     <div className="bg-white/80 backdrop-blur-sm rounded-sm hovershadow-sm border border-gray-200/04 p-3 mb-8">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-md flex items-center justify-center">
-              <Search className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">Quick Competitor Analysis</h3>
-              <p className="text-sm text-gray-900">Select a platform and enter a profile URL or username</p>
-            </div>
+          <div className="flex items-center gap-3 sm:gap-3 ">
+  <div className="w-10 h-8 lg:w-10 lg:h-10  bg-gradient-to-r from-blue-500 to-purple-600 rounded-sm flex items-center justify-center">
+    <Search className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
+  </div>
+  
+  <div className="flex flex-col leading-tight mt-2">
+    <h3 className="text-sm font-semibold text-gray-900 sm:text-base">
+      Quick Competitor Analysis
+    </h3>
+    <p className="text-xs text-gray-600 lg:text-sm">
+      Select a platform and enter a profile URL or username
+    </p>
+  </div>
           </div>
-        </div>
+          </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-800">Platform</label>
-            <select 
-              className="w-full border text-black border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-800 transition-colors duration-200" 
-              value={quickPlatform}
-              onChange={(e) => setQuickPlatform(e.target.value)}
-            >
-              <option value="instagram" disabled>📸 Instagram (disabled)</option>
-              <option value="youtube">🎥 YouTube</option>
-              <option value="twitter">🐦 Twitter</option>
-              <option value="linkedin" disabled>💼 LinkedIn (disabled)</option>
-              <option value="facebook" disabled>👥 Facebook (disabled)</option>
-            </select>
-          </div>
+          {/* Platform Filter */}
+         
+          <div className="relative" data-dropdown>
+            <label htmlFor="" className='block text-sm font-medium mb-1 text-gray-800'>Plateform</label>
+                <button
+                  type="button"
+             className="w-full inline-flex items-center gap-2 px-4 py-3 border border-gray-200/04 rounded-sm focus:outline-none transition-colors text-left"
+
+                  onClick={() => setIsPlatformDropdownOpen(!isPlatformDropdownOpen)}
+                >
+                  <span className="text-gray-700">
+                    {platformOptions.find(opt => opt.value === selectedPlatform)?.label}
+                  </span>
+                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ml-auto ${isPlatformDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {isPlatformDropdownOpen && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200/04 rounded-sm shadow-sm">
+                    <div className="p-1">
+                      {platformOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded text-left transition-colors"
+                          onClick={() => {
+                            setSelectedPlatform(option.value);
+                            setIsPlatformDropdownOpen(false);
+                          }}
+                        >
+                        
+                          <span className="text-sm text-gray-700">{option.label}</span>
+                          {selectedPlatform === option.value && (
+                            <CheckIcon className="w-4 h-4 text-blue-600 " />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
           <div className="space-y-2 md:col-span-2">
             <label className="block text-sm font-medium text-gray-800">Profile URL or Username</label>
             <input
@@ -500,7 +542,7 @@ const CompetitorAnalysisPage = () => {
                 if (detected) setQuickPlatform(detected);
               }}
               placeholder="e.g. https://youtube.com/@channel or https://twitter.com/username"
-              className="w-full border text-black border-gray-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-800 transition-colors duration-200"
+              className="w-full border text-black border-gray-200/04 rounded-sm px-3 py-3 text-sm  focus:outline-none bg-white  transition-colors duration-200"
             />
             {quickError && <div className="text-sm text-red-600">{quickError}</div>}
           </div>
@@ -508,7 +550,7 @@ const CompetitorAnalysisPage = () => {
             <button
               onClick={fetchCompetitorData}
               disabled={quickLoading || !quickInput.trim()}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70 text-sm"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600  text-white px-4 py-3 rounded-sm hover:bg-blue-700 transition-colors disabled:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70 text-sm"
             >
               {quickLoading ? 'Fetching Data…' : showPreview ? 'Refetch Competitor Data' : 'Fetch Competitor Data'}
             </button>
@@ -689,11 +731,11 @@ const CompetitorAnalysisPage = () => {
               onChange={(e) => setSelectedPlatform(e.target.value)}
             >
               <option value="all">All Platforms</option>
-              <option value="youtube">🎥 YouTube</option>
-              <option value="instagram">📸 Instagram</option>
-              <option value="twitter">🐦 Twitter</option>
-              <option value="linkedin">💼 LinkedIn</option>
-              <option value="facebook">👥 Facebook</option>
+              <option value="youtube"> YouTube</option>
+              <option value="instagram"> Instagram</option>
+              <option value="twitter"> Twitter</option>
+              <option value="linkedin"> LinkedIn</option>
+              <option value="facebook"> Facebook</option>
             </select>
           </div>
           
@@ -705,13 +747,13 @@ const CompetitorAnalysisPage = () => {
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
               <option value="all">All Categories</option>
-              <option value="technology">💻 Technology</option>
-              <option value="fashion">👗 Fashion</option>
-              <option value="fitness">💪 Fitness</option>
-              <option value="food">🍕 Food</option>
-              <option value="travel">✈️ Travel</option>
-              <option value="beauty">💄 Beauty</option>
-              <option value="gaming">🎮 Gaming</option>
+              <option value="technology">Technology</option>
+              <option value="fashion"> Fashion</option>
+              <option value="fitness"> Fitness</option>
+              <option value="food"> Food</option>
+              <option value="travel"> Travel</option>
+              <option value="beauty"> Beauty</option>
+              <option value="gaming"> Gaming</option>
             </select>
           </div>
           
@@ -722,10 +764,10 @@ const CompetitorAnalysisPage = () => {
               defaultValue=""
             >
               <option value="">Any Size</option>
-              <option value="micro">📱 Micro (1K-100K)</option>
-              <option value="mid">📊 Mid-tier (100K-1M)</option>
-              <option value="macro">🌟 Macro (1M+)</option>
-              <option value="mega">⭐ Mega (10M+)</option>
+              <option value="micro"> Micro (1K-100K)</option>
+              <option value="mid">Mid-tier (100K-1M)</option>
+              <option value="macro"> Macro (1M+)</option>
+              <option value="mega"> Mega (10M+)</option>
             </select>
           </div>
           
@@ -736,9 +778,9 @@ const CompetitorAnalysisPage = () => {
               defaultValue=""
             >
               <option value="">Any Level</option>
-              <option value="high">🔥 High (7%+)</option>
-              <option value="medium">📈 Medium (4-7%)</option>
-              <option value="low">📉 Low (&lt;4%)</option>
+              <option value="high"> High (7%+)</option>
+              <option value="medium"> Medium (4-7%)</option>
+              <option value="low"> Low (&lt;4%)</option>
             </select>
           </div>
         </div>

@@ -207,10 +207,16 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
         )}
 
         {/* Sidebar */}
-        <Sidebar sidebarOpen={sidebarOpen} />
+        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={ setSidebarOpen}/>
 
         {/* Main layout */}
-        <div className="lg:ml-80">
+      <div 
+  className={`
+    transition-all duration-500 
+    ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}
+    flex flex-col min-h-screen
+  `}
+>
           {/* Mobile Header */}
           <div className="lg:hidden bg-white/90 backdrop-blur-sm shadow-sm border-b border-gray-200 px-3 py-2 flex items-center justify-between sticky top-0 z-[50]">
             <button
@@ -275,7 +281,8 @@ const CreatorLayout: React.FC<CreatorLayoutProps> = ({
           </div>
 
           {/* Desktop Header */}
-          <div className="hidden lg:block bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200 relative z-[9999]">
+       <div className="hidden lg:block bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200 sticky top-0 z-[50] transition-all duration-500">
+
             <div className="px-5 py-3">
               <HeaderRow
                 left={

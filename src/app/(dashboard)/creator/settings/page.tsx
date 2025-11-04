@@ -812,7 +812,7 @@ function SettingsPageContent() {
 
       {/* Auth Token Banner */}
       {!tokenPresent && (
-        <div className="mb-6 p-4 rounded-2xl bg-yellow-50/80 backdrop-blur-sm border border-yellow-200/50 text-yellow-900 shadow-sm">
+        <div className="mb-6 p-4 rounded-sm bg-yellow-50/80 backdrop-blur-sm border border-yellow-200/50 text-yellow-900 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -836,10 +836,10 @@ function SettingsPageContent() {
         </div>
       )}
 
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-600/50">
-        <div className="p-6 border-b border-gray-600">
-          <h1 className="hidden md:block text-2xl font-semibold text-gray-900">Settings</h1>
-          <p className="hidden md:block text-gray-600 mt-1">
+      <div className="bg-white/80  rounded-sm hover:shadow-sm border border-gray-200/04">
+        <div className="p-4 border-b border-gray-200">
+          <h1 className=" md:block text-2xl font-semibold text-gray-900">Settings</h1>
+          <p className=" md:block text-gray-600 mt-1">
             Manage your account preferences and integrations
           </p>
         </div>
@@ -866,7 +866,7 @@ function SettingsPageContent() {
                     Upload a profile picture to personalize your account
                   </p>
 
-                  <div className="flex items-center gap-4">
+                  <div className="flex  flex-col items-center gap-4">
                     <div className="relative">
                       {(() => {
                         // Use the same pattern as CreatorLayout - prioritize hook profile
@@ -938,7 +938,7 @@ function SettingsPageContent() {
                             className="hidden"
                             id="avatar-upload"
                           />
-                          <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors cursor-pointer text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                          <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600  text-white rounded-sm hover:bg-blue-700 transition-colors cursor-pointer text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                             {uploadingAvatar ? (
                               <>
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -997,7 +997,7 @@ function SettingsPageContent() {
                       type="text"
                       value={formData.name}
                       onChange={(e) => handleInputChange("name", e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-200/04 rounded-sm focus:outline-none "
                       placeholder="Enter your full name"
                     />
                   </div>
@@ -1011,7 +1011,7 @@ function SettingsPageContent() {
                       value={formData.email}
                       disabled
                       readOnly
-                      className="w-full px-3 py-2 border border-gray-700 rounded-md bg-gray-100 cursor-not-allowed text-gray-600"
+                      className="w-full px-3 py-2 border border-gray-200/04 rounded-sm  cursor-not-allowed text-gray-600"
                       placeholder="Enter your email address"
                     />
                     <p className="text-xs text-gray-500 mt-1">
@@ -1027,7 +1027,7 @@ function SettingsPageContent() {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => handleInputChange("phone", e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-200/04 rounded-sm focus:outline-none "
                       placeholder="Enter your phone number"
                     />
                   </div>
@@ -1055,7 +1055,7 @@ function SettingsPageContent() {
                         value={forgotPasswordEmail || formData.email}
                         onChange={(e) => setForgotPasswordEmail(e.target.value)}
                         placeholder="Enter your email"
-                        className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-200/04 rounded-sm focus:outline-none  "
                         disabled={forgotPasswordLoading}
                       />
                       <p className="text-xs text-gray-500 mt-1">
@@ -1065,7 +1065,7 @@ function SettingsPageContent() {
                     <button
                       type="submit"
                       disabled={forgotPasswordLoading || (!forgotPasswordEmail && !formData.email)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+                      className=" bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-md  bg-gradient-to-r from-blue-600 to-purple-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                     >
                       {forgotPasswordLoading ? (
                         <>
@@ -1090,7 +1090,7 @@ function SettingsPageContent() {
                 <button
                   onClick={saveProfile}
                   disabled={saving}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+                  className=" bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-sm hover: bg-gradient-to-r from-blue-600 to-purple-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                 >
                   {saving ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -1130,18 +1130,21 @@ function SettingsPageContent() {
             
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <div>
+             <div >
                   <p className="font-medium text-gray-900">Marketing Emails</p>
                   <p className="text-sm text-gray-900">Receive product news, feature updates and special offers via email</p>
                 </div>
-                <ToggleSwitch 
+                <div>
+                  <ToggleSwitch 
                   enabled={marketingEmails} 
                   onToggle={() => {
                     const next = !marketingEmails;
                     setMarketingEmails(next);
                     handlePreferenceChange('marketingEmails', next);
                   }} 
+                  
                 />
+                </div>
               </div>
 
               <div className="flex items-center justify-between">
@@ -1149,7 +1152,8 @@ function SettingsPageContent() {
                   <p className="font-medium text-gray-900">Email Notifications</p>
                   <p className="text-sm text-gray-900">Get email alerts about your tasks, posts and activity</p>
                 </div>
-                <ToggleSwitch 
+                <div>
+                   <ToggleSwitch 
                   enabled={emailNotifications} 
                   onToggle={() => {
                     const next = !emailNotifications;
@@ -1157,6 +1161,7 @@ function SettingsPageContent() {
                     handlePreferenceChange('emailNotifications', next);
                   }} 
                 />
+               </div>
               </div>
 
               <div className="flex items-center justify-between">
@@ -1164,7 +1169,8 @@ function SettingsPageContent() {
                   <p className="font-medium text-gray-900">Push Notifications</p>
                   <p className="text-sm text-gray-900">Get push notifications on your mobile device and browser</p>
                 </div>
-                <ToggleSwitch 
+                <div>
+                  <ToggleSwitch 
                   enabled={pushNotifications} 
                   onToggle={() => {
                     const next = !pushNotifications;
@@ -1172,6 +1178,7 @@ function SettingsPageContent() {
                     handlePreferenceChange('pushNotifications', next);
                   }} 
                 />
+                </div>
               </div>
 
               <div className="flex items-center justify-between">
@@ -1179,7 +1186,8 @@ function SettingsPageContent() {
                   <p className="font-medium text-gray-900">SMS Notifications</p>
                   <p className="text-sm text-gray-900">Receive SMS reminders for upcoming posts or urgent deadlines</p>
                 </div>
-                <ToggleSwitch 
+                <div>
+                  <ToggleSwitch 
                   enabled={smsNotifications} 
                   onToggle={() => {
                     const next = !smsNotifications;
@@ -1187,6 +1195,7 @@ function SettingsPageContent() {
                     handlePreferenceChange('smsNotifications', next);
                   }} 
                 />
+                </div>
               </div>
             </div>
           </section>
@@ -1207,7 +1216,7 @@ function SettingsPageContent() {
                   </div>
                   <button
                     onClick={() => setShowDeleteModal(true)}
-                    className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors text-sm font-medium w-full sm:w-auto"
+                    className="bg-red-600 text-white px-4 py-2 rounded-sm hover:bg-red-700 transition-colors text-sm font-medium w-full sm:w-auto"
                   >
                     Delete Account
                   </button>

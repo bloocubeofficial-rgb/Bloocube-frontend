@@ -4,6 +4,8 @@ import { useCampaigns } from '@/hooks/useCampaigns';
 import { useBids, createBidApi } from '@/hooks/useBids';
 import type { Campaign } from '@/types/campaign';
 import { cookieAuthUtils } from '@/lib/cookieAuth';
+import { CheckIcon } from 'lucide-react';
+
 import { Search, Filter, IndianRupee, Calendar, Users, Globe, CheckCircle, Clock, XCircle, Cross, X } from 'lucide-react';
 import CreatorLayout from '@/Components/Creater/CreatorLayout';
 import {
@@ -13,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/Components/ui/Select";
+import { ChevronDownIcon } from 'lucide-react';
 export default function CreatorMarketplacePage() {
   const { data: campaigns, loading, error, params, setParams, refetch } = useCampaigns({ status: 'active', limit: 10 });
   const { data: bids, loading: bidsLoading, refetch: refetchBids } = useBids({});
@@ -26,7 +29,15 @@ export default function CreatorMarketplacePage() {
   const [search, setSearch] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedBudget, setSelectedBudget] = useState('rating')
+  const[selectedSort,setSelectedSort]=useState('all')
+ 
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isPlatformDropdownOpen, setIsPlatformDropdownOpen] = useState(false);
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+  const [isBudgetDropdownOpen, setIsBudgetDropdownOpen] = useState(false);
 
   // Helper function to get bid status for a campaign
   const getBidStatus = (campaignId: string) => {
@@ -160,8 +171,35 @@ export default function CreatorMarketplacePage() {
 const [isExpanded, setIsExpanded] = useState(false);
 
 
+const platformOptions = [
+    { value: 'all', label: 'All Platforms' },
+    { value: 'instagram', label: 'Instagram' },
+    { value: 'youtube', label: 'YouTube' },
+    { value: 'twitter', label: 'Twitter'},
+    { value: 'linkedin', label: 'LinkedIn' },
+    { value: 'tiktok', label: 'TikTok' }
+  ];
+
+  const SortOptions = [
+    { value: 'all', label: 'All Sort'},
+    { value: 'fashion', label: 'Newest first' },
+    { value: 'technology', label: 'Oldest First' },
+    { value: 'fitness', label: 'Highest Budget' },
+    { value: 'lifestyle', label: 'Lowest Budget'},
+   
+  ];
+    
+
+  const BudgetOptions = [
+    { value: 'rating', label: 'Any Budget' },
+    { value: 'followers', label: '₹0 - ₹10K' },
+    { value: 'engagement', label: '₹10K - ₹50K' },
+    { value: 'price-low', label: '₹50K - ₹1L' },
+    { value: 'price-high', label: '₹1L+' }
+  ];
 
 
+  
   return (
     <CreatorLayout 
       title="Creator Marketplace" 
@@ -191,7 +229,7 @@ const [isExpanded, setIsExpanded] = useState(false);
     
       {/* Message Display */}
       {message && (
-        <div className={`mb-6 p-4 rounded-lg border ${
+        <div className={`mb-6 p-4 rounded-sm border ${
           message.type === 'success' 
             ? 'bg-green-50 border-green-200 text-green-800' 
             : 'bg-red-50 border-red-200 text-red-800'
@@ -216,15 +254,15 @@ const [isExpanded, setIsExpanded] = useState(false);
       )}
 
       {/* Enhanced Filters Section */}
-      <div className="bg-white/80  rounded-sm border border-gray-200/90 p-6 mb-8 hover:shadow-md transition-all duration-200">
+      <div className="bg-white/80 backdrop-blur-sm rounded-sm hovershadow-sm border border-gray-200/04 p-3 mb-8">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-sm flex items-center justify-center">
+          <div className="flex items-center gap-3 sm:gap-3 ">
+  <div className="w-10 h-8 lg:w-10 lg:h-10  bg-gradient-to-r from-blue-500 to-purple-600 rounded-sm flex items-center justify-center">
               <Filter className="w-5 h-5 text-white" />
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">Filter Campaigns</h3>
-              <p className="text-sm text-gray-500">Refine your search to find the perfect campaigns</p>
+           <div className="flex flex-col leading-tight mt-2">
+               <h3 className="text-sm font-semibold text-gray-900 sm:text-base">Filter Campaigns</h3>
+              <p className="text-xs text-gray-600 lg:text-sm">Refine your search to find the perfect campaigns</p>
             </div>
           </div>
           <div className="flex items-center space-x-2 w-full sm:w-auto">
@@ -233,53 +271,8 @@ const [isExpanded, setIsExpanded] = useState(false);
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Platform</label>
-            <select 
-             className="w-full border  border-gray-300 rounded-sm px-4 py-3 text-sm  focus:border-gray-300 bg-white hover:border-gray-300 transition-colors duration-200" 
-              value={params.platform || ''} 
-              onChange={e => setParams({ platform: e.target.value || undefined })}
-            >
-              <option value="">All Platforms</option>
-              <option value="instagram"> Instagram</option>
-              <option value="youtube"> YouTube</option>
-              <option value="twitter"> X (Twitter)</option>
-              <option value="linkedin"> LinkedIn</option>
-              <option value="facebook"> Facebook</option>
-            </select>
-          </div>
-
-
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Sort By</label>
-            <select 
-             className="w-full border  border-gray-300 rounded-sm px-4 py-3 text-sm  focus:border-gray-300 bg-white hover:border-gray-300 transition-colors duration-200" 
-              value={params.sort || '-createdAt'} 
-              onChange={e => setParams({ sort: e.target.value })}
-            >
-              <option value="-createdAt"> Newest First</option>
-              <option value="createdAt"> Oldest First</option>
-              <option value="-budget"> Highest Budget</option>
-              <option value="budget"> Lowest Budget</option>
-            </select>
-          </div>
-          
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Budget Range</label>
-            <select 
-            className="w-full border  border-gray-300 rounded-sm px-4 py-3 text-sm  focus:border-gray-300 bg-white hover:border-gray-300 transition-colors duration-200" 
-              defaultValue=""
-            >
-              <option value="">Any Budget</option>
-              <option value="0-10000">₹0 - ₹10K</option>
-              <option value="10000-50000">₹10K - ₹50K</option>
-              <option value="50000-100000">₹50K - ₹1L</option>
-              <option value="100000+">₹1L+</option>
-            </select>
-          </div>
-          
-          <div className="space-y-2">
+       
+          {/* <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">Campaign Type</label>
             <select 
            className="w-full border  border-gray-300 rounded-sm px-4 py-3 text-sm  focus:border-gray-300 bg-white hover:border-gray-300 transition-colors duration-200" 
@@ -291,11 +284,125 @@ const [isExpanded, setIsExpanded] = useState(false);
               <option value="review"> Product Reviews</option>
               <option value="brand"> Brand Partnerships</option>
             </select>
-          </div>
+          </div> */}
+
+
+<div className="relative" data-dropdown>
+                <button
+                  type="button"
+             className="w-full inline-flex items-center gap-2 px-4 py-3 border border-gray-200/04 rounded-sm focus:outline-none transition-colors text-left"
+
+                  onClick={() => setIsPlatformDropdownOpen(!isPlatformDropdownOpen)}
+                >
+                  <span className="text-gray-700">
+                    {platformOptions.find(opt => opt.value === selectedPlatform)?.label}
+                  </span>
+                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ml-auto ${isPlatformDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {isPlatformDropdownOpen && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200/04 rounded-sm shadow-sm">
+                    <div className="p-1">
+                      {platformOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded text-left transition-colors"
+                          onClick={() => {
+                            setSelectedPlatform(option.value);
+                            setIsPlatformDropdownOpen(false);
+                          }}
+                        >
+                        
+                          <span className="text-sm text-gray-700">{option.label}</span>
+                          {selectedPlatform === option.value && (
+                            <CheckIcon className="w-4 h-4 text-blue-600 " />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Category Filter */}
+              <div className="relative" data-dropdown>
+                <button
+                  type="button"
+              className="w-full inline-flex items-center gap-2 px-4 py-3 border border-gray-200/04 rounded-sm focus:outline-none transition-colors text-left"
+
+                  onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                >
+                 <span className="text-gray-700">
+  {SortOptions.find(opt => opt.value === selectedCategory)?.label}
+</span>
+                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 ml-auto transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {isSortDropdownOpen && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200/04 rounded-sm shadow-lg">
+                    <div className="p-2">
+                      {SortOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded text-left transition-colors"
+                          onClick={() => {
+                            setSelectedSort(option.value);
+                            setIsSortDropdownOpen(false);
+                          }}
+                        >
+                          {/* <span>{option.icon}</span> */}
+                          <span className="text-sm text-gray-700 ">{option.label}</span>
+                          {selectedCategory === option.value && (
+                            <CheckIcon className="w-4 h-4 text-blue-600 ml-auto" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Sort Filter */}
+              <div className="relative" data-dropdown>
+                <button
+                  type="button"
+              className="w-full inline-flex items-center gap-2 px-4 py-3 border border-gray-200/04 rounded-sm focus:outline-none transition-colors text-left"
+
+                  onClick={() => setIsBudgetDropdownOpen(!isBudgetDropdownOpen)}
+                >
+                  <span className="text-gray-700">
+                    {BudgetOptions.find(opt => opt.value === selectedBudget)?.label}
+                  </span>
+                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 ml-auto transition-transform ${isBudgetDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {isBudgetDropdownOpen && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200/04 rounded-sm shadow-lg">
+                    <div className="p-2">
+                      {BudgetOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded text-left transition-colors"
+                          onClick={() => {
+                            setSelectedBudget(option.value);
+                            setIsBudgetDropdownOpen(false);
+                          }}
+                        >
+                          {/* <span>{option.icon}</span> */}
+                          <span className="text-sm text-gray-700">{option.label}</span>
+                          {selectedBudget === option.value && (
+                            <CheckIcon className="w-4 h-4 text-blue-600 ml-auto" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
         </div>
         
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 flex-wrap gap-2">
-          <div className="flex items-center space-x-2">
+       <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-400 flex-wrap gap-2 mb-3 mt-3">
+          <div className="flex flex-wrap mb-1 items-center space-x-2 gap-2">
             <span className="text-xs text-gray-500">Quick filters:</span>
             <button className="px-3 py-1 text-xs bg-blue-100 text-blue-700  border border-blue-700 rounded-full hover:bg-blue-200 transition-colors duration-200">
               High Budget
@@ -346,8 +453,8 @@ const [isExpanded, setIsExpanded] = useState(false);
           const brandName = (c as any).brand_id?.name || 'Brand';
           console.log('Rendering campaign:', c.title, 'bid status:', bidStatus, 'brand:', brandName);
           return (
-            <div key={c._id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-200">
-              <div className="p-6">
+            <div key={c._id} className="bg-white rounded-sm  border hover:shadow-sm transition-shadow duration-200">
+              <div className="p-3">
                 <div className="flex  items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex  items-center justify-between mb-2">
@@ -356,7 +463,7 @@ const [isExpanded, setIsExpanded] = useState(false);
                         <p className="text-xs text-gray-500 mt-1">by {brandName}</p>
                       </div>
                       {/* Bid Status Badge - Always show */}
-                      <div className={`flex flex-1 items-center px-2 py-1.5 rounded-xl text-xs font-medium ${
+                      <div className={`flex flex-1 items-center px-2 py-1.5 rounded-xl text-xs font-sm ${
                         bidStatus.status === 'accepted' ? 'bg-green-100 text-green-800 border border-green-300 items-center' :
                         bidStatus.status === 'rejected' ? 'bg-red-100 text-red-800 border border-red-800 items-center' :
                         bidStatus.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border border-yellow-800 items-center ' :

@@ -373,17 +373,15 @@ const Dashboard = () => {
 
       {!loading && !error && (
         <>
-          <div className="flex justify-between ">
-          <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
+          <div className="flex flex-col lg:flex-row justify-between ">
+           <div className="flex items-center space-x-2 text-sm text-gray-500 mb-4">
             <Calendar className="w-4 h-4" />
             <span>
               Last updated: {new Date(totals.lastUpdated).toLocaleTimeString()}
             </span>
           </div>
-        </div>
         <div>
-              <Link href="/creator/posts">
+   <Link href="/creator/posts">
   <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-sm text-white px-4 py-2.5 rounded-sm flex items-center space-x-1 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md">
     <Plus className="w-4 h-4" />
     <span>Create New Post</span>
