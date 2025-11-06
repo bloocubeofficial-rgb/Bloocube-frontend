@@ -2,6 +2,9 @@
 'use client'
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { Line, Pie, Bar } from 'react-chartjs-2';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/Components/ui/tabs";
+import Engagement30DaysChart from './engagement30DaysChart';
+import EngagementChart from "./engagementChart";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -19,7 +22,9 @@ import { apiRequest } from '@/lib/apiClient';
 import { getUserId } from '@/lib/userUtils';
 import { RefreshCw } from 'lucide-react';
 import { getFriendlyMessage, ApiError } from '@/lib/errors';
-
+import MonthlyViewsGraph from './monthlyviews';
+import PlateformBreakdownChart from './platformBreakdownChart'
+import PostTypePerformanceChart from './PostTypeperformanceChart';
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -41,15 +46,15 @@ interface MetricCardProps {
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, color, icon }) => (
-  <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6 shadow-sm border">
+  <div className="bg-white/80  rounded-sm p-3 shadow-sm border">
     <div className="flex items-center justify-between mb-2">
-      <div className={`p-2 rounded-lg ${color}`}>
+      <div className={`p-1 rounded-sm ${color}`}>
         {icon}
       </div>
     </div>
     <div className="space-y-1">
       <p className="text-sm text-gray-800">{title}</p>
-      <p className="text-2xl font-bold">{value}</p>
+      <p className="text-sm font-bold">{value}</p>
       <p className="text-xs text-gray-700">{subtitle}</p>
     </div>
   </div>
@@ -72,6 +77,7 @@ const AnalyticsDashboard: React.FC = () => {
   const hasSyncedRef = useRef<boolean>(false); // Track if we've synced on initial load
   const lastSyncTimeRef = useRef<number>(0); // Track last sync time to throttle
   const SYNC_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes cooldown between syncs to avoid rate limits
+const [platform, setPlatform] = useState("instagram");
 
   // Sync analytics from linked accounts with throttling to prevent rate limits
   const syncAnalytics = useCallback(async (userId: string, days: number, force = false) => {
@@ -402,6 +408,15 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
     }
   };
 
+
+
+  const sampleData = [
+  { date: "Day 1", likes: 10, shares: 5, comments: 5 },
+  { date: "Day 2", likes: 20, shares: 8, comments: 12 },
+  { date: "Day 3", likes: 5, shares: 3, comments: 7 },
+  { date: "Day 4", likes: 30, shares: 10, comments: 20 },
+  // ... continue till Day 30
+];
   return (
     <CreatorLayout 
       title="Analytics Dashboard" 
@@ -494,6 +509,8 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
         </div>
       </div>
 
+      
+      
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
         <MetricCard
@@ -525,11 +542,111 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
           icon={<span className="text-purple-600">📊</span>}
         />
       </div>
+<div className="w-full">
+  <Tabs value={platform} onValueChange={setPlatform}>
+    {/* 🔹 Tabs Header (Right aligned) */}
+    <div className="flex justify-end mb-6">
+      <TabsList className="flex flex-wrap gap-2">
+        <TabsTrigger value="instagram">Instagram</TabsTrigger>
+        <TabsTrigger value="youtube">YouTube</TabsTrigger>
+        <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
+        <TabsTrigger value="twitter">Twitter (X)</TabsTrigger>
+      </TabsList>
+    </div>
+
+    {/* 🔹 First Row */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      {/* Chart 1 */}
+      <div className="border border-gray-200 dark:border-gray-800 rounded-sm p-2  hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-900">
+        <TabsContent value="instagram">
+          <EngagementChart activePlatform="instagram" />
+        </TabsContent>
+        <TabsContent value="youtube">
+          <EngagementChart activePlatform="youtube" />
+        </TabsContent>
+        <TabsContent value="linkedin">
+          <EngagementChart activePlatform="linkedin" />
+        </TabsContent>
+        <TabsContent value="twitter">
+          <EngagementChart activePlatform="twitter" />
+        </TabsContent>
+      </div>
+
+      {/* Chart 2 */}
+      <div className="border border-gray-200 dark:border-gray-800 rounded-sm p-2  hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-900">
+        <TabsContent value="instagram">
+          <MonthlyViewsGraph platform="instagram" />
+        </TabsContent>
+        <TabsContent value="youtube">
+          <MonthlyViewsGraph platform="youtube" />
+        </TabsContent>
+        <TabsContent value="linkedin">
+          <MonthlyViewsGraph platform="linkedin" />
+        </TabsContent>
+        <TabsContent value="twitter">
+          <MonthlyViewsGraph platform="twitter" />
+        </TabsContent>
+      </div>
+    </div>
+
+    {/* 🔹 Second Row (Single Chart Centered) */}
+    <div className="border border-gray-200 dark:border-gray-800 rounded-sm p-3  hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-900 mb-6">
+      <TabsContent value="instagram">
+        <Engagement30DaysChart platform="instagram" />
+      </TabsContent>
+      <TabsContent value="youtube">
+        <Engagement30DaysChart platform="youtube" />
+      </TabsContent>
+      <TabsContent value="linkedin">
+        <Engagement30DaysChart platform="linkedin" />
+      </TabsContent>
+      <TabsContent value="twitter">
+        <Engagement30DaysChart platform="twitter" />
+      </TabsContent>
+    </div>
+
+    {/* 🔹 Third Row */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Chart 4 - Platform Breakdown */}
+      <div className="border border-gray-200 dark:border-gray-800 rounded-sm p-2 hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-900">
+        <TabsContent value="instagram">
+          <PlateformBreakdownChart platform="instagram" />
+        </TabsContent>
+        <TabsContent value="youtube">
+          <PlateformBreakdownChart platform="youtube" />
+        </TabsContent>
+        <TabsContent value="linkedin">
+          <PlateformBreakdownChart platform="linkedin" />
+        </TabsContent>
+        <TabsContent value="twitter">
+          <PlateformBreakdownChart platform="twitter" />
+        </TabsContent>
+      </div>
+
+      {/* Chart 5 - Post Type Performance */}
+      <div className="border border-gray-200 dark:border-gray-800 rounded-sm p-2 hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-900">
+        <TabsContent value="instagram">
+          <PostTypePerformanceChart platform="instagram" />
+        </TabsContent>
+        <TabsContent value="youtube">
+          <PostTypePerformanceChart platform="youtube" />
+        </TabsContent>
+        <TabsContent value="linkedin">
+          <PostTypePerformanceChart platform="linkedin" />
+        </TabsContent>
+        <TabsContent value="twitter">
+          <PostTypePerformanceChart platform="twitter" />
+        </TabsContent>
+      </div>
+    </div>
+  </Tabs>
+</div>
+
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 gap-4 md:gap-6 mb-6">
         {/* Engagement Trends */}
-        <div className="bg-white/80  rounded-sm p-3 md:p-6 shadow-sm border border-gray-200/100 hover:shadow:sm">
+        {/* <div className="bg-white/80  rounded-sm p-3 md:p-6 shadow-sm border border-gray-200/100 hover:shadow:sm">
           <div className="mb-4">
             <h3 className="text-base md:text-lg font-semibold">Engagement Trends</h3>
             <p className="text-xs md:text-sm text-gray-700">Likes, comments and shares over the last {rangeDays} days</p>
@@ -537,13 +654,14 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
           <div style={{ height: "250px" }} className="w-full">
             <Line data={engagementData} options={chartOptions} />
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Bottom Charts */}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Platform Breakdown */}
-        <div className="rounded-sm p-3 md:p-6 shadow-sm border border-gray-200/100 hover:shadow:sm">
+        {/* <div className="rounded-sm p-3 md:p-6 shadow-sm border border-gray-200/100 hover:shadow:sm">
           <div className="mb-4">
             <h3 className="text-base md:text-lg font-semibold">Platform Breakdown</h3>
             <p className="text-xs md:text-sm text-gray-700">Engagement distribution across social media platforms</p>
@@ -551,10 +669,10 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
           <div style={{ height: '200px' }} className="w-full">
             <Pie data={platformData} options={pieOptions} />
           </div>
-        </div>
+        </div> */}
 
         {/* Post Type Performance */}
-        <div className="rounded-sm p-3 md:p-6 shadow-sm border border-gray-200/100 hover:shadow:sm">
+        {/* <div className="rounded-sm p-3 md:p-6 shadow-sm border border-gray-200/100 hover:shadow:sm">
           <div className="mb-4">
             <h3 className="text-base md:text-lg font-semibold">Post Type Performance</h3>
             <p className="text-xs md:text-sm text-gray-700">Engagement by post content type</p>
@@ -562,8 +680,12 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
           <div style={{ height: '200px' }} className="w-full">
             <Bar data={postTypeData} options={barOptions} />
           </div>
-        </div>
+        </div> */}
       </div>
+       <div className="p-6">
+      <h1 className="text-xl font-semibold mb-4">Social Media Analytics</h1>
+      </div>
+      
     </CreatorLayout>
   );
 };

@@ -15,7 +15,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 
-
+import EngagementCarousel from "./engagementCrousel";
 import {
   Plus,
   Eye,
@@ -438,29 +438,10 @@ const Dashboard = () => {
 </Card>
 
 {/* Engagement Rate */}
- <Card className="rounded-sm  hover:shadow-md transition-all duration-200 border border-gray-200/04 ">
-  <CardContent className="p-3">
-    <div className="flex justify-between items-start mb-1">
-      <div>
-        <p className="text-xs text-gray-500 font-medium">Engagement Rate</p>
-        <p className="text-2xl font-semibold text-gray-900 mt-1">{totals.engagementRate}%</p>
-      </div>
-
-      <div className="w-10 h-10 bg-green-100 rounded-md flex items-center justify-center">
-        <TrendingUp className="w-5 h-5 text-green-600" />
-      </div>
-    </div>
-    <div className="flex items-center text-green-600 text-xs font-sm mt-1">
-      <TrendingUp className="w-3 h-3 mr-1" />
-   +2.1% From last month
-    </div>
-
-  </CardContent>
-</Card>
-        
+     <EngagementCarousel />
 
 {/* Avg Engagement Score */}
- <Card className="rounded-xl  hover:shadow-md transition-all duration-200 border border-gray-200/04 ">
+ <Card className="rounded-sm  hover:shadow-md transition-all duration-200 border border-gray-200/04 ">
   <CardContent className="p-3">
     <div className="flex justify-between items-start mb-1">
       <div>
