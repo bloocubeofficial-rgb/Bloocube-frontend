@@ -91,6 +91,13 @@ const Sidebar = React.memo(({ sidebarOpen,setSidebarOpen }: SidebarProps) => {
     return `${baseClasses} ${isActive ? activeClasses : inactiveClasses}`;
   };
 
+//   useEffect(() => {
+//   if (window.innerWidth < 1024) {
+//     // Auto close only on mobile when a link is clicked
+//     setSidebarOpen(true);
+//   }
+// }, [pathname]);
+
   return (
     // This className controls the mobile slide-in and fixed width
     <>

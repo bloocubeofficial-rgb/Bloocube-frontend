@@ -2042,6 +2042,7 @@ export default function PostsPage() {
                   return (
                     <div
                       key={platform}
+                       onClick={() => handlePlatformSelect(platform)}
                       className={`p-4 rounded-sm border transition-all duration-200 ${isSelected
                           ? `border-${config.color}-500 bg-${config.color}-50  hover:shadow:sm`
                           : "border-gray-200/80 bg-white"
@@ -2076,7 +2077,7 @@ export default function PostsPage() {
                                   ✓ Connected
                                 </span>
                                 <button
-                                  onClick={() => handlePlatformSelect(platform)}
+                                  // onClick={() => handlePlatformSelect(platform)}
                                   className="text-xs text-blue-600 hover:text-blue-800 font-medium"
                                 >
                                   Select
