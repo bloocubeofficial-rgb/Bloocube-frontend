@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -11,37 +11,59 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { fetchPublishedPosts, type PublishedPost } from "@/lib/engagementApi";
 
-type Platform = "instagram" | "youtube" | "linkedin" | "twitter";
+type Platform = "instagram" | "youtube" | "linkedin" | "twitter" | "facebook";
 
 interface Props {
   platform: Platform;
 }
 
 const PostTypePerformanceChart: React.FC<Props> = ({ platform }) => {
-  const data: Record<Platform, { type: string; engagement: number }[]> = {
-    instagram: [
-      { type: "Image", engagement: 3200 },
-      { type: "Video", engagement: 5400 },
-      { type: "Reel", engagement: 8700 },
-      { type: "Carousel", engagement: 4600 },
-    ],
-    youtube: [
-      { type: "Short", engagement: 10200 },
-      { type: "Video", engagement: 7200 },
-      { type: "Live", engagement: 5400 },
-    ],
-    linkedin: [
-      { type: "Text", engagement: 1500 },
-      { type: "Image", engagement: 2400 },
-      { type: "Article", engagement: 1900 },
-    ],
-    twitter: [
-      { type: "Text", engagement: 1200 },
-      { type: "Image", engagement: 2100 },
-      { type: "Video", engagement: 3200 },
-    ],
-  };
+  const [chartData, setChartData] = useState<{ type: string; engagement: number }[]>([]);
+
+  useEffect(() => {
+    // Fetch published posts for the platform
+    fetchPublishedPosts({
+      platform,
+      limit: 100,
+      includeMetrics: true,
+    })
+      .then(response => {
+        if (response.success && response.data?.posts) {
+          // Group posts by post_type and calculate total engagement
+          const typeMap: Record<string, number> = {};
+          
+          response.data.posts.forEach((post: PublishedPost) => {
+            const postType = post.post_type || 'Unknown';
+            const engagement = (post.metrics?.likes || 0) + 
+                             (post.metrics?.comments || 0) + 
+                             (post.metrics?.shares || 0);
+            
+            if (!typeMap[postType]) {
+              typeMap[postType] = 0;
+            }
+            typeMap[postType] += engagement;
+          });
+          
+          // Convert to array format
+          const data = Object.entries(typeMap)
+            .map(([type, engagement]) => ({
+              type: type.charAt(0).toUpperCase() + type.slice(1),
+              engagement,
+            }))
+            .sort((a, b) => b.engagement - a.engagement);
+          
+          setChartData(data.length > 0 ? data : []);
+        } else {
+          setChartData([]);
+        }
+      })
+      .catch(err => {
+        console.warn(`Failed to fetch ${platform} post types:`, err);
+        setChartData([]);
+      });
+  }, [platform]);
 
   return (
     <div className="bg-white p-5 ">
@@ -53,10 +75,15 @@ const PostTypePerformanceChart: React.FC<Props> = ({ platform }) => {
       </p>
 
       <div className="w-full h-[300px] sm:h-[350px] md:h-[400px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={data[platform]}
-            margin={{
+        {chartData.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            No data available for this platform
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{
               top: 20,
               right: 20,
               left: 0,
@@ -101,6 +128,7 @@ const PostTypePerformanceChart: React.FC<Props> = ({ platform }) => {
             />
           </BarChart>
         </ResponsiveContainer>
+        )}
       </div>
     </div>
   );

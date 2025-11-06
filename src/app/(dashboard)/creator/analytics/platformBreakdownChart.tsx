@@ -1,30 +1,46 @@
 "use client";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as echarts from "echarts";
+import { fetchPlatformEngagement, type PlatformEngagement } from "@/lib/engagementApi";
 
-type Platform = "instagram" | "youtube" | "linkedin" | "twitter";
+type Platform = "instagram" | "youtube" | "linkedin" | "twitter" | "facebook";
 
 interface Props {
   platform: Platform;
 }
 
-const platformData: Record<
-  Platform,
-  { likes: number; shares: number; comments: number }
-> = {
-  instagram: { likes: 2500, shares: 1200, comments: 900 },
-  youtube: { likes: 4500, shares: 2300, comments: 1500 },
-  linkedin: { likes: 1800, shares: 700, comments: 500 },
-  twitter: { likes: 3200, shares: 1600, comments: 900 },
-};
-
 const PlatformBreakdownChart: React.FC<Props> = ({ platform }) => {
   const chartRef = useRef<HTMLDivElement | null>(null);
+  const [chartData, setChartData] = useState<{ likes: number; shares: number; comments: number }>({
+    likes: 0,
+    shares: 0,
+    comments: 0,
+  });
+
+  useEffect(() => {
+    // Fetch engagement data for the platform
+    fetchPlatformEngagement(platform)
+      .then(data => {
+        console.log(`Fetched ${platform} breakdown data:`, data);
+        if (data.success && data.metrics) {
+          setChartData({
+            likes: data.metrics.likes || 0,
+            shares: data.metrics.shares || 0,
+            comments: data.metrics.comments || 0,
+          });
+        } else {
+          setChartData({ likes: 0, shares: 0, comments: 0 });
+        }
+      })
+      .catch(err => {
+        console.warn(`Failed to fetch ${platform} engagement:`, err);
+        setChartData({ likes: 0, shares: 0, comments: 0 });
+      });
+  }, [platform]);
 
   useEffect(() => {
     if (!chartRef.current) return;
     const chart = echarts.init(chartRef.current);
-    const data = platformData[platform];
 
     const option = {
       tooltip: {
@@ -59,9 +75,9 @@ const PlatformBreakdownChart: React.FC<Props> = ({ platform }) => {
             show: window.innerWidth > 640,
           },
           data: [
-            { value: data.likes, name: "Likes" },
-            { value: data.shares, name: "Shares" },
-            { value: data.comments, name: "Comments" },
+            { value: chartData.likes, name: "Likes" },
+            { value: chartData.shares, name: "Shares" },
+            { value: chartData.comments, name: "Comments" },
           ],
           emphasis: {
             itemStyle: {
@@ -104,7 +120,7 @@ const PlatformBreakdownChart: React.FC<Props> = ({ platform }) => {
       chart.dispose();
       window.removeEventListener("resize", handleResize);
     };
-  }, [platform]);
+  }, [platform, chartData]);
 
   return (
     <div className="bg-white p-5 ">

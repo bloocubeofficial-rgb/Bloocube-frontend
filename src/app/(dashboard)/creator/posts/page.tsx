@@ -716,6 +716,30 @@ export default function PostsPage() {
   };
 
   const loadPosts = async (syncAnalytics = false, force = false) => {
+    // Also fetch engagement metrics from new API
+    try {
+      const { fetchPublishedPosts } = await import('@/lib/engagementApi');
+      const engagementRes = await fetchPublishedPosts({
+        page: 1,
+        limit: 100,
+        includeMetrics: true
+      });
+      
+      if (engagementRes.success && engagementRes.data?.posts) {
+        // Create a map of engagement metrics by platform_post_id
+        const engagementMap: Record<string, any> = {};
+        engagementRes.data.posts.forEach(post => {
+          if (post.platform_post_id) {
+            engagementMap[post.platform_post_id] = post.metrics;
+          }
+        });
+        
+        // Merge engagement metrics into analytics map
+        setAnalyticsMap(prev => ({ ...prev, ...engagementMap }));
+      }
+    } catch (err) {
+      console.warn('Failed to fetch engagement metrics:', err);
+    }
     // Prevent duplicate calls within 2 seconds unless forced
     const now = Date.now();
     // Basic throttling for non-forced requests (apiClient handles deduplication)

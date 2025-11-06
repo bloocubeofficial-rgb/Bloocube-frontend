@@ -1,18 +1,11 @@
 "use client";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as echarts from "echarts";
+import { fetchPlatformEngagement, type PlatformEngagement } from "@/lib/engagementApi";
 
 interface PlatformViewData {
   [key: string]: number[];
 }
-
-// Dummy monthly data (12 months)
-const platformViews: PlatformViewData = {
-  instagram: [1200, 1800, 1500, 2000, 2500, 2700, 3000, 3500, 4000, 4200, 4500, 5000],
-  youtube: [900, 1200, 1100, 1600, 2100, 2500, 2900, 3100, 3300, 3600, 4000, 4500],
-  linkedin: [500, 800, 900, 1200, 1700, 2000, 2400, 2600, 3000, 3500, 3800, 4200],
-  twitter: [300, 500, 600, 800, 1000, 1300, 1600, 1900, 2200, 2500, 2800, 3000],
-};
 
 const months = [
   "Jan",
@@ -31,6 +24,55 @@ const months = [
 
 const MonthlyViewsGraph = ({ platform }: { platform: string }) => {
   const chartRef = useRef<HTMLDivElement | null>(null);
+  const [viewsData, setViewsData] = useState<number[]>([]);
+
+  useEffect(() => {
+    // Fetch engagement data and calculate monthly views
+    fetchPlatformEngagement(platform)
+      .then(data => {
+        console.log(`Fetched ${platform} views data:`, data);
+        if (data.success && data.posts && data.posts.length > 0) {
+          // Group views by month (last 12 months)
+          const now = new Date();
+          const monthMap: Record<string, number> = {};
+          
+          // Initialize last 12 months with year-month key
+          for (let i = 11; i >= 0; i--) {
+            const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            monthMap[key] = 0;
+          }
+          
+          // Aggregate views by month
+          data.posts.forEach(post => {
+            if (post.timestamp && post.views) {
+              const postDate = new Date(post.timestamp);
+              const key = `${postDate.getFullYear()}-${String(postDate.getMonth() + 1).padStart(2, '0')}`;
+              if (monthMap[key] !== undefined) {
+                monthMap[key] += post.views || 0;
+              }
+            }
+          });
+          
+          // Convert to array (last 12 months) in chronological order
+          const monthlyViews: number[] = [];
+          for (let i = 11; i >= 0; i--) {
+            const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            monthlyViews.push(monthMap[key] || 0);
+          }
+          
+          setViewsData(monthlyViews);
+        } else {
+          // No data, show zeros
+          setViewsData(Array(12).fill(0));
+        }
+      })
+      .catch(err => {
+        console.warn(`Failed to fetch ${platform} views:`, err);
+        setViewsData(Array(12).fill(0));
+      });
+  }, [platform]);
 
   useEffect(() => {
     if (!chartRef.current) return;
@@ -78,7 +120,7 @@ const MonthlyViewsGraph = ({ platform }: { platform: string }) => {
         {
           name: "Views",
           type: "line",
-          data: platformViews[platform],
+          data: viewsData.length > 0 ? viewsData : Array(12).fill(0),
           smooth: true,
           lineStyle: {
             width: 3,
@@ -113,7 +155,7 @@ const MonthlyViewsGraph = ({ platform }: { platform: string }) => {
       chart.dispose();
       resizeObserver.disconnect();
     };
-  }, [platform]);
+  }, [platform, viewsData]);
 
   return (
     <div

@@ -1,38 +1,9 @@
 "use client";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as echarts from "echarts";
+import { fetchPlatformEngagement, type PlatformEngagement } from "@/lib/engagementApi";
 
-type Platform = "instagram" | "youtube" | "linkedin" | "twitter";
-
-const platformData: Record<
-  Platform,
-  { date: string; likes: number; shares: number; comments: number }[]
-> = {
-  instagram: Array.from({ length: 30 }, (_, i) => ({
-    date: `Day ${i + 1}`,
-    likes: Math.floor(Math.random() * 90),
-    shares: Math.floor(Math.random() * 50),
-    comments: Math.floor(Math.random() * 40),
-  })),
-  youtube: Array.from({ length: 30 }, (_, i) => ({
-    date: `Day ${i + 1}`,
-    likes: Math.floor(Math.random() * 200),
-    shares: Math.floor(Math.random() * 80),
-    comments: Math.floor(Math.random() * 70),
-  })),
-  linkedin: Array.from({ length: 30 }, (_, i) => ({
-    date: `Day ${i + 1}`,
-    likes: Math.floor(Math.random() * 60),
-    shares: Math.floor(Math.random() * 30),
-    comments: Math.floor(Math.random() * 25),
-  })),
-  twitter: Array.from({ length: 30 }, (_, i) => ({
-    date: `Day ${i + 1}`,
-    likes: Math.floor(Math.random() * 100),
-    shares: Math.floor(Math.random() * 60),
-    comments: Math.floor(Math.random() * 50),
-  })),
-};
+type Platform = "instagram" | "youtube" | "linkedin" | "twitter" | "facebook";
 
 interface Props {
   platform: Platform;
@@ -40,10 +11,71 @@ interface Props {
 
 const Engagement30DaysChart = ({ platform }: Props) => {
   const chartRef = useRef<HTMLDivElement | null>(null);
-  const data = platformData[platform];
+  const [engagementData, setEngagementData] = useState<PlatformEngagement | null>(null);
+  const [chartData, setChartData] = useState<{ date: string; likes: number; shares: number; comments: number }[]>([]);
 
   useEffect(() => {
-    if (!chartRef.current || !data.length) return;
+    // Fetch engagement data for the platform
+    fetchPlatformEngagement(platform)
+      .then(data => {
+        console.log(`Fetched ${platform} engagement for 30 days chart:`, data);
+        setEngagementData(data);
+        
+        if (data.success && data.posts && data.posts.length > 0) {
+          // Group posts by day (last 30 days)
+          const now = new Date();
+          const dayMap: Record<string, { likes: number; shares: number; comments: number }> = {};
+          
+          // Initialize last 30 days
+          for (let i = 29; i >= 0; i--) {
+            const date = new Date(now);
+            date.setDate(date.getDate() - i);
+            const dateKey = date.toISOString().split('T')[0];
+            dayMap[dateKey] = { likes: 0, shares: 0, comments: 0 };
+          }
+          
+          // Aggregate metrics by day
+          data.posts.forEach(post => {
+            if (post.timestamp) {
+              const postDate = new Date(post.timestamp);
+              const dateKey = postDate.toISOString().split('T')[0];
+              if (dayMap[dateKey]) {
+                dayMap[dateKey].likes += post.likes || 0;
+                dayMap[dateKey].shares += post.shares || 0;
+                dayMap[dateKey].comments += post.comments || 0;
+              }
+            }
+          });
+          
+          // Convert to array format
+          const sortedData = Object.entries(dayMap)
+            .sort((a, b) => a[0].localeCompare(b[0]))
+            .map(([dateKey, metrics], index) => ({
+              date: `Day ${index + 1}`,
+              likes: metrics.likes,
+              shares: metrics.shares,
+              comments: metrics.comments,
+            }));
+          
+          setChartData(sortedData);
+        } else {
+          // No data available, show empty chart
+          setChartData(Array.from({ length: 30 }, (_, i) => ({
+            date: `Day ${i + 1}`,
+            likes: 0,
+            shares: 0,
+            comments: 0,
+          })));
+        }
+      })
+      .catch(err => {
+        console.warn(`Failed to fetch ${platform} engagement:`, err);
+        setChartData([]);
+      });
+  }, [platform]);
+
+  useEffect(() => {
+    if (!chartRef.current || !chartData.length) return;
 
     const chart = echarts.init(chartRef.current);
 
@@ -51,7 +83,7 @@ const Engagement30DaysChart = ({ platform }: Props) => {
       dataset: {
         source: [
           ["score", "amount", "date"],
-          ...data.map((d) => [
+          ...chartData.map((d) => [
             d.likes + d.shares + d.comments,
             d.likes + d.shares + d.comments,
             d.date,
@@ -86,7 +118,7 @@ const Engagement30DaysChart = ({ platform }: Props) => {
         left: "center",
         bottom: 8,
         min: 0,
-        max: Math.max(...data.map((d) => d.likes + d.shares + d.comments)),
+        max: Math.max(...chartData.map((d) => d.likes + d.shares + d.comments), 1),
         text: ["High", "Low"],
         dimension: 0,
         inRange: {
@@ -118,7 +150,7 @@ const Engagement30DaysChart = ({ platform }: Props) => {
       chart.dispose();
       window.removeEventListener("resize", handleResize);
     };
-  }, [platform, data]);
+  }, [platform, chartData]);
 
   return (
     <div

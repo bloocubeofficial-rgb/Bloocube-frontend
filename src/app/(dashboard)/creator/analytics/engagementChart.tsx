@@ -1,52 +1,97 @@
 "use client";
 import * as echarts from "echarts";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { fetchPlatformEngagement, type PlatformEngagement } from "@/lib/engagementApi";
 
-const platformData: any = {
-  instagram: {
-    title: "Instagram Engagement",
-    legend: ["Likes", "Comments", "Shares", "Saves"],
-    data: {
-      Likes: [240, 380, 420, 500, 620, 700, 880],
-      Comments: [60, 120, 200, 230, 260, 300, 360],
-      Shares: [40, 90, 140, 160, 190, 250, 300],
-      Saves: [120, 180, 250, 300, 350, 420, 500],
-    },
-  },
-  youtube: {
-    title: "YouTube Engagement",
-    legend: ["Views", "Likes", "Comments", "Shares"],
-    data: {
-      Views: [2000, 3000, 3500, 4200, 5000, 6200, 8000],
-      Likes: [200, 400, 500, 620, 720, 800, 900],
-      Comments: [50, 90, 130, 160, 200, 240, 320],
-      Shares: [20, 40, 70, 90, 120, 150, 200],
-    },
-  },
-  linkedin: {
-    title: "LinkedIn Engagement",
-    legend: ["Impressions", "Reactions", "Comments", "Shares"],
-    data: {
-      Impressions: [900, 1200, 1500, 1900, 2300, 2800, 3500],
-      Reactions: [80, 150, 220, 300, 400, 480, 550],
-      Comments: [20, 40, 70, 90, 110, 150, 200],
-      Shares: [5, 10, 20, 30, 45, 60, 85],
-    },
-  },
-  twitter: {
-    title: "Twitter (X) Engagement",
-    legend: ["Likes", "Retweets", "Replies", "Bookmarks"],
-    data: {
-      Likes: [150, 250, 400, 520, 640, 700, 820],
-      Retweets: [40, 80, 130, 160, 200, 260, 330],
-      Replies: [25, 40, 60, 90, 120, 150, 200],
-      Bookmarks: [30, 60, 80, 120, 150, 190, 250],
-    },
-  },
-};
 
-const getChartOption = (platform: string) => {
-  const { title, legend, data } = platformData[platform];
+
+const getChartOption = (platform: string, engagementData?: PlatformEngagement) => {
+  // Use real data if available, otherwise show empty chart
+  let title, legend, data;
+  
+  console.log(`getChartOption for ${platform}:`, engagementData);
+  
+  if (engagementData?.success && engagementData.posts && engagementData.posts.length > 0) {
+    // Use real data from API
+    const posts = engagementData.posts.slice(0, 30); // Last 7 posts
+    console.log(`Using ${posts.length} posts for ${platform} chart:`, posts);
+    title = `${platform.charAt(0).toUpperCase() + platform.slice(1)} Engagement`;
+    
+    if (platform === 'youtube') {
+      legend = ["Views", "Likes", "Comments"];
+      data = {
+        Views: posts.map(p => p.views || 0),
+        Likes: posts.map(p => p.likes || 0),
+        Comments: posts.map(p => p.comments || 0),
+        
+      };
+      console.log(`YouTube chart data:`, data);
+    } else if (platform === 'linkedin') {
+      legend = ["Impressions", "Reactions", "Comments"];
+      data = {
+        Impressions: posts.map(p => p.views || 0),
+        Reactions: posts.map(p => p.likes || 0),
+        Comments: posts.map(p => p.comments || 0),
+      
+      };
+    } else if (platform === 'twitter') {
+      legend = ["Likes", "Retweets", "Replies"];
+      data = {
+        Likes: posts.map(p => p.likes || 0),
+        Retweets: posts.map(p => p.shares || 0),
+        Replies: posts.map(p => p.comments || 0),
+        
+      };
+    } else {
+      // Instagram, Facebook, etc.
+      legend = ["Likes", "Comments", "Shares","views"];
+      data = {
+        Likes: posts.map(p => p.likes || 0),
+        Comments: posts.map(p => p.comments || 0),
+        Shares: posts.map(p => p.shares || 0),
+        Views: posts.map(p => p.views || 0),
+      };
+      console.log(`${platform} chart data:`, data);
+    }
+  } else {
+    // No data available, show empty chart with default structure
+    if (platform === 'youtube') {
+      title = "YouTube Engagement";
+      legend = ["Views", "Likes", "Comments", "Shares"];
+      data = {
+        Views: Array(7).fill(0),
+        Likes: Array(7).fill(0),
+        Comments: Array(7).fill(0),
+        Shares: Array(7).fill(0),
+      };
+    } else if (platform === 'linkedin') {
+      title = "LinkedIn Engagement";
+      legend = ["Impressions", "Reactions", "Comments", "Shares"];
+      data = {
+        Impressions: Array(7).fill(0),
+        Reactions: Array(7).fill(0),
+        Comments: Array(7).fill(0),
+        Shares: Array(7).fill(0),
+      };
+    } else if (platform === 'twitter') {
+      title = "Twitter (X) Engagement";
+      legend = ["Likes", "Retweets", "Replies"];
+      data = {
+        Likes: Array(7).fill(0),
+        Retweets: Array(7).fill(0),
+        Replies: Array(7).fill(0),
+      };
+    } else {
+      // Instagram, Facebook, etc.
+      title = `${platform.charAt(0).toUpperCase() + platform.slice(1)} Engagement`;
+      legend = ["Likes", "Comments", "Shares"];
+      data = {
+        Likes: Array(7).fill(0),
+        Comments: Array(7).fill(0),
+        Shares: Array(7).fill(0),
+      };
+    }
+  }
 
   const gradientColors = [
     ["rgb(128,255,165)", "rgb(1,191,236)"],
@@ -89,7 +134,9 @@ const getChartOption = (platform: string) => {
       {
         type: "category",
         boundaryGap: false,
-        data: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        data: engagementData?.posts && engagementData.posts.length > 0
+          ? engagementData.posts.slice(0, 7).map((_, idx) => `Post ${idx + 1}`)
+          : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
         axisLabel: {
           fontSize: 10,
         },
@@ -116,19 +163,48 @@ const getChartOption = (platform: string) => {
         ]),
       },
       emphasis: { focus: "series" },
-      data: data[name],
+      data: (data as Record<string, number[]>)[name] || [],
     })),
   };
 };
 
 export default function EngagementChart({ activePlatform }: any) {
   const chartRef = useRef<HTMLDivElement>(null);
+  const [engagementData, setEngagementData] = useState<PlatformEngagement | null>(null);
+
+  useEffect(() => {
+    // Reset engagement data when platform changes
+    setEngagementData(null);
+    
+    // Fetch engagement data for the platform
+    let isMounted = true;
+    
+    fetchPlatformEngagement(activePlatform)
+      .then(data => {
+        if (isMounted) {
+          console.log(`Fetched ${activePlatform} engagement data:`, data);
+          setEngagementData(data);
+        }
+      })
+      .catch(err => {
+        if (isMounted) {
+          console.warn(`Failed to fetch ${activePlatform} engagement:`, err);
+          setEngagementData(null);
+        }
+      });
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [activePlatform]);
 
   useEffect(() => {
     if (!chartRef.current) return;
 
     const chart = echarts.init(chartRef.current);
-    chart.setOption(getChartOption(activePlatform));
+    const options = getChartOption(activePlatform, engagementData || undefined);
+    console.log(`Setting chart options for ${activePlatform}:`, options);
+    chart.setOption(options);
 
     const resizeObserver = new ResizeObserver(() => {
       chart.resize();
@@ -140,7 +216,7 @@ export default function EngagementChart({ activePlatform }: any) {
       chart.dispose();
       resizeObserver.disconnect();
     };
-  }, [activePlatform]);
+  }, [activePlatform, engagementData]);
 
   return (
     <div

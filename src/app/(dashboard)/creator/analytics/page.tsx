@@ -22,6 +22,7 @@ import { apiRequest } from '@/lib/apiClient';
 import { getUserId } from '@/lib/userUtils';
 import { RefreshCw } from 'lucide-react';
 import { getFriendlyMessage, ApiError } from '@/lib/errors';
+import { fetchAllPlatformEngagement, fetchPlatformEngagement, fetchPlatformSupport, type AllPlatformEngagement, type PlatformEngagement, type PlatformSupportResponse } from '@/lib/engagementApi';
 import MonthlyViewsGraph from './monthlyviews';
 import PlateformBreakdownChart from './platformBreakdownChart'
 import PostTypePerformanceChart from './PostTypeperformanceChart';
@@ -77,7 +78,11 @@ const AnalyticsDashboard: React.FC = () => {
   const hasSyncedRef = useRef<boolean>(false); // Track if we've synced on initial load
   const lastSyncTimeRef = useRef<number>(0); // Track last sync time to throttle
   const SYNC_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes cooldown between syncs to avoid rate limits
-const [platform, setPlatform] = useState("instagram");
+  const [platform, setPlatform] = useState<string>("");
+  const [allEngagementData, setAllEngagementData] = useState<AllPlatformEngagement | null>(null);
+  const [platformEngagement, setPlatformEngagement] = useState<Record<string, PlatformEngagement>>({});
+  const [platformSupport, setPlatformSupport] = useState<PlatformSupportResponse | null>(null);
+  const [supportedPlatforms, setSupportedPlatforms] = useState<string[]>([]);
 
   // Sync analytics from linked accounts with throttling to prevent rate limits
   const syncAnalytics = useCallback(async (userId: string, days: number, force = false) => {
@@ -113,6 +118,50 @@ const [platform, setPlatform] = useState("instagram");
         // Log other sync errors but don't block analytics fetch
         console.warn('Failed to sync analytics from linked accounts:', e);
       }
+    }
+  }, []);
+
+  // Fetch platform support information
+  const fetchPlatformSupportInfo = useCallback(async () => {
+    try {
+      const support = await fetchPlatformSupport();
+      setPlatformSupport(support);
+      
+      // Get list of supported platforms (where supportsMetrics is true)
+      const supported = Object.entries(support.data || {})
+        .filter(([_, info]) => info.supportsMetrics)
+        .map(([platform, _]) => platform);
+      
+      setSupportedPlatforms(supported);
+      
+      // Set default platform to first supported platform if current platform is not supported
+      if (supported.length > 0 && (!platform || !supported.includes(platform))) {
+        setPlatform(supported[0]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch platform support:', err);
+    }
+  }, [platform]);
+
+  // Fetch engagement metrics from new engagement API
+  const fetchEngagementMetrics = useCallback(async (isManualRefresh = false) => {
+    try {
+      setError(null);
+      // Fetch all platform engagement
+      const allEngagement = await fetchAllPlatformEngagement();
+      console.log('Fetched all platform engagement:', allEngagement);
+      console.log('Summary data:', allEngagement?.data?.summary);
+      console.log('Platforms data:', allEngagement?.data?.platforms);
+      setAllEngagementData(allEngagement);
+      
+      // Note: Individual charts will fetch their own data when they mount
+      // This allows each chart to be independent and update when platform changes
+    } catch (err) {
+      console.error('Failed to fetch engagement metrics:', err);
+      const errorMessage = err instanceof ApiError 
+        ? getFriendlyMessage(err)
+        : (err as Error).message || 'Failed to load engagement metrics';
+      setError(errorMessage);
     }
   }, []);
 
@@ -185,17 +234,39 @@ const [platform, setPlatform] = useState("instagram");
   // Note: We don't reset sync flag on rangeDays change to avoid excessive syncs
   // The backend already filters by date range, so we can use existing synced data
   useEffect(() => {
-    fetchAnalytics(2, false);
+    // First fetch platform support to determine which platforms to show
+    fetchPlatformSupportInfo();
+    // Also fetch engagement metrics immediately (not dependent on platform selection)
+    fetchEngagementMetrics(false);
+  }, [fetchPlatformSupportInfo, fetchEngagementMetrics]);
+
+  useEffect(() => {
+    // Only fetch analytics if we have a selected platform
+    if (platform) {
+      fetchAnalytics(2, false);
+    }
     // Increase auto-refresh interval to 5 minutes (300000ms) to avoid rate limits
     // Analytics data doesn't need to be refreshed every 30 seconds
-    const interval = setInterval(() => fetchAnalytics(2, false), 5 * 60 * 1000); // 5 minutes
+    const interval = setInterval(() => {
+      if (platform) {
+        fetchAnalytics(2, false);
+      }
+      // Always refresh engagement metrics regardless of platform
+      fetchEngagementMetrics(false);
+    }, 5 * 60 * 1000); // 5 minutes
     return () => clearInterval(interval);
-  }, [fetchAnalytics]); // Now includes rangeDays dependency through fetchAnalytics
+  }, [fetchAnalytics, fetchEngagementMetrics, platform]); // Now includes platform dependency
 
   // Manual refresh handler
   const handleRefresh = useCallback(() => {
-    fetchAnalytics(2, true);
-  }, [fetchAnalytics]);
+    setRefreshing(true);
+    Promise.all([
+      fetchAnalytics(2, true),
+      fetchEngagementMetrics(true)
+    ]).finally(() => {
+      setRefreshing(false);
+    });
+  }, [fetchAnalytics, fetchEngagementMetrics]);
 
   // Build day labels for selected range
   const dayLabels = useMemo(() => {
@@ -210,22 +281,47 @@ const [platform, setPlatform] = useState("instagram");
   }, [rangeDays]);
 
   const engagementData = useMemo(() => {
-    // Calculate engagement trends from synced linked accounts data
-    // All metrics (likes, comments, shares) come from Instagram, Twitter, LinkedIn, YouTube, Facebook
+    // Calculate engagement trends from engagement API data (prioritize) or analytics data
     const byDay: Record<string, { likes: number; comments: number; shares: number }> = {};
     dayLabels.forEach(l => (byDay[l] = { likes: 0, comments: 0, shares: 0 }));
     
-    // Process analytics items from synced linked accounts (filtered by backend by date range)
-    analytics.forEach(a => {
-      const date = a?.timing?.posted_at ? new Date(a.timing.posted_at) : null;
-      if (!date) return;
-      const key = `${date.getMonth() + 1}/${date.getDate()}`;
-      if (!byDay[key]) return;
-      // Aggregate engagement metrics from all linked social accounts
-      byDay[key].likes += a.metrics?.likes || 0;
-      byDay[key].comments += a.metrics?.comments || 0;
-      byDay[key].shares += a.metrics?.shares || 0;
-    });
+    // Calculate date range for filtering
+    const now = new Date();
+    const startDate = new Date(now);
+    startDate.setDate(now.getDate() - rangeDays);
+    startDate.setHours(0, 0, 0, 0);
+    
+    // Use engagement API data if available (more accurate)
+    if (allEngagementData?.data?.platforms) {
+      for (const [platform, data] of Object.entries(allEngagementData.data.platforms)) {
+        if (data && data.success && data.posts && data.posts.length > 0) {
+          data.posts.forEach(post => {
+            if (!post.timestamp) return;
+            const postDate = new Date(post.timestamp);
+            if (postDate < startDate) return;
+            
+            const key = `${postDate.getMonth() + 1}/${postDate.getDate()}`;
+            if (byDay[key]) {
+              byDay[key].likes += post.likes || 0;
+              byDay[key].comments += post.comments || 0;
+              byDay[key].shares += post.shares || 0;
+            }
+          });
+        }
+      }
+    } else {
+      // Fallback to analytics data
+      analytics.forEach(a => {
+        const date = a?.timing?.posted_at ? new Date(a.timing.posted_at) : null;
+        if (!date || date < startDate) return;
+        const key = `${date.getMonth() + 1}/${date.getDate()}`;
+        if (!byDay[key]) return;
+        byDay[key].likes += a.metrics?.likes || 0;
+        byDay[key].comments += a.metrics?.comments || 0;
+        byDay[key].shares += a.metrics?.shares || 0;
+      });
+    }
+    
     return {
       labels: dayLabels,
       datasets: [
@@ -258,15 +354,42 @@ const [platform, setPlatform] = useState("instagram");
         }
       ]
     };
-  }, [analytics, dayLabels]);
+  }, [analytics, dayLabels, allEngagementData, rangeDays]);
 
   const platformData = useMemo(() => {
-    // Platform breakdown from linked accounts (Instagram, Twitter, LinkedIn, YouTube, Facebook)
+    // Platform breakdown from engagement API data (prioritize) or analytics data
     const counts: Record<string, number> = {};
-    analytics.forEach(a => {
-      const p = String(a.platform || '').toLowerCase();
-      counts[p] = (counts[p] || 0) + 1;
-    });
+    
+    // Calculate date range for filtering
+    const now = new Date();
+    const startDate = new Date(now);
+    startDate.setDate(now.getDate() - rangeDays);
+    startDate.setHours(0, 0, 0, 0);
+    
+    // Use engagement API data if available
+    if (allEngagementData?.data?.platforms) {
+      for (const [platform, data] of Object.entries(allEngagementData.data.platforms)) {
+        if (data && data.success && data.posts && data.posts.length > 0) {
+          const filteredPosts = data.posts.filter(post => {
+            if (!post.timestamp) return false;
+            const postDate = new Date(post.timestamp);
+            return postDate >= startDate;
+          });
+          if (filteredPosts.length > 0) {
+            counts[platform] = (counts[platform] || 0) + filteredPosts.length;
+          }
+        }
+      }
+    } else {
+      // Fallback to analytics data
+      analytics.forEach(a => {
+        const date = a?.timing?.posted_at ? new Date(a.timing.posted_at) : null;
+        if (!date || date < startDate) return;
+        const p = String(a.platform || '').toLowerCase();
+        counts[p] = (counts[p] || 0) + 1;
+      });
+    }
+    
     const labels = Object.keys(counts).map(n => n.charAt(0).toUpperCase() + n.slice(1));
     const data = Object.values(counts);
     return {
@@ -279,15 +402,25 @@ const [platform, setPlatform] = useState("instagram");
         }
       ]
     };
-  }, [analytics]);
+  }, [analytics, allEngagementData, rangeDays]);
 
   const postTypeData = useMemo(() => {
-    // Post type performance from linked accounts data
+    // Post type performance from analytics data (post type not available in engagement API)
     const counts: Record<string, number> = {};
+    
+    // Calculate date range for filtering
+    const now = new Date();
+    const startDate = new Date(now);
+    startDate.setDate(now.getDate() - rangeDays);
+    startDate.setHours(0, 0, 0, 0);
+    
     analytics.forEach(a => {
+      const date = a?.timing?.posted_at ? new Date(a.timing.posted_at) : null;
+      if (!date || date < startDate) return;
       const t = String(a.content?.media_type || 'unknown');
       counts[t] = (counts[t] || 0) + 1;
     });
+    
     const labels = Object.keys(counts).map(n => n.charAt(0).toUpperCase() + n.slice(1));
     const data = Object.values(counts);
     return {
@@ -300,21 +433,94 @@ const [platform, setPlatform] = useState("instagram");
         }
       ]
     };
-  }, [analytics]);
+  }, [analytics, rangeDays]);
 
   const totals = useMemo(() => {
-    // Calculate totals from synced linked accounts data (Instagram, Twitter, LinkedIn, YouTube, Facebook)
-    // All metrics come from real-time engagement data synced from social platforms
+    console.log('Calculating totals, allEngagementData:', allEngagementData);
+    console.log('Summary exists?', !!allEngagementData?.data?.summary);
+    console.log('Range days:', rangeDays);
+    
+    // Calculate date range for filtering
+    const now = new Date();
+    const startDate = new Date(now);
+    startDate.setDate(now.getDate() - rangeDays);
+    startDate.setHours(0, 0, 0, 0);
+    
+    // Use engagement API data if available, otherwise fall back to analytics
+    if (allEngagementData?.data?.platforms) {
+      // Filter posts by date range and recalculate totals
+      let filteredTotalLikes = 0;
+      let filteredTotalComments = 0;
+      let filteredTotalShares = 0;
+      let filteredTotalViews = 0;
+      let filteredTotalPosts = 0;
+      let topPostTitle = '—';
+      let topPostEngagement = 0;
+      
+      // Iterate through all platforms and filter posts by date range
+      for (const [platform, data] of Object.entries(allEngagementData.data.platforms || {})) {
+        if (data && data.success && data.posts && data.posts.length > 0) {
+          // Filter posts within the date range
+          const filteredPosts = data.posts.filter(post => {
+            if (!post.timestamp) return false;
+            const postDate = new Date(post.timestamp);
+            return postDate >= startDate;
+          });
+          
+          // Aggregate metrics from filtered posts
+          filteredPosts.forEach(post => {
+            filteredTotalLikes += post.likes || 0;
+            filteredTotalComments += post.comments || 0;
+            filteredTotalShares += post.shares || 0;
+            filteredTotalViews += post.views || 0;
+            filteredTotalPosts += 1;
+            
+            // Track top performing post
+            const engagement = (post.likes || 0) + (post.comments || 0) + (post.shares || 0);
+            if (engagement > topPostEngagement) {
+              topPostEngagement = engagement;
+              topPostTitle = `${platform.charAt(0).toUpperCase() + platform.slice(1)} post (${engagement} engagement)`;
+            }
+          });
+        }
+      }
+      
+      const totalEngagements = filteredTotalLikes + filteredTotalComments + filteredTotalShares;
+      const avgEngRate = filteredTotalPosts > 0 && filteredTotalViews > 0
+        ? ((totalEngagements / filteredTotalPosts) / filteredTotalViews * 100).toFixed(1)
+        : filteredTotalPosts > 0
+        ? ((totalEngagements / filteredTotalPosts) / Math.max(filteredTotalViews, 1) * 100).toFixed(1)
+        : '0.0';
+      
+      const result = {
+        totalEngagements,
+        audienceGrowth: filteredTotalViews,
+        topPostTitle: topPostTitle || '—',
+        avgEngagementRate: avgEngRate
+      };
+      
+      console.log(`Calculated totals from engagement API (${rangeDays} days):`, result);
+      return result;
+    }
+    
+    console.log('Falling back to analytics data');
+    
+    // Filter analytics by date range (startDate already calculated above)
+    const filteredAnalytics = analytics.filter(a => {
+      const date = a?.timing?.posted_at ? new Date(a.timing.posted_at) : null;
+      return date && date >= startDate;
+    });
+    
+    // Fallback to analytics data (filtered by date range)
     const sum = (key: 'likes' | 'comments' | 'shares' | 'views') => 
-      analytics.reduce((s, a) => s + (a.metrics?.[key] || 0), 0);
+      filteredAnalytics.reduce((s, a) => s + (a.metrics?.[key] || 0), 0);
     
     const totalEngagements = sum('likes') + sum('comments') + sum('shares');
     const totalViews = sum('views');
-    const avgEngRate = analytics.length ? (((totalEngagements) / Math.max(totalViews, 1)) * 100).toFixed(1) : '0.0';
+    const avgEngRate = filteredAnalytics.length ? (((totalEngagements) / Math.max(totalViews, 1)) * 100).toFixed(1) : '0.0';
     
     // Find top performing post from linked accounts based on total engagement
-    // Engagement = likes + comments + shares (from synced social platforms)
-    const topPost = [...analytics]
+    const topPost = [...filteredAnalytics]
       .map(a => {
         const engagement = (a.metrics?.likes || 0) + (a.metrics?.comments || 0) + (a.metrics?.shares || 0);
         const platform = a.platform || 'Unknown';
@@ -331,11 +537,11 @@ const [platform, setPlatform] = useState("instagram");
     
     return {
       totalEngagements,
-      audienceGrowth: totalViews, // Total views from linked accounts
+      audienceGrowth: totalViews,
       topPostTitle: topPost?.title || '—',
       avgEngagementRate: avgEngRate
     };
-  }, [analytics]);
+  }, [analytics, allEngagementData, rangeDays]);
 
 
 // chart options with correct typing
@@ -410,13 +616,6 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
 
 
 
-  const sampleData = [
-  { date: "Day 1", likes: 10, shares: 5, comments: 5 },
-  { date: "Day 2", likes: 20, shares: 8, comments: 12 },
-  { date: "Day 3", likes: 5, shares: 3, comments: 7 },
-  { date: "Day 4", likes: 30, shares: 10, comments: 20 },
-  // ... continue till Day 30
-];
   return (
     <CreatorLayout 
       title="Analytics Dashboard" 
@@ -516,28 +715,28 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
         <MetricCard
           title="Total Engagements"
           value={totals.totalEngagements.toLocaleString()}
-          subtitle="From linked accounts (Instagram, Twitter, LinkedIn, YouTube, Facebook)"
+          subtitle={`Likes, comments, and shares (last ${rangeDays} days)`}
           color="bg-green-200"
           icon={<span className="text-green-600">💬</span>}
         />
         <MetricCard
-          title="Audience Growth"
+          title="Total Views"
           value={totals.audienceGrowth.toLocaleString()}
-          subtitle={`Total views from linked accounts (last ${rangeDays} days)`}
+          subtitle={`Total views across all platforms (last ${rangeDays} days)`}
           color="bg-blue-100"
           icon={<span className="text-blue-600">👥</span>}
         />
         <MetricCard
           title="Top Performing Post"
-          value={`"${totals.topPostTitle}"`}
-          subtitle="Highest engagement from linked accounts"
+          value={totals.topPostTitle.length > 40 ? `"${totals.topPostTitle.substring(0, 40)}..."` : `"${totals.topPostTitle}"`}
+          subtitle={`Highest engagement (last ${rangeDays} days)`}
           color="bg-yellow-100"
           icon={<span className="text-yellow-600">⭐</span>}
         />
         <MetricCard
           title="Avg. Engagement Rate"
           value={`${totals.avgEngagementRate}%`}
-          subtitle="Engagement vs views"
+          subtitle={`Engagement rate (last ${rangeDays} days)`}
           color="bg-purple-100"
           icon={<span className="text-purple-600">📊</span>}
         />
@@ -547,10 +746,24 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
     {/* 🔹 Tabs Header (Right aligned) */}
     <div className="flex justify-end mb-6">
       <TabsList className="flex flex-wrap gap-2">
-        <TabsTrigger value="instagram">Instagram</TabsTrigger>
-        <TabsTrigger value="youtube">YouTube</TabsTrigger>
-        <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
-        <TabsTrigger value="twitter">Twitter (X)</TabsTrigger>
+        {supportedPlatforms.includes('instagram') && (
+          <TabsTrigger value="instagram">Instagram</TabsTrigger>
+        )}
+        {supportedPlatforms.includes('youtube') && (
+          <TabsTrigger value="youtube">YouTube</TabsTrigger>
+        )}
+        {supportedPlatforms.includes('linkedin') && (
+          <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
+        )}
+        {supportedPlatforms.includes('twitter') && (
+          <TabsTrigger value="twitter">Twitter (X)</TabsTrigger>
+        )}
+        {supportedPlatforms.includes('facebook') && (
+          <TabsTrigger value="facebook">Facebook</TabsTrigger>
+        )}
+        {supportedPlatforms.length === 0 && (
+          <div className="text-sm text-gray-500 px-4 py-2">Loading platforms...</div>
+        )}
       </TabsList>
     </div>
 
@@ -558,85 +771,150 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       {/* Chart 1 */}
       <div className="border border-gray-200 dark:border-gray-800 rounded-sm p-2  hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-900">
-        <TabsContent value="instagram">
-          <EngagementChart activePlatform="instagram" />
-        </TabsContent>
-        <TabsContent value="youtube">
-          <EngagementChart activePlatform="youtube" />
-        </TabsContent>
-        <TabsContent value="linkedin">
-          <EngagementChart activePlatform="linkedin" />
-        </TabsContent>
-        <TabsContent value="twitter">
-          <EngagementChart activePlatform="twitter" />
-        </TabsContent>
+        {supportedPlatforms.includes('instagram') && (
+          <TabsContent value="instagram">
+            <EngagementChart activePlatform="instagram" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('youtube') && (
+          <TabsContent value="youtube">
+            <EngagementChart activePlatform="youtube" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('linkedin') && (
+          <TabsContent value="linkedin">
+            <EngagementChart activePlatform="linkedin" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('twitter') && (
+          <TabsContent value="twitter">
+            <EngagementChart activePlatform="twitter" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('facebook') && (
+          <TabsContent value="facebook">
+            <EngagementChart activePlatform="facebook" />
+          </TabsContent>
+        )}
       </div>
 
       {/* Chart 2 */}
       <div className="border border-gray-200 dark:border-gray-800 rounded-sm p-2  hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-900">
-        <TabsContent value="instagram">
-          <MonthlyViewsGraph platform="instagram" />
-        </TabsContent>
-        <TabsContent value="youtube">
-          <MonthlyViewsGraph platform="youtube" />
-        </TabsContent>
-        <TabsContent value="linkedin">
-          <MonthlyViewsGraph platform="linkedin" />
-        </TabsContent>
-        <TabsContent value="twitter">
-          <MonthlyViewsGraph platform="twitter" />
-        </TabsContent>
+        {supportedPlatforms.includes('instagram') && (
+          <TabsContent value="instagram">
+            <MonthlyViewsGraph platform="instagram" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('youtube') && (
+          <TabsContent value="youtube">
+            <MonthlyViewsGraph platform="youtube" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('linkedin') && (
+          <TabsContent value="linkedin">
+            <MonthlyViewsGraph platform="linkedin" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('twitter') && (
+          <TabsContent value="twitter">
+            <MonthlyViewsGraph platform="twitter" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('facebook') && (
+          <TabsContent value="facebook">
+            <MonthlyViewsGraph platform="facebook" />
+          </TabsContent>
+        )}
       </div>
     </div>
 
     {/* 🔹 Second Row (Single Chart Centered) */}
     <div className="border border-gray-200 dark:border-gray-800 rounded-sm p-3  hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-900 mb-6">
-      <TabsContent value="instagram">
-        <Engagement30DaysChart platform="instagram" />
-      </TabsContent>
-      <TabsContent value="youtube">
-        <Engagement30DaysChart platform="youtube" />
-      </TabsContent>
-      <TabsContent value="linkedin">
-        <Engagement30DaysChart platform="linkedin" />
-      </TabsContent>
-      <TabsContent value="twitter">
-        <Engagement30DaysChart platform="twitter" />
-      </TabsContent>
+      {supportedPlatforms.includes('instagram') && (
+        <TabsContent value="instagram">
+          <Engagement30DaysChart platform="instagram" />
+        </TabsContent>
+      )}
+      {supportedPlatforms.includes('youtube') && (
+        <TabsContent value="youtube">
+          <Engagement30DaysChart platform="youtube" />
+        </TabsContent>
+      )}
+      {supportedPlatforms.includes('linkedin') && (
+        <TabsContent value="linkedin">
+          <Engagement30DaysChart platform="linkedin" />
+        </TabsContent>
+      )}
+      {supportedPlatforms.includes('twitter') && (
+        <TabsContent value="twitter">
+          <Engagement30DaysChart platform="twitter" />
+        </TabsContent>
+      )}
+      {supportedPlatforms.includes('facebook') && (
+        <TabsContent value="facebook">
+          <Engagement30DaysChart platform="facebook" />
+        </TabsContent>
+      )}
     </div>
 
     {/* 🔹 Third Row */}
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Chart 4 - Platform Breakdown */}
       <div className="border border-gray-200 dark:border-gray-800 rounded-sm p-2 hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-900">
-        <TabsContent value="instagram">
-          <PlateformBreakdownChart platform="instagram" />
-        </TabsContent>
-        <TabsContent value="youtube">
-          <PlateformBreakdownChart platform="youtube" />
-        </TabsContent>
-        <TabsContent value="linkedin">
-          <PlateformBreakdownChart platform="linkedin" />
-        </TabsContent>
-        <TabsContent value="twitter">
-          <PlateformBreakdownChart platform="twitter" />
-        </TabsContent>
+        {supportedPlatforms.includes('instagram') && (
+          <TabsContent value="instagram">
+            <PlateformBreakdownChart platform="instagram" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('youtube') && (
+          <TabsContent value="youtube">
+            <PlateformBreakdownChart platform="youtube" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('linkedin') && (
+          <TabsContent value="linkedin">
+            <PlateformBreakdownChart platform="linkedin" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('twitter') && (
+          <TabsContent value="twitter">
+            <PlateformBreakdownChart platform="twitter" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('facebook') && (
+          <TabsContent value="facebook">
+            <PlateformBreakdownChart platform="facebook" />
+          </TabsContent>
+        )}
       </div>
 
       {/* Chart 5 - Post Type Performance */}
       <div className="border border-gray-200 dark:border-gray-800 rounded-sm p-2 hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-900">
-        <TabsContent value="instagram">
-          <PostTypePerformanceChart platform="instagram" />
-        </TabsContent>
-        <TabsContent value="youtube">
-          <PostTypePerformanceChart platform="youtube" />
-        </TabsContent>
-        <TabsContent value="linkedin">
-          <PostTypePerformanceChart platform="linkedin" />
-        </TabsContent>
-        <TabsContent value="twitter">
-          <PostTypePerformanceChart platform="twitter" />
-        </TabsContent>
+        {supportedPlatforms.includes('instagram') && (
+          <TabsContent value="instagram">
+            <PostTypePerformanceChart platform="instagram" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('youtube') && (
+          <TabsContent value="youtube">
+            <PostTypePerformanceChart platform="youtube" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('linkedin') && (
+          <TabsContent value="linkedin">
+            <PostTypePerformanceChart platform="linkedin" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('twitter') && (
+          <TabsContent value="twitter">
+            <PostTypePerformanceChart platform="twitter" />
+          </TabsContent>
+        )}
+        {supportedPlatforms.includes('facebook') && (
+          <TabsContent value="facebook">
+            <PostTypePerformanceChart platform="facebook" />
+          </TabsContent>
+        )}
       </div>
     </div>
   </Tabs>
