@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+
 import {
   Calendar,
   Upload,
@@ -47,7 +49,9 @@ import { facebookService } from "@/lib/facebook";
 import { instagramService } from "@/lib/instagram";
 import { linkedInService } from "@/lib/linkedin";
 import { youtubeService } from "@/lib/youtube";
+import { useRouter } from "next/navigation";
 
+import { useRef } from "react";
 // Platform configurations
 const PLATFORM_CONFIGS = {
   instagram: {
@@ -252,6 +256,7 @@ const TwitterPostForm = ({
     }
   };
 
+  
   return (
     <div className="space-y-6">
       {/* Basic Tweet Content - Always shown */}
@@ -357,7 +362,26 @@ export default function PostsPage() {
   // Regular state for non-form data
   const [activeTab, setActiveTab] = useState<
     "create" | "drafts" | "scheduled" | "published"
-  >("create");
+    >("create");
+  useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get("status");
+
+  if (status === "published") setActiveTab("published");
+  else if (status === "draft") setActiveTab("drafts");
+  else if (status === "scheduled") setActiveTab("scheduled");
+  else setActiveTab("create");
+  }, []);
+  
+ const router = useRouter();
+
+  // const handleClick = () => {
+  //   try {
+  //     sessionStorage.setItem("invalidate_connections_cache", "1");
+  //   } catch {}
+  //   router.push("/creator/settings#linked_account");
+  // };
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
@@ -391,7 +415,55 @@ export default function PostsPage() {
   const [facebookPages, setFacebookPages] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedFacebookPageId, setSelectedFacebookPageId] = useState<string>("")
   const [loadingFbPages, setLoadingFbPages] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState(false);
 
+const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+  function handleClickOutside(event: MouseEvent) {
+    if (
+      menuRef.current &&
+      !menuRef.current.contains(event.target as Node)
+    ) {
+      setOpenMenuPublishedId(null); // 👈 Close menu
+    }
+  }
+
+  if (openMenuPublishedId) {
+    document.addEventListener("mousedown", handleClickOutside);
+  } else {
+    document.removeEventListener("mousedown", handleClickOutside);
+  }
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, [openMenuPublishedId]);
+
+  
+
+
+const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash;
+      if (hash) {
+        const element = document.querySelector(hash);
+        if (element) {
+          // thoda delay de dete hain taaki DOM load ho jaye
+          setTimeout(() => {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 300);
+        }
+      }
+    }
+  }, [pathname, searchParams]);
+
+
+
+  
   const fetchFacebookPages = async () => {
     try {
       setLoadingFbPages(true);
@@ -536,7 +608,7 @@ export default function PostsPage() {
     setMediaFiles([]);
     setError("");
     setSuccess("");
-
+setShowModal(true)
     // Check YouTube connection when YouTube is selected
     if (platform === "youtube") {
       checkYouTubeConnection();
@@ -1863,6 +1935,7 @@ export default function PostsPage() {
     return <IconComponent size={16} className={`text-${config.color}-600`} />;
   };
 
+  
   const headerActions = (
     <>
       <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-sm  text-white px-4 py-2.5 rounded-sm flex items-center space-x-1 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md">
@@ -2066,7 +2139,7 @@ export default function PostsPage() {
                   return (
                     <div
                       key={platform}
-                       onClick={() => handlePlatformSelect(platform)}
+                     
                       className={`p-4 rounded-sm border transition-all duration-200 ${isSelected
                           ? `border-${config.color}-500 bg-${config.color}-50  hover:shadow:sm`
                           : "border-gray-200/80 bg-white"
@@ -2096,13 +2169,14 @@ export default function PostsPage() {
                                 Checking...
                               </div>
                             ) : isConnected ? (
-                              <div className="flex items-center space-x-2">
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                  ✓ Connected
+                              <div className="flex flex-col  justify-start">
+                                <span className=" inline-flex items-center justify-center whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 border border-green-600 text-green-800 w-fit">
+                                ✓ Connected
                                 </span>
+
                                 <button
-                                  // onClick={() => handlePlatformSelect(platform)}
-                                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                            onClick={() => handlePlatformSelect(platform)}
+                                className=" cursor-pointer px-2 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white text-sm text-gray-700 shadow-sm   border border-gray-200/100 rounded hover:shadow:md transition-all duration-150 mt-3"
                                 >
                                   Select
                                 </button>
@@ -2114,9 +2188,11 @@ export default function PostsPage() {
                                 </span>
                                 <button
                                   onClick={() => {
-                                    try { sessionStorage.setItem('invalidate_connections_cache', '1'); } catch {}
-                                    (window.location.href = "/creator/settings");
-                                  }}
+    try {
+      sessionStorage.setItem('invalidate_connections_cache', '1');
+    } catch {}
+    router.push("/creator/settings#linked_account");
+  }}
                                   className="px-2 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm text-gray-700 shadow-sm   border border-gray-200/100 rounded hover:shadow:md transition-all duration-150 mt-3"
                                 >
                                   Connect
@@ -2132,203 +2208,216 @@ export default function PostsPage() {
               </div>
             </div>
 
-            {/* Post Type Selection (hidden when only one type) */}
-            {selectedPlatform && PLATFORM_CONFIGS[
-              selectedPlatform as keyof typeof PLATFORM_CONFIGS
-            ].postTypes.length > 1 && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-3">
-                  Post Type
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {PLATFORM_CONFIGS[
-                    selectedPlatform as keyof typeof PLATFORM_CONFIGS
-                  ].postTypes.map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => handlePostTypeSelect(type)}
-                      className={`px-3 md:px-4 py-2 rounded-lg border transition-colors ${selectedPostType === type
-                          ? "border-blue-500 bg-blue-50 text-blue-700"
-                          : "border-gray-300 hover:border-gray-400 text-gray-700"
-                        }`}
-                    >
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+          {showModal && (
+  <div
+    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+    onClick={(e) => {
+      if (e.target === e.currentTarget) setShowModal(false); // click outside to close
+    }}
+  >
+    <div
+  className="bg-white w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-xl p-6 relative animate-fadeIn flex flex-col"
+>
+  <div className="overflow-y-auto pr-2">
+      
+      {/* Close Button */}
+      <button
+        onClick={() => setShowModal(false)}
+        className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+      >
+        ✕
+      </button>
 
-            {/* Media Upload */}
-            {selectedPlatform && selectedPostType && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-3">
-                  Media Upload
-                </h3>
-                <label className="block border-2 border-dashed border-gray-300 rounded-lg p-6 md:p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
-                  <Upload size={24} className="mx-auto text-gray-400 mb-2" />
-                  <p className="text-gray-600 mb-1">
-                    Upload{" "}
-                    {PLATFORM_CONFIGS[
-                      selectedPlatform as keyof typeof PLATFORM_CONFIGS
-                    ].supportedMedia.join(" or ")}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {selectedPlatform === "youtube" &&
-                      "Video required for YouTube posts"}
-                  </p>
-                  <input
-                    type="file"
-                    multiple={selectedPlatform !== "youtube"}
-                    accept={
-                      PLATFORM_CONFIGS[
-                        selectedPlatform as keyof typeof PLATFORM_CONFIGS
-                      ].supportedMedia.includes("image")
-                        ? "image/*,video/*"
-                        : "video/*"
-                    }
-                    className="hidden"
-                    onChange={(e) => handleMediaUpload(e.target.files)}
-                  />
-                </label>
-                {mediaFiles.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {mediaFiles.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-2 bg-gray-50 rounded"
-                      >
-                        <span className="text-sm text-gray-700">
-                          {file.name}
-                        </span>
-                        <button
-                          onClick={() =>
-                            setMediaFiles((files) =>
-                              files.filter((_, i) => i !== index)
-                            )
-                          }
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-           
-        
-
-            {/* YouTube: silently checking connection to avoid noisy UI */}
-
-        
-
-            {/* Platform-Specific Fields */}
-            {renderPlatformFields()}
-
-            {/* Scheduling */}
-            {selectedPlatform && selectedPostType && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-3">
-                  Schedule (Optional)
-                </h3>
-                <input
-                  type="datetime-local"
-                  value={postData.scheduledFor || ""}
-                  onChange={(e) =>
-                    handleFieldChange("scheduledFor", e.target.value)
-                  }
-                  min={new Date().toISOString().slice(0, 16)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            )}
-
-            {/* Error/Success Messages */}
-            {(error || success) && (
-              <div className="space-y-2">
-                {error && (
-                  <div className="bg-red-50 text-red-700 border border-red-200 rounded-md px-4 py-3 text-sm">
-                    {error}
-                  </div>
-                )}
-                {success && (
-                  <div className="bg-green-50 text-green-700 border border-green-200 rounded-md px-4 py-3 text-sm">
-                    {success}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Action Buttons */}
-
-            {/* <button
-              onClick={clearFormData}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-800 rounded-lg hover:bg-gray-50 transition-colors inline-block w-full sm:w-auto text-center"
-            >
-              Clear Form
-            </button> */}
-
-            {selectedPlatform && selectedPostType && (
-              <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+      {/* 🧩 Your Original Code (No Logic Changed) */}
+      {/* Post Type Selection (hidden when only one type) */}
+      {selectedPlatform &&
+        PLATFORM_CONFIGS[
+          selectedPlatform as keyof typeof PLATFORM_CONFIGS
+        ].postTypes.length > 1 && (
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">
+              Post Type
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {PLATFORM_CONFIGS[
+                selectedPlatform as keyof typeof PLATFORM_CONFIGS
+              ].postTypes.map((type) => (
                 <button
-                  onClick={() => createPost("draft")}
-                  disabled={
-                    loading ||
-                    (selectedPlatform === "youtube" && !youtubeConnected)
-                  }
-                  className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
+                  key={type}
+                  onClick={() => handlePostTypeSelect(type)}
+                  className={`px-3 md:px-4 py-2 rounded-lg border transition-colors ${
+                    selectedPostType === type
+                      ? "border-blue-500 bg-blue-50 text-blue-700"
+                      : "border-gray-300 hover:border-gray-400 text-gray-700"
+                  }`}
                 >
-                  <Save size={16} />
-                  <span>Save Draft</span>
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
                 </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-                {postData.scheduledFor ? (
-                  <button
-                    onClick={() => createPost("schedule")}
-                    disabled={
-                      loading ||
-                      (selectedPlatform === "youtube" && !youtubeConnected)
-                    }
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
-                  >
-                    <Clock size={16} />
-                    <span>{loading ? "Scheduling..." : "Schedule Post"}</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => createPost("publish")}
-                    disabled={
-                      loading ||
-                      (selectedPlatform === "youtube" && !youtubeConnected)
-                    }
-                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
-                  >
-                    <Send size={16} />
-                    <span>{loading ? "Publishing..." : "Publish Now"}</span>
-                  </button>
-                )}
+      {/* Media Upload */}
+      {selectedPlatform && selectedPostType && (
+        <div className="mt-6">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">
+            Media Upload
+          </h3>
+          <label className="block border-2 border-dashed border-gray-300 rounded-lg p-6 md:p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
+            <Upload size={24} className="mx-auto text-gray-400 mb-2" />
+            <p className="text-gray-600 mb-1">
+              Upload{" "}
+              {PLATFORM_CONFIGS[
+                selectedPlatform as keyof typeof PLATFORM_CONFIGS
+              ].supportedMedia.join(" or ")}
+            </p>
+            <p className="text-xs text-gray-500">
+              {selectedPlatform === "youtube" &&
+                "Video required for YouTube posts"}
+            </p>
+            <input
+              type="file"
+              multiple={selectedPlatform !== "youtube"}
+              accept={
+                PLATFORM_CONFIGS[
+                  selectedPlatform as keyof typeof PLATFORM_CONFIGS
+                ].supportedMedia.includes("image")
+                  ? "image/*,video/*"
+                  : "video/*"
+              }
+              className="hidden"
+              onChange={(e) => handleMediaUpload(e.target.files)}
+            />
+          </label>
 
-                {selectedPlatform === "youtube" && !youtubeConnected && (
-                  <p className="text-sm text-gray-500 flex items-center">
-                    <svg
-                      className="w-4 h-4 mr-1"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Connect YouTube to enable posting
-                  </p>
-                )}
-              </div>
-            )}
+          {mediaFiles.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {mediaFiles.map((file, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                >
+                  <span className="text-sm text-gray-700">{file.name}</span>
+                  <button
+                    onClick={() =>
+                      setMediaFiles((files) =>
+                        files.filter((_, i) => i !== index)
+                      )
+                    }
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Platform-Specific Fields */}
+      <div className="mt-6">{renderPlatformFields()}</div>
+
+      {/* Scheduling */}
+      {selectedPlatform && selectedPostType && (
+        <div className="mt-6">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">
+            Schedule (Optional)
+          </h3>
+          <input
+            type="datetime-local"
+            value={postData.scheduledFor || ""}
+            onChange={(e) =>
+              handleFieldChange("scheduledFor", e.target.value)
+            }
+            min={new Date().toISOString().slice(0, 16)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+      )}
+
+      {/* Error/Success Messages */}
+      {(error || success) && (
+        <div className="space-y-2 mt-4">
+          {error && (
+            <div className="bg-red-50 text-red-700 border border-red-200 rounded-md px-4 py-3 text-sm">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="bg-green-50 text-green-700 border border-green-200 rounded-md px-4 py-3 text-sm">
+              {success}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      {selectedPlatform && selectedPostType && (
+        <div className="flex flex-wrap gap-3 pt-6 border-t border-gray-200 mt-6">
+          <button
+            onClick={() => createPost("draft")}
+            disabled={
+              loading ||
+              (selectedPlatform === "youtube" && !youtubeConnected)
+            }
+            className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
+          >
+            <Save size={16} />
+            <span>Save Draft</span>
+          </button>
+
+          {postData.scheduledFor ? (
+            <button
+              onClick={() => createPost("schedule")}
+              disabled={
+                loading ||
+                (selectedPlatform === "youtube" && !youtubeConnected)
+              }
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
+            >
+              <Clock size={16} />
+              <span>{loading ? "Scheduling..." : "Schedule Post"}</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => createPost("publish")}
+              disabled={
+                loading ||
+                (selectedPlatform === "youtube" && !youtubeConnected)
+              }
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
+            >
+              <Send size={16} />
+              <span>{loading ? "Publishing..." : "Publish Now"}</span>
+            </button>
+          )}
+
+          {selectedPlatform === "youtube" && !youtubeConnected && (
+            <p className="text-sm text-gray-500 flex items-center">
+              <svg
+                className="w-4 h-4 mr-1"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Connect YouTube to enable posting
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+                </div>
+                </div>
+)}
+   
+           
           </div>
         </div>
       )}
@@ -2602,8 +2691,8 @@ export default function PostsPage() {
             </button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto relative  overflow-visible">
+            <table className="w-full relative overflow-visible">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -2623,9 +2712,9 @@ export default function PostsPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white/80 backdrop-blur-sm divide-y divide-gray-200">
+              <tbody className="bg-white/80 backdrop-blur-sm divide-y divide-gray-200 relative">
                 {posts.map((post) => (
-                  <tr key={post._id} className="hover:bg-gray-50">
+                  <tr key={post._id} className="hover:bg-gray-50 relative">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div className="w-10 h-10 bg-gray-200 rounded-lg mr-3 flex items-center justify-center">
@@ -2690,7 +2779,7 @@ export default function PostsPage() {
                         );
                       })()}
                     </td>
-                    <td className="px-6 py-4 relative">
+                    <td className="px-6 py-4 relative overflow-visible">
                       <button
                         className="text-gray-400 hover:text-gray-600"
                         onClick={() =>
@@ -2703,52 +2792,65 @@ export default function PostsPage() {
                       >
                         <MoreHorizontal size={16} />
                       </button>
-                      {openMenuPublishedId === post._id && (
-                        <div className="absolute right-6 mt-2 w-48 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-md shadow-lg z-10">
-                          {post.publishing?.platform_url ? (
-                            <button
-                              className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                              onClick={() => handleViewPost(post)}
-                            >
-                              <ExternalLink size={14} />
-                              View on Platform
-                            </button>
-                          ) : (
-                            <button
-                              className="block w-full text-left px-4 py-2 text-sm text-gray-400 cursor-not-allowed"
-                              disabled
-                              title="No platform URL available"
-                            >
-                              View on Platform
-                            </button>
-                          )}
-                          {post.publishing?.platform_url ? (
-                            <button
-                              className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                              onClick={() => handleCopyLink(post)}
-                            >
-                              <Copy size={14} />
-                              Copy Link
-                            </button>
-                          ) : (
-                            <button
-                              className="block w-full text-left px-4 py-2 text-sm text-gray-400 cursor-not-allowed"
-                              disabled
-                              title="No link available"
-                            >
-                              Copy Link
-                            </button>
-                          )}
-                          <div className="border-t border-gray-200 my-1"></div>
-                          <button
-                            className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                            onClick={() => handleDeletePost(post)}
-                          >
-                            <Trash2 size={14} />
-                            Delete
-                          </button>
-                        </div>
-                      )}
+                     {openMenuPublishedId === post._id && (
+               <div  ref={menuRef}
+                className="absolute right-0 w-48 bg-white/80 backdrop-blur-sm 
+                           border border-gray-200 rounded-md shadow-lg z-[9999] overflow-visible"
+              
+                style={{
+                  transform: "translateY(0)",
+                  position: "fixed", // 👈 main fix
+                  // adjust depending on scroll
+                  right: "2rem",
+                }}
+              >
+      {post.publishing?.platform_url ? (
+        <button
+          className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          onClick={() => handleViewPost(post)}
+        >
+          <ExternalLink size={14} />
+          View on Platform
+        </button>
+      ) : (
+        <button
+          className="block w-full text-left px-4 py-2 text-sm text-gray-400 cursor-not-allowed"
+          disabled
+          title="No platform URL available"
+        >
+          View on Platform
+        </button>
+      )}
+
+      {post.publishing?.platform_url ? (
+        <button
+          className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          onClick={() => handleCopyLink(post)}
+        >
+          <Copy size={14} />
+          Copy Link
+        </button>
+      ) : (
+        <button
+          className="block w-full text-left px-4 py-2 text-sm text-gray-400 cursor-not-allowed"
+          disabled
+          title="No link available"
+        >
+          Copy Link
+        </button>
+      )}
+
+      <div className="border-t border-gray-200 my-1"></div>
+
+      <button
+        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+        onClick={() => handleDeletePost(post)}
+      >
+        <Trash2 size={14} />
+        Delete
+      </button>
+    </div>
+  )}
                     </td>
                   </tr>
                 ))}

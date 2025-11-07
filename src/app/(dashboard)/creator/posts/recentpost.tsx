@@ -370,7 +370,7 @@ const RecentPosts = () => {
                               View on {post.platform}
                             </a>
                           ) : (
-                            <Link href="/creator/posts">
+                            <Link href="/creator/posts?status=published">
                               <Button
                                 variant="ghost"
                                 size="sm"

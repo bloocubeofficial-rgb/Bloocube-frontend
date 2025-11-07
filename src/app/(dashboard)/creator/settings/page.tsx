@@ -68,6 +68,10 @@ function SettingsPageContent() {
   // Use profile from hook if available (for latest avatar data)
   const displayUser = userProfileFromHook || user;
   
+
+  const linkedAccountRef = useRef(null);
+
+
   // Debug: Log avatar URL when it changes
   useEffect(() => {
     if (displayUser?.profile?.avatar_url) {
@@ -1110,7 +1114,7 @@ function SettingsPageContent() {
           </section>
 
           {/* Linked Accounts */}
-          <section>
+          <section id="linked_account">
             <h2 className="text-lg font-medium text-gray-900 mb-2">Linked Accounts</h2>
             <p className="text-sm text-gray-600 mb-6">Connect other accounts with external providers to access your content</p>
             

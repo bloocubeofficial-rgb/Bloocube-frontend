@@ -3,6 +3,12 @@ import React from "react";
 
 const TermsPage: React.FC = () => {
   return (
+    <>
+    <div className="w-full bg-black absolute md:fixed inset-0 z-0 pointer-events-none will-change-transform">
+  <div className="absolute -top-20 -left-20 w-[400px] h-[400px] bg-gradient-to-br from-purple-600 via-blue-500 to-teal-400 opacity-20 md:opacity-30 rounded-full blur-[120px] animate-gradient-60" />
+  <div className="absolute top-[30%] -left-20 w-[400px] h-[400px] bg-gradient-to-br from-purple-600 via-blue-500 to-teal-400 opacity-18 md:opacity-28 rounded-full blur-[120px] animate-gradient-60" />
+  <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gradient-to-tr from-indigo-500 via-fuchsia-500 to-pink-500 opacity-16 md:opacity-24 rounded-full blur-[140px] animate-gradient-60" />
+</div>
     <main className="relative z-10 max-w-3xl mx-auto px-6 py-16 text-zinc-300">
       <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">Terms of Service</h1>
       <p className="text-sm text-zinc-400 mb-10">Last updated: 2025-10-06</p>
@@ -69,7 +75,9 @@ const TermsPage: React.FC = () => {
           For questions about these Terms, contact legal@bloocube.com.
         </p>
       </section>
-    </main>
+      </main>
+    </>
+    
   );
 };
 

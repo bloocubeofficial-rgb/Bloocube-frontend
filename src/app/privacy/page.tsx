@@ -3,13 +3,19 @@ import React from "react";
 
 const PrivacyPage: React.FC = () => {
   return (
-    <main className="relative z-10 max-w-3xl mx-auto px-6 py-16 text-zinc-300">
+    <>
+    <div className="w-full bg-black text-black pointer-events-none absolute md:fixed inset-0 z-0 overflow-hidden will-change-transform">
+      <div className="absolute -top-20 -left-20 w-[400px] h-[400px] bg-gradient-to-br from-purple-600 via-blue-500 to-teal-400 opacity-20 md:opacity-30 rounded-full blur-[120px] animate-gradient-60" />
+          <div className="absolute top-[30%] -left-20 w-[400px] h-[400px] bg-gradient-to-br from-purple-600 via-blue-500 to-teal-400 opacity-18 md:opacity-28 rounded-full blur-[120px] animate-gradient-60" />
+          <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gradient-to-tr from-indigo-500 via-fuchsia-500 to-pink-500 opacity-16 md:opacity-24 rounded-full blur-[140px] animate-gradient-60" />
+</div>
+       <main className="relative  z-10 max-w-3xl mx-auto px-6 py-16 text-zinc-300">
       <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">Privacy Policy</h1>
       <p className="text-sm text-zinc-400 mb-10">Last updated: 2025-10-06</p>
 
       <section className="space-y-4 mb-10">
         <h2 className="text-xl font-semibold text-white">Introduction</h2>
-        <p>
+        <p className="">
           This Privacy Policy explains how Bloocube ("we", "us") collects, uses, and protects your
           information when you use our platform and services.
         </p>
@@ -67,6 +73,8 @@ const PrivacyPage: React.FC = () => {
         </p>
       </section>
     </main>
+  </>
+   
   );
 };
 

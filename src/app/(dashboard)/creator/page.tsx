@@ -478,7 +478,7 @@ const Dashboard = () => {
       {/* Enhanced Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 mt-8">
         {/* Engagement Trends */}
-        <div  className="rounded-sm  bg-card text-card-foreground flex flex-col gap-6  border py-6  p-4  hover:shadow-md transition-all duration-200  border border-gray-200/04">
+        {/* <div  className="rounded-sm  bg-card text-card-foreground flex flex-col gap-6  border py-6  p-4  hover:shadow-md transition-all duration-200  border border-gray-200/04">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-lg font-bold text-gray-900">
@@ -565,10 +565,10 @@ const Dashboard = () => {
               />
             </LineChart>
           </ResponsiveContainer>
-        </div>
+        </div> */}
 
         {/* Views by Month */}
-       <div  className="rounded-sm  bg-card text-card-foreground flex flex-col gap-6  border py-6  p-4  hover:shadow-md transition-all duration-200  border border-gray-200/04">
+       {/* <div  className="rounded-sm  bg-card text-card-foreground flex flex-col gap-6  border py-6  p-4  hover:shadow-md transition-all duration-200  border border-gray-200/04">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-lg font-bold text-gray-900">
@@ -635,7 +635,7 @@ const Dashboard = () => {
               />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </div> */}
       </div>
 
       {/* Enhanced Top Performing Posts */}
