@@ -286,7 +286,7 @@ const platformOptions = [
             </select>
           </div> */}
 
-
+{/*  plateform  */}
 <div className="relative" data-dropdown>
                 <button
                   type="button"
