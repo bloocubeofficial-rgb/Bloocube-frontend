@@ -235,8 +235,11 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
             cookieAuthUtils.clearAuth();
             // Trigger auth sync to update UI
             window.dispatchEvent(new CustomEvent('authChange'));
-            // Only redirect if not already on login page
-            if (!window.location.pathname.includes('/login')) {
+            // Only redirect if not already on login page or landing page
+            const pathname = window.location.pathname;
+            const publicRoutes = ['/', '/about', '/privacy', '/terms', '/login', '/signup'];
+            const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/auth/');
+            if (!isPublicRoute) {
               window.location.href = '/login';
             }
           }

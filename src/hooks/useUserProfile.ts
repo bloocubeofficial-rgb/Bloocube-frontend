@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { profileApi, type UserProfile } from '@/lib/profile';
+import { cookieAuthUtils } from '@/lib/cookieAuth';
 
 interface UseUserProfileReturn {
   profile: UserProfile | null;
@@ -15,6 +16,15 @@ export function useUserProfile(): UseUserProfileReturn {
   const [error, setError] = useState<string | null>(null);
 
   const fetchProfile = useCallback(async () => {
+    // Only fetch profile if user is authenticated
+    // This prevents API calls on public pages like landing page
+    const isAuthenticated = cookieAuthUtils.isAuthenticated();
+    if (!isAuthenticated) {
+      setLoading(false);
+      setProfile(null);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -29,7 +39,11 @@ export function useUserProfile(): UseUserProfileReturn {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch profile';
       setError(errorMessage);
-      console.error('Error fetching user profile:', err);
+      // Don't log errors for unauthenticated users on public pages
+      const isAuthenticated = cookieAuthUtils.isAuthenticated();
+      if (isAuthenticated) {
+        console.error('Error fetching user profile:', err);
+      }
     } finally {
       setLoading(false);
     }
