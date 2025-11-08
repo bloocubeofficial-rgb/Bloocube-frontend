@@ -52,7 +52,7 @@ import { youtubeService } from "@/lib/youtube";
 import { useRouter } from "next/navigation";
 
 import { useRef } from "react";
-import { AIScoreIndicator } from "@/components/ui/AIScoreIndicator";
+import { AIScoreIndicator } from "@/Components/ui/AIScoreIndicator";
 // Platform configurations
 const PLATFORM_CONFIGS = {
   instagram: {
