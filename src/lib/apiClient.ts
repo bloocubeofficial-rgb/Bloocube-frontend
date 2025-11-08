@@ -16,6 +16,13 @@ const CACHE_TTL = {
   LONG: 30 * 60 * 1000   // 30 minutes
 };
 
+// Cache size limits
+const MAX_CACHE_SIZE = 100;
+const MAX_PENDING_REQUESTS = 50;
+
+// Request timeout in milliseconds
+const REQUEST_TIMEOUT_MS = 30000; // 30 seconds
+
 function sleep(ms: number) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
 // Enhanced token refresh with caching
@@ -60,7 +67,15 @@ async function refreshAppToken(): Promise<string | null> {
 function getCacheKey(path: string, init: RequestInit): string {
   const method = init.method || 'GET';
   const body = init.body ? JSON.stringify(init.body) : '';
-  return `${method}:${path}:${body}`;
+  // Include query parameters in cache key to prevent collisions
+  try {
+    const url = new URL(path, 'http://dummy');
+    const query = url.search; // Includes '?' and all query params
+    return `${method}:${path}${query}:${body}`;
+  } catch {
+    // If URL parsing fails, use original path
+    return `${method}:${path}:${body}`;
+  }
 }
 
 // Check if request should be cached
@@ -72,7 +87,42 @@ function shouldCache(path: string, method: string): boolean {
 function getCacheTTL(path: string): number {
   if (path.includes('/profile') || path.includes('/channel')) return CACHE_TTL.MEDIUM;
   if (path.includes('/analytics') || path.includes('/campaigns')) return CACHE_TTL.SHORT;
+  if (path.includes('/auth/status')) return CACHE_TTL.LONG; // User status rarely changes
   return CACHE_TTL.SHORT;
+}
+
+// Cleanup old cache entries and enforce size limits
+function cleanupCache(): void {
+  const now = Date.now();
+  const keysToDelete: string[] = [];
+  
+  // Remove expired entries
+  for (const [key, value] of requestCache.entries()) {
+    if (now - value.timestamp > value.ttl) {
+      keysToDelete.push(key);
+    }
+  }
+  keysToDelete.forEach(key => requestCache.delete(key));
+  
+  // Limit cache size (remove oldest entries)
+  if (requestCache.size > MAX_CACHE_SIZE) {
+    const entries = Array.from(requestCache.entries())
+      .sort((a, b) => a[1].timestamp - b[1].timestamp);
+    const toRemove = entries.slice(0, requestCache.size - MAX_CACHE_SIZE);
+    toRemove.forEach(([key]) => requestCache.delete(key));
+  }
+  
+  // Limit pending requests size
+  if (pendingRequests.size > MAX_PENDING_REQUESTS) {
+    // Remove oldest pending requests (we can't sort promises, so just clear some)
+    const keys = Array.from(pendingRequests.keys()).slice(0, pendingRequests.size - MAX_PENDING_REQUESTS);
+    keys.forEach(key => pendingRequests.delete(key));
+  }
+}
+
+// Run cleanup every 5 minutes
+if (typeof window !== 'undefined') {
+  setInterval(cleanupCache, 5 * 60 * 1000);
 }
 
 export async function apiRequest<T = unknown>(path: string, init: RequestInit = {}, retries = 1): Promise<T> {
@@ -112,26 +162,58 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
   // Create request promise with performance monitoring
   const requestPromise = (async (): Promise<T> => {
     if (showLoading) loadingManager.start();
-    return measureApiCall(async (): Promise<T> => {
     try {
-      // Check if body is FormData - if so, don't set Content-Type header
-      const isFormData = init.body instanceof FormData;
-      const headers: Record<string, string> = {};
-      
-      if (!isFormData) {
-        headers['Content-Type'] = 'application/json';
-      }
-      
-      // Merge any additional headers
-      if (init.headers) {
-        Object.assign(headers, init.headers);
-      }
-      
-      const res = await fetch(`${base}${path}`, {
-        ...init,
-        headers,
-        credentials: 'include' // This sends HttpOnly cookies automatically
-      });
+      return await measureApiCall(async (): Promise<T> => {
+        // Check if body is FormData - if so, don't set Content-Type header
+        const isFormData = init.body instanceof FormData;
+        const headers: Record<string, string> = {};
+        
+        if (!isFormData) {
+          headers['Content-Type'] = 'application/json';
+        }
+        
+        // Merge any additional headers
+        if (init.headers) {
+          Object.assign(headers, init.headers);
+        }
+        
+        // Create AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+        
+        let res: Response;
+        try {
+          res = await fetch(`${base}${path}`, {
+            ...init,
+            headers,
+            credentials: 'include', // This sends HttpOnly cookies automatically
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+        } catch (fetchError) {
+          clearTimeout(timeoutId);
+          // Clean up pending request
+          pendingRequests.delete(cacheKey);
+          if (showLoading) loadingManager.done();
+          
+          // Handle network errors
+          if (fetchError instanceof TypeError && fetchError.message === 'Failed to fetch') {
+            throw new ApiError('Network error. Please check your connection.', {
+              status: 0,
+              code: 'NETWORK_ERROR'
+            });
+          }
+          if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+            throw new ApiError('Request timeout. Please try again.', {
+              status: 0,
+              code: 'TIMEOUT'
+            });
+          }
+          throw new ApiError('Request failed. Please try again.', {
+            status: 0,
+            code: 'REQUEST_FAILED'
+          });
+        }
 
       // Only attempt refresh for protected, non-auth endpoints
       const isAuthEndpoint = path.startsWith('/api/auth/');
@@ -140,6 +222,10 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
         const newToken = await refreshAppToken();
         if (newToken) {
           console.log('✅ Token refreshed successfully, retrying request');
+          // Wait a bit for cookies to be set
+          await sleep(100);
+          // Remove current pending request before retrying
+          pendingRequests.delete(cacheKey);
           return apiRequest<T>(path, init, retries - 1);
         } else {
           console.log('❌ Token refresh failed, clearing auth and redirecting');
@@ -176,6 +262,8 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
         }
         
         await sleep(delay);
+        // Remove current pending request before retrying
+        pendingRequests.delete(cacheKey);
         return apiRequest<T>(path, init, retries - 1);
       }
 
@@ -184,6 +272,8 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
         const attempt = Math.max(1, 2 - retries + 1);
         const delay = Math.min(300 * Math.pow(2, attempt - 1), 3000);
         await sleep(delay);
+        // Remove current pending request before retrying
+        pendingRequests.delete(cacheKey);
         return apiRequest<T>(path, init, retries - 1);
       }
 
@@ -198,9 +288,28 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
           body = { message: `HTTP ${res.status} ${res.statusText}` };
         }
         
-        const parsed = body as { error?: string; message?: string; code?: string | number; details?: unknown; validation_errors?: unknown; errors?: unknown; validation?: unknown } | null;
-        const baseMessage = (parsed?.error || parsed?.message);
-        const message = baseMessage || `HTTP ${res.status} ${res.statusText}`;
+        // Normalize error message extraction (handle different error structures)
+        const parsed = body as {
+          error?: string | { message?: string; code?: string };
+          message?: string;
+          code?: string | number;
+          details?: unknown;
+          validation_errors?: unknown;
+          errors?: unknown;
+          validation?: unknown;
+        } | null;
+        
+        let message = '';
+        if (typeof parsed?.error === 'string') {
+          message = parsed.error;
+        } else if (parsed?.error && typeof parsed.error === 'object' && parsed.error.message) {
+          message = parsed.error.message;
+        } else if (parsed?.message) {
+          message = parsed.message;
+        } else {
+          message = `HTTP ${res.status} ${res.statusText}`;
+        }
+        
         const retryAfterHeader = res.headers.get('retry-after');
         const retryAfter = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : undefined;
         
@@ -224,7 +333,30 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
         });
       }
 
-      const data = await res.json() as T;
+      // Validate content-type before parsing JSON
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const text = await res.text().catch(() => 'Could not read response');
+        throw new ApiError(`Unexpected response format: ${contentType}`, {
+          status: res.status,
+          code: 'INVALID_RESPONSE_FORMAT',
+          raw: text
+        });
+      }
+
+      // Parse JSON response with error handling
+      // Read response as text first, then parse (in case parsing fails, we have the text)
+      const responseText = await res.text().catch(() => 'Could not read response');
+      let data: T;
+      try {
+        data = JSON.parse(responseText) as T;
+      } catch (parseError) {
+        throw new ApiError('Failed to parse response', {
+          status: res.status,
+          code: 'PARSE_ERROR',
+          raw: responseText
+        });
+      }
 
       // Cache successful GET requests
       if (shouldCache(path, method)) {
@@ -237,13 +369,42 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
         console.log(`💾 Cached: ${method} ${path} (TTL: ${ttl}ms)`);
       }
 
-      return data;
+      // Auto-invalidate cache for mutations (POST/PUT/DELETE/PATCH)
+      if (method !== 'GET' && res.ok) {
+        // Extract base path without query params for cache invalidation
+        const basePath = path.split('?')[0];
+        
+        // Invalidate related caches
+        if (basePath.includes('/posts')) {
+          cacheUtils.clearPattern('/api/posts');
+          cacheUtils.clearPattern('/api/analytics');
+          console.log(`🗑️ Auto-invalidated cache for: /api/posts, /api/analytics`);
+        } else if (basePath.includes('/campaigns')) {
+          cacheUtils.clearPattern('/api/campaigns');
+          console.log(`🗑️ Auto-invalidated cache for: /api/campaigns`);
+        } else if (basePath.includes('/bids')) {
+          cacheUtils.clearPattern('/api/bids');
+          cacheUtils.clearPattern('/api/campaigns');
+          console.log(`🗑️ Auto-invalidated cache for: /api/bids, /api/campaigns`);
+        } else if (basePath.includes('/analytics')) {
+          cacheUtils.clearPattern('/api/analytics');
+          console.log(`🗑️ Auto-invalidated cache for: /api/analytics`);
+        } else if (basePath.includes('/engagement')) {
+          cacheUtils.clearPattern('/api/engagement');
+          console.log(`🗑️ Auto-invalidated cache for: /api/engagement`);
+        }
+      }
+
+        return data;
+      }, path);
+    } catch (error) {
+      // Re-throw error after ensuring cleanup
+      throw error;
     } finally {
-      // Remove from pending requests
+      // Always cleanup, even on errors
       pendingRequests.delete(cacheKey);
       if (showLoading) loadingManager.done();
     }
-    }, path);
   })();
 
   // Store pending request
@@ -268,12 +429,27 @@ export const cacheUtils = {
     console.log(`🗑️ Cleared cache for pattern: ${pattern} (${keysToDelete.length} entries)`);
   },
 
+  // Clear cache for specific endpoint (exact match or pattern)
+  clearEndpoint(endpoint: string): void {
+    const keysToDelete = Array.from(requestCache.keys()).filter(key => {
+      // Match GET requests to this endpoint (with or without query params)
+      return key.startsWith(`GET:${endpoint}`) || key.includes(`:${endpoint}?`) || key.includes(`:${endpoint}:`);
+    });
+    keysToDelete.forEach(key => requestCache.delete(key));
+    console.log(`🗑️ Cleared cache for endpoint: ${endpoint} (${keysToDelete.length} entries)`);
+  },
+
   // Get cache stats
   getStats(): { size: number; keys: string[] } {
     return {
       size: requestCache.size,
       keys: Array.from(requestCache.keys())
     };
+  },
+
+  // Run cleanup manually
+  cleanup(): void {
+    cleanupCache();
   }
 };
 

@@ -1,4 +1,4 @@
-import { apiRequest } from '@/lib/apiClient';
+import { apiRequest, cacheUtils } from '@/lib/apiClient';
 import type { CampaignListResponse, CampaignResponse } from '@/types/campaign';
 import type { BidListResponse } from '@/types/bid';
 
@@ -22,11 +22,17 @@ export const campaignService = {
   },
 
   async create(payload: unknown) {
-    return apiRequest<CampaignResponse>(`/api/campaigns`, { method: 'POST', body: JSON.stringify(payload) });
+    const result = await apiRequest<CampaignResponse>(`/api/campaigns`, { method: 'POST', body: JSON.stringify(payload) });
+    // Cache invalidation is now handled automatically in apiClient, but we can also do it explicitly
+    cacheUtils.clearPattern('/api/campaigns');
+    return result;
   },
 
   async update(id: string, payload: unknown) {
-    return apiRequest<CampaignResponse>(`/api/campaigns/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    const result = await apiRequest<CampaignResponse>(`/api/campaigns/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    // Cache invalidation is now handled automatically in apiClient, but we can also do it explicitly
+    cacheUtils.clearPattern('/api/campaigns');
+    return result;
   },
 
   async listBids(campaignId: string, params: Record<string, string | number | undefined> = {}) {
