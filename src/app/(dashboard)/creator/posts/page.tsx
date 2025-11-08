@@ -52,6 +52,7 @@ import { youtubeService } from "@/lib/youtube";
 import { useRouter } from "next/navigation";
 
 import { useRef } from "react";
+import { AIScoreIndicator } from "@/components/ui/AIScoreIndicator";
 // Platform configurations
 const PLATFORM_CONFIGS = {
   instagram: {
@@ -188,10 +189,14 @@ const TwitterPostForm = ({
   postData,
   onFieldChange,
   selectedPostType,
+  focusedField,
+  setFocusedField,
 }: {
   postData: any;
   onFieldChange: (field: string, value: any) => void;
   selectedPostType: string;
+  focusedField: string | null;
+  setFocusedField: (field: string | null) => void;
 }) => {
   const [pollOptions, setPollOptions] = useState(["", ""]);
   const [threadTweets, setThreadTweets] = useState([""]);
@@ -261,12 +266,38 @@ const TwitterPostForm = ({
     <div className="space-y-6">
       {/* Basic Tweet Content - Always shown */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Tweet Content *
-        </label>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Tweet Content *
+          </label>
+          <AIScoreIndicator
+            content={postData.content || ""}
+            field="content"
+            platform="twitter"
+            contentType="tweet"
+            enabled={true}
+            showDetails={true}
+            isFieldFocused={focusedField === "twitter-content"}
+            onFocusChange={(focused) => {
+              if (focused) {
+                setFocusedField("twitter-content");
+              } else if (focusedField === "twitter-content") {
+                setFocusedField(null);
+              }
+            }}
+          />
+        </div>
         <textarea
           value={postData.content || ""}
           onChange={(e) => onFieldChange("content", e.target.value)}
+          onFocus={() => setFocusedField("twitter-content")}
+          onBlur={() => {
+            setTimeout(() => {
+              if (focusedField === "twitter-content") {
+                setFocusedField(null);
+              }
+            }, 200);
+          }}
           placeholder="What's happening?"
           maxLength={280}
           rows={3}
@@ -363,6 +394,9 @@ export default function PostsPage() {
   const [activeTab, setActiveTab] = useState<
     "create" | "drafts" | "scheduled" | "published"
     >("create");
+  
+  // Track which field is currently focused for AI score popup visibility
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   useEffect(() => {
   const params = new URLSearchParams(window.location.search);
   const status = params.get("status");
@@ -1639,6 +1673,8 @@ setShowModal(true)
           postData={postData}
           onFieldChange={handleFieldChange}
           selectedPostType={selectedPostType}
+          focusedField={focusedField}
+          setFocusedField={setFocusedField}
         />
       );
     }
@@ -1652,11 +1688,37 @@ setShowModal(true)
     return (
       <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Article Title</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">Article Title</label>
+                <AIScoreIndicator
+                  content={(postData as any).articleTitle || ""}
+                  field="title"
+                  platform="linkedin"
+                  contentType="article"
+                  enabled={true}
+                  showDetails={true}
+                  isFieldFocused={focusedField === "linkedin-articleTitle"}
+                  onFocusChange={(focused) => {
+                    if (focused) {
+                      setFocusedField("linkedin-articleTitle");
+                    } else if (focusedField === "linkedin-articleTitle") {
+                      setFocusedField(null);
+                    }
+                  }}
+                />
+              </div>
               <input
                 type="text"
                 value={(postData as any).articleTitle || ""}
                 onChange={(e) => handleFieldChange("articleTitle", e.target.value)}
+                onFocus={() => setFocusedField("linkedin-articleTitle")}
+                onBlur={() => {
+                  setTimeout(() => {
+                    if (focusedField === "linkedin-articleTitle") {
+                      setFocusedField(null);
+                    }
+                  }, 200);
+                }}
                 placeholder="Enter article title"
                 className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -1664,34 +1726,60 @@ setShowModal(true)
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-gray-700">Article Body</label>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      setLoading(true);
-                      const prompt = `Write a professional LinkedIn article body about: ${(postData as any).articleTitle || "my topic"}`;
-                      const res = await apiRequest('/api/ai/suggestions', {
-                        method: 'POST',
-                        body: JSON.stringify({ prompt, platform: 'linkedin', type: 'article', context: postData })
-                      }) as any;
-                      const text = res?.data?.result?.content || '';
-                      if (text) handleFieldChange('articleBody', text);
-                    } catch {
-                      setError('Failed to generate article content');
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
-                  title="Generate article with AI"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  AI
-                </button>
+                <div className="flex items-center gap-2">
+                  <AIScoreIndicator
+                    content={(postData as any).articleBody || ""}
+                    field="content"
+                    platform="linkedin"
+                    contentType="article"
+                    enabled={true}
+                    showDetails={true}
+                    isFieldFocused={focusedField === "linkedin-articleBody"}
+                    onFocusChange={(focused) => {
+                      if (focused) {
+                        setFocusedField("linkedin-articleBody");
+                      } else if (focusedField === "linkedin-articleBody") {
+                        setFocusedField(null);
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        setLoading(true);
+                        const prompt = `Write a professional LinkedIn article body about: ${(postData as any).articleTitle || "my topic"}`;
+                        const res = await apiRequest('/api/ai/suggestions', {
+                          method: 'POST',
+                          body: JSON.stringify({ prompt, platform: 'linkedin', type: 'article', context: postData })
+                        }) as any;
+                        const text = res?.data?.result?.content || '';
+                        if (text) handleFieldChange('articleBody', text);
+                      } catch {
+                        setError('Failed to generate article content');
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+                    title="Generate article with AI"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    AI
+                  </button>
+                </div>
               </div>
               <textarea
                 value={(postData as any).articleBody || ""}
                 onChange={(e) => handleFieldChange("articleBody", e.target.value)}
+                onFocus={() => setFocusedField("linkedin-articleBody")}
+                onBlur={() => {
+                  setTimeout(() => {
+                    if (focusedField === "linkedin-articleBody") {
+                      setFocusedField(null);
+                    }
+                  }, 200);
+                }}
                 placeholder="Write your article body..."
                 rows={8}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
@@ -1818,6 +1906,11 @@ setShowModal(true)
           }
 
           if ((fieldConfig as any).type === "textarea" || field === 'content') {
+            // Check if this field should show AI score
+            const shouldShowAIScore = ['description', 'caption', 'content'].includes(field);
+            const fieldId = `${selectedPlatform}-${field}`;
+            const isFieldFocused = focusedField === fieldId;
+            
             return (
               <div key={field}>
                 <div className="flex items-center justify-between mb-2">
@@ -1827,38 +1920,67 @@ setShowModal(true)
                     <span className="text-red-500">*</span>
                   )}
                 </label>
-                  {field === 'content' && (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          setLoading(true);
-                          const prompt = `Generate a social post for ${selectedPlatform}.` + (postData.hashtags ? ` Use hashtags: ${postData.hashtags}` : '');
-                          const res = await apiRequest('/api/ai/suggestions', {
-                            method: 'POST',
-                            body: JSON.stringify({ prompt, platform: selectedPlatform, context: postData })
-                          }) as any;
-                          const text = res?.data?.result?.content || '';
-                          if (text) {
-                            handleFieldChange('content', text);
+                  <div className="flex items-center gap-2">
+                    {shouldShowAIScore && selectedPlatform && (
+                      <AIScoreIndicator
+                        content={postData[field] || ""}
+                        field={field}
+                        platform={selectedPlatform}
+                        contentType={selectedPostType || "post"}
+                        enabled={true}
+                        showDetails={true}
+                        isFieldFocused={isFieldFocused}
+                        onFocusChange={(focused) => {
+                          if (focused) {
+                            setFocusedField(fieldId);
+                          } else if (focusedField === fieldId) {
+                            setFocusedField(null);
                           }
-                        } catch (e) {
-                          setError('Failed to generate content');
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
-                      title="Generate content with AI"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      AI
-                    </button>
-                  )}
+                        }}
+                      />
+                    )}
+                    {field === 'content' && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            setLoading(true);
+                            const prompt = `Generate a social post for ${selectedPlatform}.` + (postData.hashtags ? ` Use hashtags: ${postData.hashtags}` : '');
+                            const res = await apiRequest('/api/ai/suggestions', {
+                              method: 'POST',
+                              body: JSON.stringify({ prompt, platform: selectedPlatform, context: postData })
+                            }) as any;
+                            const text = res?.data?.result?.content || '';
+                            if (text) {
+                              handleFieldChange('content', text);
+                            }
+                          } catch (e) {
+                            setError('Failed to generate content');
+                          } finally {
+                            setLoading(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+                        title="Generate content with AI"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        AI
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <textarea
                   value={postData[field] || ""}
                   onChange={(e) => handleFieldChange(field, e.target.value)}
+                  onFocus={() => setFocusedField(fieldId)}
+                  onBlur={() => {
+                    // Delay blur to allow clicking on the popup
+                    setTimeout(() => {
+                      if (focusedField === fieldId) {
+                        setFocusedField(null);
+                      }
+                    }, 200);
+                  }}
                   placeholder={(fieldConfig as any).placeholder}
                   maxLength={(fieldConfig as any).maxLength}
                   rows={4}
@@ -1899,22 +2021,58 @@ setShowModal(true)
             );
           }
 
+          // Check if this field should show AI score (title, description, caption, content)
+          const shouldShowAIScore = ['title', 'description', 'caption', 'content'].includes(field);
+          const fieldId = `${selectedPlatform}-${field}`;
+          const isFieldFocused = focusedField === fieldId;
+          
           return (
             <div key={field}>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {field.charAt(0).toUpperCase() + field.slice(1)}
-                {fieldConfig.required && (
-                  <span className="text-red-500">*</span>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  {field.charAt(0).toUpperCase() + field.slice(1)}
+                  {fieldConfig.required && (
+                    <span className="text-red-500">*</span>
+                  )}
+                </label>
+                {shouldShowAIScore && selectedPlatform && (
+                  <AIScoreIndicator
+                    content={postData[field] || ""}
+                    field={field}
+                    platform={selectedPlatform}
+                    contentType={selectedPostType || "post"}
+                    enabled={true}
+                    showDetails={true}
+                    isFieldFocused={isFieldFocused}
+                    onFocusChange={(focused) => {
+                      if (focused) {
+                        setFocusedField(fieldId);
+                      } else if (focusedField === fieldId) {
+                        setFocusedField(null);
+                      }
+                    }}
+                  />
                 )}
-              </label>
-              <input
-                type={(fieldConfig as any).type === "url" ? "url" : "text"}
-                value={postData[field] || ""}
-                onChange={(e) => handleFieldChange(field, e.target.value)}
-                placeholder={(fieldConfig as any).placeholder}
-                maxLength={(fieldConfig as any).maxLength}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+              </div>
+              <div className="relative">
+                <input
+                  type={(fieldConfig as any).type === "url" ? "url" : "text"}
+                  value={postData[field] || ""}
+                  onChange={(e) => handleFieldChange(field, e.target.value)}
+                  onFocus={() => setFocusedField(fieldId)}
+                  onBlur={() => {
+                    // Delay blur to allow clicking on the popup
+                    setTimeout(() => {
+                      if (focusedField === fieldId) {
+                        setFocusedField(null);
+                      }
+                    }, 200);
+                  }}
+                  placeholder={(fieldConfig as any).placeholder}
+                  maxLength={(fieldConfig as any).maxLength}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
               {(fieldConfig as any).maxLength && (
                 <div className="text-xs text-gray-500 mt-1">
                   {(postData[field] || "").length}/
