@@ -191,15 +191,38 @@ const TwitterPostForm = ({
   selectedPostType,
   focusedField,
   setFocusedField,
+  platform,
 }: {
   postData: any;
   onFieldChange: (field: string, value: any) => void;
   selectedPostType: string;
   focusedField: string | null;
   setFocusedField: (field: string | null) => void;
+  platform: string;
 }) => {
-  const [pollOptions, setPollOptions] = useState(["", ""]);
-  const [threadTweets, setThreadTweets] = useState([""]);
+  // Initialize from postData to sync with persisted data
+  const [pollOptions, setPollOptions] = useState<string[]>(() => {
+    if (postData.poll_options && Array.isArray(postData.poll_options) && postData.poll_options.length > 0) {
+      return postData.poll_options;
+    }
+    return ["", ""];
+  });
+  const [threadTweets, setThreadTweets] = useState<string[]>(() => {
+    if (postData.thread && Array.isArray(postData.thread) && postData.thread.length > 0) {
+      return postData.thread;
+    }
+    return [""];
+  });
+
+  // Sync with postData when it changes (e.g., when loading a draft)
+  useEffect(() => {
+    if (postData.thread && Array.isArray(postData.thread)) {
+      setThreadTweets(postData.thread.length > 0 ? postData.thread : [""]);
+    }
+    if (postData.poll_options && Array.isArray(postData.poll_options)) {
+      setPollOptions(postData.poll_options.length > 0 ? postData.poll_options : ["", ""]);
+    }
+  }, [postData.thread, postData.poll_options]);
 
   // Handle poll option changes
   const handlePollOptionChange = (index: number, value: string) => {
@@ -273,8 +296,8 @@ const TwitterPostForm = ({
           <AIScoreIndicator
             content={postData.content || ""}
             field="content"
-            platform="twitter"
-            contentType="tweet"
+            platform={platform}
+            contentType={selectedPostType || "tweet"}
             enabled={true}
             showDetails={true}
             isFieldFocused={focusedField === "twitter-content"}
@@ -406,6 +429,16 @@ export default function PostsPage() {
   else if (status === "scheduled") setActiveTab("scheduled");
   else setActiveTab("create");
   }, []);
+
+  // Reset focused field and clear notifications when tab or platform changes
+  useEffect(() => {
+    setFocusedField(null);
+    // Clear notifications on navigation (but keep loadPostsError for published tab)
+    setNotifications([]);
+    setError("");
+    setSuccess("");
+    // Don't clear loadPostsError here - it's specific to the published tab
+  }, [activeTab, selectedPlatform]);
   
  const router = useRouter();
 
@@ -417,8 +450,16 @@ export default function PostsPage() {
   // };
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>("");
-  const [success, setSuccess] = useState<string>("");
+  // Consolidated error/success notification system
+  interface Notification {
+    id: string;
+    type: 'error' | 'success' | 'info';
+    message: string;
+    timestamp: number;
+  }
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [error, setError] = useState<string>(""); // Keep for backward compatibility with modal
+  const [success, setSuccess] = useState<string>(""); // Keep for backward compatibility with modal
   const [posts, setPosts] = useState<Post[]>([]);
   const [scheduledPosts, setScheduledPosts] = useState<Post[]>([]);
   const [drafts, setDrafts] = useState<Post[]>([]);
@@ -431,7 +472,53 @@ export default function PostsPage() {
   const [analyticsMap, setAnalyticsMap] = useState<Record<string, any>>({});
   const [refreshingAnalytics, setRefreshingAnalytics] = useState(false);
   const [loadingPosts, setLoadingPosts] = useState(false);
+  const [loadPostsError, setLoadPostsError] = useState<string>("");
   const [lastLoadTime, setLastLoadTime] = useState(0);
+  
+  // Standardized timeout durations
+  const NOTIFICATION_TIMEOUTS = {
+    success: 4000, // 4 seconds
+    error: 6000,   // 6 seconds
+    info: 3000,    // 3 seconds
+  };
+
+  // Helper function to show notifications
+  const showNotification = (type: 'error' | 'success' | 'info', message: string, duration?: number) => {
+    const id = `notif-${Date.now()}-${Math.random()}`;
+    const notification: Notification = {
+      id,
+      type,
+      message,
+      timestamp: Date.now(),
+    };
+    
+    setNotifications(prev => [...prev, notification]);
+    
+    // Auto-remove after timeout
+    const timeout = duration || NOTIFICATION_TIMEOUTS[type];
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, timeout);
+    
+    // Also set legacy error/success for modal compatibility
+    if (type === 'error') {
+      setError(message);
+      setTimeout(() => setError(""), timeout);
+    } else if (type === 'success') {
+      setSuccess(message);
+      setTimeout(() => setSuccess(""), timeout);
+    }
+    
+    return id;
+  };
+
+  // Helper to clear all notifications
+  const clearNotifications = () => {
+    setNotifications([]);
+    setError("");
+    setSuccess("");
+    setLoadPostsError("");
+  };
   const [youtubeConnected, setYoutubeConnected] = useState<boolean>(false);
   const [checkingConnection, setCheckingConnection] = useState<boolean>(false);
 
@@ -447,8 +534,30 @@ export default function PostsPage() {
 
   // Facebook Pages selection
   const [facebookPages, setFacebookPages] = useState<Array<{ id: string; name: string }>>([]);
-  const [selectedFacebookPageId, setSelectedFacebookPageId] = useState<string>("")
+  const [selectedFacebookPageId, setSelectedFacebookPageId] = useState<string>(() => {
+    // Load from localStorage if available
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('selectedFacebookPageId');
+        return saved || "";
+      } catch {
+        return "";
+      }
+    }
+    return "";
+  });
   const [loadingFbPages, setLoadingFbPages] = useState<boolean>(false);
+
+  // Persist Facebook page selection
+  useEffect(() => {
+    if (selectedFacebookPageId && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('selectedFacebookPageId', selectedFacebookPageId);
+      } catch {
+        // Ignore localStorage errors
+      }
+    }
+  }, [selectedFacebookPageId]);
   const [showModal, setShowModal] = useState(false);
 
 const menuRef = useRef<HTMLDivElement | null>(null);
@@ -501,17 +610,25 @@ const pathname = usePathname();
   const fetchFacebookPages = async () => {
     try {
       setLoadingFbPages(true);
+      clearNotifications(); // Clear previous notifications
       const resp = await facebookService.getPages();
       if (resp?.success && Array.isArray(resp.pages)) {
         setFacebookPages(resp.pages.map((p: any) => ({ id: p.id, name: p.name })));
         if (resp.pages.length === 1) {
           setSelectedFacebookPageId(resp.pages[0].id);
         }
+        if (resp.pages.length === 0) {
+          showNotification('info', 'No Facebook pages found. Please connect a Facebook page in Settings.');
+        }
       } else {
         setFacebookPages([]);
+        showNotification('info', 'No Facebook pages available.');
       }
     } catch (e) {
+      console.error("Failed to fetch Facebook pages:", e);
       setFacebookPages([]);
+      const errorMessage = e instanceof Error ? e.message : "Failed to load Facebook pages. Please try again.";
+      showNotification('error', errorMessage);
     } finally {
       setLoadingFbPages(false);
     }
@@ -623,14 +740,18 @@ const pathname = usePathname();
       // Only clear if this was a force refresh
       if (force) {
         setConnectedPlatforms([]);
+        const errorMessage = error instanceof Error ? error.message : "Failed to check platform connections. Please try again.";
+        showNotification('error', errorMessage);
       }
+      // For non-force errors, silently fail to avoid disrupting user experience
     } finally {
       setCheckingConnections(false);
     }
   };
 
   // Handle platform selection
-  const handlePlatformSelect = (platform: string) => {
+  const handlePlatformSelect = async (platform: string) => {
+    clearNotifications(); // Clear previous notifications
     setSelectedPlatform(platform);
     try {
       const firstType = PLATFORM_CONFIGS[platform as keyof typeof PLATFORM_CONFIGS]?.postTypes?.[0] || "";
@@ -640,18 +761,21 @@ const pathname = usePathname();
     }
     setPostData({});
     setMediaFiles([]);
-    setError("");
-    setSuccess("");
-setShowModal(true)
-    // Check YouTube connection when YouTube is selected
+    setFocusedField(null); // Reset focused field when switching platforms
+    
+    // Check YouTube connection when YouTube is selected before opening modal
     if (platform === "youtube") {
-      checkYouTubeConnection();
+      await checkYouTubeConnection();
     }
+    
+    setShowModal(true);
   };
 
   // Load a draft into the form for editing/publishing
   const loadDraftIntoForm = async (post: Post) => {
     try {
+      setLoading(true);
+      clearNotifications(); // Clear previous notifications
       // Optionally fetch latest version
       const latest = await apiRequest<any>(`/api/posts/${post._id}`);
       const p = latest?.post || latest?.data?.post || post;
@@ -659,6 +783,7 @@ setShowModal(true)
       setActiveTab("create");
       setSelectedPlatform(p.platform);
       setSelectedPostType(p.post_type);
+      setFocusedField(null); // Reset focused field when loading draft
 
       const baseCaption = p?.content?.caption || "";
       const baseHashtags = Array.isArray(p?.content?.hashtags)
@@ -676,7 +801,7 @@ setShowModal(true)
       };
 
       // YouTube specifics
-      const yt = (p as any).platformContent?.youtube;
+      const yt = (p as any).platformContent?.youtube || (p as any).platform_content?.youtube;
       if (p.platform === "youtube" && yt) {
         nextData.title = yt.title || p.title || "";
         nextData.description = yt.description || "";
@@ -684,15 +809,35 @@ setShowModal(true)
         nextData.privacy = yt.privacy_status || "public";
       }
 
-      // Twitter basics (poll/thread not reconstructed here)
+      // Twitter specifics - restore thread and poll data
       if (p.platform === "twitter") {
         nextData.content = baseCaption;
+        const twitterContent = (p as any).platformContent?.twitter || (p as any).platform_content?.twitter;
+        if (twitterContent) {
+          if (twitterContent.thread && Array.isArray(twitterContent.thread)) {
+            nextData.thread = twitterContent.thread.map((t: any) => t.text || t);
+          }
+          if (twitterContent.poll) {
+            nextData.poll_question = twitterContent.poll.question || baseCaption;
+            nextData.poll_options = twitterContent.poll.options || [];
+            nextData.poll_duration = twitterContent.poll.duration_minutes || 1440;
+          }
+          if (twitterContent.reply_settings) {
+            nextData.reply_settings = twitterContent.reply_settings;
+          }
+        }
       }
 
       setPostData(nextData);
       setMediaFiles([]); // Media cannot be reconstructed client-side; prompt user to re-add if needed
+      setShowModal(true); // Open modal to show the loaded draft
+      showNotification('success', 'Draft loaded successfully');
     } catch (e) {
       console.error("Failed to load draft:", e);
+      const errorMessage = e instanceof Error ? e.message : "Failed to load draft. Please try again.";
+      showNotification('error', errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -700,6 +845,7 @@ setShowModal(true)
   const deleteDraft = async (postId?: string) => {
     if (!postId) return;
     try {
+      clearNotifications(); // Clear previous notifications
       await apiRequest(`/api/posts/${postId}`, { method: "DELETE" });
       // Refresh drafts list
       // Clear cache after delete
@@ -707,9 +853,12 @@ setShowModal(true)
       cacheUtils.clearPattern('/api/posts');
       // Notify other components
       window.dispatchEvent(new CustomEvent('postDeleted'));
+      showNotification('success', 'Draft deleted successfully');
       loadPosts(false, true); // Force refresh after delete
     } catch (e) {
       console.error("Failed to delete draft:", e);
+      const errorMessage = e instanceof Error ? e.message : "Failed to delete draft. Please try again.";
+      showNotification('error', errorMessage);
     }
   };
 
@@ -822,30 +971,6 @@ setShowModal(true)
   };
 
   const loadPosts = async (syncAnalytics = false, force = false) => {
-    // Also fetch engagement metrics from new API
-    try {
-      const { fetchPublishedPosts } = await import('@/lib/engagementApi');
-      const engagementRes = await fetchPublishedPosts({
-        page: 1,
-        limit: 100,
-        includeMetrics: true
-      });
-      
-      if (engagementRes.success && engagementRes.data?.posts) {
-        // Create a map of engagement metrics by platform_post_id
-        const engagementMap: Record<string, any> = {};
-        engagementRes.data.posts.forEach(post => {
-          if (post.platform_post_id) {
-            engagementMap[post.platform_post_id] = post.metrics;
-          }
-        });
-        
-        // Merge engagement metrics into analytics map
-        setAnalyticsMap(prev => ({ ...prev, ...engagementMap }));
-      }
-    } catch (err) {
-      console.warn('Failed to fetch engagement metrics:', err);
-    }
     // Prevent duplicate calls within 2 seconds unless forced
     const now = Date.now();
     // Basic throttling for non-forced requests (apiClient handles deduplication)
@@ -853,9 +978,33 @@ setShowModal(true)
       return; // Too soon since last load
     }
 
+    let engagementMap: Record<string, any> = {};
+
     try {
       setLoadingPosts(true);
+      setLoadPostsError(""); // Clear previous errors
       setLastLoadTime(now);
+      
+      // Also fetch engagement metrics from new API
+      try {
+        const { fetchPublishedPosts } = await import('@/lib/engagementApi');
+        const engagementRes = await fetchPublishedPosts({
+          page: 1,
+          limit: 100,
+          includeMetrics: true
+        });
+        
+        if (engagementRes.success && engagementRes.data?.posts) {
+          // Create a map of engagement metrics by platform_post_id
+          engagementRes.data.posts.forEach(post => {
+            if (post.platform_post_id) {
+              engagementMap[post.platform_post_id] = post.metrics;
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to fetch engagement metrics:', err);
+      }
       
       const [publishedRes, scheduledRes, draftsRes, failedRes] =
         await Promise.all([
@@ -933,13 +1082,27 @@ setShowModal(true)
               }
             }
           });
-          setAnalyticsMap(map);
+          // Merge with existing engagement metrics instead of overwriting
+          setAnalyticsMap(prev => ({ ...prev, ...engagementMap, ...map }));
         } catch (error) {
           console.error("Failed to process analytics:", error);
         }
       }
     } catch (err) {
       console.error("Failed to load posts:", err);
+      let errorMessage = "Failed to load posts. Please try again.";
+      if (err instanceof Error) {
+        // Convert technical errors to user-friendly messages
+        if (err.message.includes('401') || err.message.includes('Authentication')) {
+          errorMessage = "Your session has expired. Please refresh the page.";
+        } else if (err.message.includes('Network') || err.message.includes('fetch')) {
+          errorMessage = "Network error. Please check your connection and try again.";
+        } else {
+          errorMessage = getFriendlyMessage(err) || err.message;
+        }
+      }
+      setLoadPostsError(errorMessage);
+      showNotification('error', errorMessage);
     } finally {
       setLoadingPosts(false);
     }
@@ -999,7 +1162,7 @@ setShowModal(true)
       window.open(post.publishing.platform_url, '_blank', 'noopener,noreferrer');
     } else {
       // If no platform URL, could navigate to post details or show a message
-      setSuccess("No platform URL available for this post");
+      showNotification('info', "No platform URL available for this post");
     }
     setOpenMenuPublishedId(null);
   };
@@ -1009,15 +1172,12 @@ setShowModal(true)
     if (url) {
       try {
         await navigator.clipboard.writeText(url);
-        setSuccess("Link copied to clipboard!");
-        setTimeout(() => setSuccess(""), 3000);
+        showNotification('success', 'Link copied to clipboard!');
       } catch (err) {
-        setError("Failed to copy link");
-        setTimeout(() => setError(""), 3000);
+        showNotification('error', 'Failed to copy link. Please try again.');
       }
     } else {
-      setError("No link available for this post");
-      setTimeout(() => setError(""), 3000);
+      showNotification('error', 'No link available for this post');
     }
     setOpenMenuPublishedId(null);
   };
@@ -1029,6 +1189,7 @@ setShowModal(true)
     }
 
     try {
+      clearNotifications(); // Clear previous notifications
       await apiRequest(`/api/posts/${post._id}`, {
         method: 'DELETE'
       });
@@ -1037,12 +1198,11 @@ setShowModal(true)
       cacheUtils.clearPattern('/api/posts');
       // Notify other components
       window.dispatchEvent(new CustomEvent('postDeleted'));
-      setSuccess("Post deleted successfully");
+      showNotification('success', 'Post deleted successfully');
       await loadPosts(false, true); // Reload posts with force refresh
-      setTimeout(() => setSuccess(""), 3000);
     } catch (err: any) {
-      setError(err.message || "Failed to delete post");
-      setTimeout(() => setError(""), 3000);
+      const errorMessage = err?.message || "Failed to delete post. Please try again.";
+      showNotification('error', errorMessage);
     }
     setOpenMenuPublishedId(null);
   };
@@ -1065,15 +1225,55 @@ setShowModal(true)
       const config =
         PLATFORM_CONFIGS[selectedPlatform as keyof typeof PLATFORM_CONFIGS];
 
-      // Validate file types
+      // File size limits (100MB for videos, 10MB for images)
+      const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
+      const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+
+      // Collect all validation errors
+      const errors: string[] = [];
       const validFiles = fileArray.filter((file) => {
         const fileType = file.type.startsWith("image/")
           ? "image"
           : file.type.startsWith("video/")
             ? "video"
             : "other";
-        return config.supportedMedia.includes(fileType);
+        
+        if (!config.supportedMedia.includes(fileType)) {
+          errors.push(`${file.name}: File type not supported for ${config.name}`);
+          return false;
+        }
+
+        // Check file size
+        if (fileType === "video" && file.size > MAX_VIDEO_SIZE) {
+          errors.push(`${file.name}: File too large. Maximum size for videos is 100MB.`);
+          return false;
+        }
+        if (fileType === "image" && file.size > MAX_IMAGE_SIZE) {
+          errors.push(`${file.name}: File too large. Maximum size for images is 10MB.`);
+          return false;
+        }
+
+        return true;
       });
+
+      // Show all validation errors
+      if (errors.length > 0) {
+        const errorMessage = errors.length === 1 
+          ? errors[0] 
+          : `Multiple files have issues:\n${errors.map((e, i) => `${i + 1}. ${e}`).join('\n')}`;
+        showNotification('error', errorMessage);
+      }
+
+      if (validFiles.length === 0 && fileArray.length > 0) {
+        if (errors.length === 0) {
+          showNotification('error', "No valid files selected. Please check file types and sizes.");
+        }
+        return;
+      }
+
+      if (validFiles.length > 0 && errors.length > 0) {
+        showNotification('info', `${validFiles.length} file(s) added. ${errors.length} file(s) were skipped due to validation errors.`);
+      }
 
       setMediaFiles(validFiles);
 
@@ -1091,6 +1291,8 @@ setShowModal(true)
 
     const video = document.createElement("video");
     video.preload = "metadata";
+    const videoUrl = URL.createObjectURL(file);
+    video.src = videoUrl;
 
     video.onloadedmetadata = () => {
       const width = video.videoWidth;
@@ -1121,9 +1323,15 @@ setShowModal(true)
         );
         setShowShortsDialog(true);
       }
+
+      // Clean up blob URL to prevent memory leak
+      URL.revokeObjectURL(videoUrl);
     };
 
-    video.src = URL.createObjectURL(file);
+    video.onerror = () => {
+      // Clean up blob URL even on error
+      URL.revokeObjectURL(videoUrl);
+    };
   };
 
   const validatePost = () => {
@@ -1189,6 +1397,10 @@ setShowModal(true)
         );
         if (validThreadTweets.length === 0) {
           throw new Error("Thread must contain at least one valid tweet");
+        }
+        // Ensure main content or first thread tweet is not empty
+        if (!postData.content.trim() && (!validThreadTweets[0] || !validThreadTweets[0].trim())) {
+          throw new Error("Either main content or first thread tweet must be filled");
         }
       }
     }
@@ -1315,8 +1527,7 @@ setShowModal(true)
     try {
       setLoading(true);
       if (action === "publish") setShowPublishingDialog(true);
-      setError("");
-      setSuccess("");
+      clearNotifications(); // Clear previous notifications before starting
 
       console.log("🚨 Creating post:", {
         action,
@@ -1458,7 +1669,7 @@ setShowModal(true)
         } else if (selectedPlatform === "facebook") {
           // Provide selected page for posting
           if (selectedFacebookPageId) {
-            postPayload.platform_content = {
+            postPayload.platformContent = {
               facebook: {
                 pageId: selectedFacebookPageId,
               },
@@ -1604,29 +1815,24 @@ setShowModal(true)
         
         // Show prominent error notification
         const errorMsg = getFriendlyMessage(publishError);
-        setError(`Post created successfully, but ${action} failed: ${errorMsg}. Post has been saved as draft.`);
-        setTimeout(() => setError(""), 8000); // Show error for 8 seconds
+        showNotification('error', `Post created successfully, but ${action} failed: ${errorMsg}. Post has been saved as draft.`);
       }
 
-      // Set appropriate success message
+      // Set appropriate success message - only show success if operation fully succeeded
       if (action === "publish") {
         if (publishSuccess) {
-          setSuccess("Post created and published successfully!");
+          showNotification('success', 'Post created and published successfully!');
           setPublishResultText("Your post was published successfully.");
           setShowPublishResultDialog(true);
-        } else {
-          // Error already shown in catch block, but show info message too
-          setSuccess("Post created successfully! (Publish failed - post saved as draft)");
         }
+        // If publish failed, error was already shown in catch block above
       } else if (action === "schedule") {
         if (publishSuccess) {
-          setSuccess("Post created and scheduled successfully!");
-        } else {
-          // Error already shown in catch block, but show info message too
-          setSuccess("Post created successfully! (Schedule failed - post saved as draft)");
+          showNotification('success', 'Post created and scheduled successfully!');
         }
+        // If schedule failed, error was already shown in catch block above
       } else {
-        setSuccess("Post saved as draft successfully!");
+        showNotification('success', 'Post saved as draft successfully!');
       }
 
       // Reset form
@@ -1634,6 +1840,7 @@ setShowModal(true)
       setSelectedPostType("");
       setPostData({});
       setMediaFiles([]);
+      setShowModal(false); // Close modal after successful post creation
 
       // Clear cache before reloading to ensure fresh data
       const { cacheUtils } = await import("@/lib/apiClient");
@@ -1651,12 +1858,23 @@ setShowModal(true)
     } catch (err: unknown) {
       console.error("❌ Post creation failed:", err);
 
-      let errorMessage = "Failed to create post";
+      let errorMessage = "Failed to create post. Please try again.";
       if (err instanceof Error) {
-        errorMessage = err.message;
+        // Convert technical errors to user-friendly messages
+        if (err.message.includes('HTML error page') || err.message.includes('404')) {
+          errorMessage = "Unable to connect to server. Please check your connection and try again.";
+        } else if (err.message.includes('401') || err.message.includes('Authentication')) {
+          errorMessage = "Your session has expired. Please refresh the page and try again.";
+        } else if (err.message.includes('403') || err.message.includes('Forbidden')) {
+          errorMessage = "You don't have permission to perform this action.";
+        } else if (err.message.includes('500') || err.message.includes('Internal Server Error')) {
+          errorMessage = "Server error occurred. Please try again later.";
+        } else {
+          errorMessage = getFriendlyMessage(err) || err.message;
+        }
       }
 
-      setError(errorMessage);
+      showNotification('error', errorMessage);
     } finally {
       setLoading(false);
       setShowPublishingDialog(false);
@@ -1675,6 +1893,7 @@ setShowModal(true)
           selectedPostType={selectedPostType}
           focusedField={focusedField}
           setFocusedField={setFocusedField}
+          platform={selectedPlatform}
         />
       );
     }
@@ -1748,15 +1967,22 @@ setShowModal(true)
                     onClick={async () => {
                       try {
                         setLoading(true);
+                        clearNotifications(); // Clear previous notifications
                         const prompt = `Write a professional LinkedIn article body about: ${(postData as any).articleTitle || "my topic"}`;
                         const res = await apiRequest('/api/ai/suggestions', {
                           method: 'POST',
                           body: JSON.stringify({ prompt, platform: 'linkedin', type: 'article', context: postData })
                         }) as any;
                         const text = res?.data?.result?.content || '';
-                        if (text) handleFieldChange('articleBody', text);
-                      } catch {
-                        setError('Failed to generate article content');
+                        if (text) {
+                          handleFieldChange('articleBody', text);
+                          showNotification('success', 'Article content generated successfully!');
+                        } else {
+                          showNotification('info', 'No content generated. Please try again.');
+                        }
+                      } catch (e) {
+                        const errorMessage = e instanceof Error ? e.message : 'Failed to generate article content. Please try again.';
+                        showNotification('error', errorMessage);
                       } finally {
                         setLoading(false);
                       }
@@ -1823,10 +2049,12 @@ setShowModal(true)
                   type="button"
                   onClick={async () => {
                     try {
+                      clearNotifications(); // Clear previous notifications
                       await facebookService.setDefaultPage(selectedFacebookPageId);
-                      setSuccess("Default Facebook Page saved");
+                      showNotification('success', 'Default Facebook Page saved');
                     } catch (e) {
-                      setError("Failed to set default page");
+                      const errorMessage = e instanceof Error ? e.message : 'Failed to set default page. Please try again.';
+                      showNotification('error', errorMessage);
                     }
                   }}
                   className="text-xs text-gray-700 hover:text-gray-900 underline"
@@ -1945,6 +2173,7 @@ setShowModal(true)
                         onClick={async () => {
                           try {
                             setLoading(true);
+                            clearNotifications(); // Clear previous notifications
                             const prompt = `Generate a social post for ${selectedPlatform}.` + (postData.hashtags ? ` Use hashtags: ${postData.hashtags}` : '');
                             const res = await apiRequest('/api/ai/suggestions', {
                               method: 'POST',
@@ -1953,9 +2182,13 @@ setShowModal(true)
                             const text = res?.data?.result?.content || '';
                             if (text) {
                               handleFieldChange('content', text);
+                              showNotification('success', 'Content generated successfully!');
+                            } else {
+                              showNotification('info', 'No content generated. Please try again.');
                             }
                           } catch (e) {
-                            setError('Failed to generate content');
+                            const errorMessage = e instanceof Error ? e.message : 'Failed to generate content. Please try again.';
+                            showNotification('error', errorMessage);
                           } finally {
                             setLoading(false);
                           }
@@ -2109,25 +2342,64 @@ setShowModal(true)
       subtitle="Create, schedule, and manage your social media posts"
      
     >
+      {/* Global Notification System - Shows outside modal */}
+      {notifications.length > 0 && (
+        <div className="fixed top-4 right-4 z-[10000] space-y-2 max-w-md">
+          {notifications.map((notification) => (
+            <div
+              key={notification.id}
+              className={`p-4 rounded-lg shadow-lg border backdrop-blur-sm animate-in slide-in-from-right ${
+                notification.type === 'error'
+                  ? 'bg-red-50 border-red-200 text-red-800'
+                  : notification.type === 'success'
+                  ? 'bg-green-50 border-green-200 text-green-800'
+                  : 'bg-blue-50 border-blue-200 text-blue-800'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <p className="text-sm font-medium whitespace-pre-line">{notification.message}</p>
+                </div>
+                <button
+                  onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
+                  className="flex-shrink-0 text-gray-400 hover:text-gray-600"
+                  aria-label="Close notification"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      
       {showShortsDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowShortsDialog(false)} />
-          <div className="relative bg-white rounded-sm border border-gray-200/04 w-full max-w-md p-6 mx-4">
-            <div className="mb-4">
-              <p className="text-sm text-gray-900">{shortsDialogText}</p>
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowShortsDialog(false)} />
+          <div className="relative bg-white rounded-lg border border-gray-200 shadow-xl w-full max-w-md p-6 mx-auto">
+            <button
+              type="button"
+              onClick={() => setShowShortsDialog(false)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+            <div className="mb-4 pr-6">
+              <p className="text-sm text-gray-900 leading-relaxed">{shortsDialogText}</p>
             </div>
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setShowShortsDialog(false)}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Keep as Video
               </button>
               <button
                 type="button"
                 onClick={() => { setSelectedPostType('short'); setShowShortsDialog(false); }}
-                className="px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                className="px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors"
               >
                 Switch to Short
               </button>
@@ -2136,22 +2408,22 @@ setShowModal(true)
         </div>
       )}
       {showPublishingDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" />
-          <div className="relative bg-white rounded-sm hover:shadow-sm w-full max-w-sm p-6 mx-4">
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="relative bg-white rounded-lg border border-gray-200 shadow-xl w-full max-w-sm p-6 mx-auto">
             <button
               type="button"
               aria-label="Close"
               onClick={() => setShowPublishingDialog(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
             <div className="flex items-center gap-3">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-              <div>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 flex-shrink-0"></div>
+              <div className="flex-1">
                 <p className="text-sm font-medium text-gray-900">Publishing...</p>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-gray-600 mt-1">
                   {selectedPlatform === 'youtube'
                     ? 'Uploading to YouTube. This can take a few minutes for videos.'
                     : 'Your post is being published. Please wait...'}
@@ -2162,22 +2434,22 @@ setShowModal(true)
         </div>
       )}
       {showPublishResultDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowPublishResultDialog(false)} />
-          <div className="relative bg-white rounded-sm hover:shadow-sm w-full max-w-sm p-6 mx-4">
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowPublishResultDialog(false)} />
+          <div className="relative bg-white rounded-lg border border-gray-200 shadow-xl w-full max-w-sm p-6 mx-auto">
             <button
               type="button"
               aria-label="Close"
               onClick={() => setShowPublishResultDialog(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
-            <div className="flex items-start gap-3">
-              <CheckCircle className="text-green-600" size={20} />
-              <div>
+            <div className="flex items-start gap-3 pr-6">
+              <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
+              <div className="flex-1">
                 <p className="text-sm font-medium text-gray-900">Published</p>
-                <p className="text-xs text-gray-600">{publishResultText || 'Your post has been published successfully.'}</p>
+                <p className="text-xs text-gray-600 mt-1 leading-relaxed">{publishResultText || 'Your post has been published successfully.'}</p>
               </div>
             </div>
           </div>
@@ -2220,7 +2492,7 @@ setShowModal(true)
           <button
             onClick={() => setActiveTab("scheduled")}
              className={`px-4 py-1 text-xs rounded-xl border transition-all ${
-              activeTab === "create"
+              activeTab === "scheduled"
                 ? "bg-blue-50 text-blue-700 border-blue-700 shadow-sm"
                 : " hover:bg-white-300 border border-blue-600 bg-blue-50 text-blue-600 hover:shadow-md transition-all duration-150"
             }`}
@@ -2230,7 +2502,7 @@ setShowModal(true)
           <button
             onClick={() => setActiveTab("published")}
              className={`px-4 py-1 text-xs rounded-xl border transition-all ${
-              activeTab === "create"
+              activeTab === "published"
                 ? "bg-blue-50 text-blue-700 border-blue-700 shadow-sm"
                 : " hover:bg-white-300 border border-blue-600 bg-blue-50 text-blue-600 hover:shadow-sm transition-all duration-150"
             }`}
@@ -2334,7 +2606,7 @@ setShowModal(true)
 
                                 <button
                             onClick={() => handlePlatformSelect(platform)}
-                                className=" cursor-pointer px-2 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white text-sm text-gray-700 shadow-sm   border border-gray-200/100 rounded hover:shadow:md transition-all duration-150 mt-3"
+                                className=" cursor-pointer px-2 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white text-sm shadow-sm   border border-gray-200/100 rounded hover:shadow:md transition-all duration-150 mt-3"
                                 >
                                   Select
                                 </button>
@@ -2351,7 +2623,7 @@ setShowModal(true)
     } catch {}
     router.push("/creator/settings#linked_account");
   }}
-                                  className="px-2 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm text-gray-700 shadow-sm   border border-gray-200/100 rounded hover:shadow:md transition-all duration-150 mt-3"
+                                  className="px-2 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm shadow-sm   border border-gray-200/100 rounded hover:shadow:md transition-all duration-150 mt-3"
                                 >
                                   Connect
                                 </button>
@@ -2368,22 +2640,23 @@ setShowModal(true)
 
           {showModal && (
   <div
-    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+    className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
     onClick={(e) => {
       if (e.target === e.currentTarget) setShowModal(false); // click outside to close
     }}
   >
     <div
-  className="bg-white w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-xl p-6 relative animate-fadeIn flex flex-col"
+  className="bg-white w-full max-w-3xl max-h-[90vh] rounded-lg border border-gray-200 shadow-xl p-6 relative flex flex-col mx-auto"
 >
-  <div className="overflow-y-auto pr-2">
+  <div className="overflow-y-auto pr-2 flex-1">
       
       {/* Close Button */}
       <button
         onClick={() => setShowModal(false)}
-        className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
+        aria-label="Close modal"
       >
-        ✕
+        <X size={20} />
       </button>
 
       {/* 🧩 Your Original Code (No Logic Changed) */}
@@ -2499,12 +2772,12 @@ setShowModal(true)
       {(error || success) && (
         <div className="space-y-2 mt-4">
           {error && (
-            <div className="bg-red-50 text-red-700 border border-red-200 rounded-md px-4 py-3 text-sm">
+            <div className="bg-red-50 text-red-700 border border-red-200 rounded-md px-4 py-3 text-sm leading-relaxed">
               {error}
             </div>
           )}
           {success && (
-            <div className="bg-green-50 text-green-700 border border-green-200 rounded-md px-4 py-3 text-sm">
+            <div className="bg-green-50 text-green-700 border border-green-200 rounded-md px-4 py-3 text-sm leading-relaxed">
               {success}
             </div>
           )}
@@ -2571,8 +2844,8 @@ setShowModal(true)
         </div>
       )}
     </div>
-                </div>
-                </div>
+  </div>
+  </div>
 )}
    
            
@@ -2840,7 +3113,7 @@ setShowModal(true)
             </div>
             <button
               onClick={handleRefreshAnalytics}
-              disabled={refreshingAnalytics}
+              disabled={refreshingAnalytics || loadingPosts}
               className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
               title="Refresh engagement metrics"
             >
@@ -2848,6 +3121,19 @@ setShowModal(true)
               <span>Refresh Metrics</span>
             </button>
           </div>
+          
+          {/* Error message for loadPosts */}
+          {loadPostsError && (
+            <div className="p-4 bg-red-50 border-l-4 border-red-400 text-red-700">
+              <p className="text-sm">{loadPostsError}</p>
+              <button
+                onClick={() => loadPosts(false, true)}
+                className="mt-2 text-sm underline hover:text-red-900"
+              >
+                Try again
+              </button>
+            </div>
+          )}
 
           <div className="overflow-x-auto relative  overflow-visible">
             <table className="w-full relative overflow-visible">
@@ -2937,31 +3223,27 @@ setShowModal(true)
                         );
                       })()}
                     </td>
-                    <td className="px-6 py-4 relative overflow-visible">
-                      <button
-                        className="text-gray-400 hover:text-gray-600"
-                        onClick={() =>
-                          setOpenMenuPublishedId(
-                            openMenuPublishedId === post._id
-                              ? null
-                              : (post._id as string)
-                          )
-                        }
-                      >
-                        <MoreHorizontal size={16} />
-                      </button>
-                     {openMenuPublishedId === post._id && (
-               <div  ref={menuRef}
-                className="absolute right-0 w-48 bg-white/80 backdrop-blur-sm 
-                           border border-gray-200 rounded-md shadow-lg z-[9999] overflow-visible"
-              
-                style={{
-                  transform: "translateY(0)",
-                  position: "fixed", // 👈 main fix
-                  // adjust depending on scroll
-                  right: "2rem",
-                }}
-              >
+                    <td className="px-6 py-4 relative">
+                      <div className="relative">
+                        <button
+                          className="text-gray-400 hover:text-gray-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuPublishedId(
+                              openMenuPublishedId === post._id
+                                ? null
+                                : (post._id as string)
+                            );
+                          }}
+                        >
+                          <MoreHorizontal size={16} />
+                        </button>
+                        {openMenuPublishedId === post._id && (
+                          <div
+                            ref={menuRef}
+                            className="absolute right-0 mt-1 w-48 bg-white/80 backdrop-blur-sm 
+                                       border border-gray-200 rounded-md shadow-lg z-[9999]"
+                          >
       {post.publishing?.platform_url ? (
         <button
           className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -3007,8 +3289,9 @@ setShowModal(true)
         <Trash2 size={14} />
         Delete
       </button>
-    </div>
-  )}
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
