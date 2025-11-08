@@ -417,24 +417,7 @@ const CompetitorAnalysisPage = () => {
             </Link>
           </div>
           <div className='flex gap-2'>
-            <button
-              onClick={testAIServices}
-              disabled={aiTestStatus === 'testing'}
-              className={`px-3 py-1.5 rounded-sm transition-colors flex items-center space-x-2 text-sm ${
-                aiTestStatus === 'success' 
-                  ? 'bg-green-100 text-green-700 border border-green-300' 
-                  : aiTestStatus === 'error'
-                  ? 'bg-red-100 text-red-700 border border-red-300'
-                  : 'border border-gray-200/08 text-gray-800 hover:bg-gray-50'
-              }`}
-            >
-              <Zap className="w-4 h-4" />
-              <span>
-                {aiTestStatus === 'testing' ? 'Testing AI...' : 
-                 aiTestStatus === 'success' ? 'AI Connected' :
-                 aiTestStatus === 'error' ? 'AI Error' : 'Test AI'}
-              </span>
-            </button>
+          
             <button
               onClick={() => setShowHistory(!showHistory)}
               className="border border-gray-200/08 text-gray-800 px-3 py-1.5 rounded-sm hover:bg-gray-50 transition-colors flex items-center space-x-2 text-sm"
@@ -492,8 +475,21 @@ const CompetitorAnalysisPage = () => {
           </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
           {/* Platform Filter */}
-         
-          <div className="relative" data-dropdown>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-800">Platform</label>
+            <select 
+              className="w-full border text-black border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-800 transition-colors duration-200" 
+              value={quickPlatform}
+              onChange={(e) => setQuickPlatform(e.target.value)}
+            >
+              <option value="instagram" disabled>Instagram (disabled)</option>
+              <option value="youtube">YouTube</option>
+              <option value="twitter">Twitter</option>
+              <option value="linkedin" disabled>LinkedIn (disabled)</option>
+              <option value="facebook" disabled>Facebook (disabled)</option>
+            </select>
+          </div>
+          {/* <div className="relative" data-dropdown>
             <label htmlFor="" className='block text-sm font-medium mb-1 text-gray-800'>Plateform</label>
                 <button
                   type="button"
@@ -529,7 +525,7 @@ const CompetitorAnalysisPage = () => {
                     </div>
                   </div>
                 )}
-              </div>
+              </div> */}
           <div className="space-y-2 md:col-span-2">
             <label className="block text-sm font-medium text-gray-800">Profile URL or Username</label>
             <input
