@@ -88,7 +88,6 @@ export default function BrandAnalyticsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedFollowers, setSelectedFollwers] = useState('any')
   const [selectedlevel, setSelectedLevel] = useState('all')
-  const[selectedsecPlateform , setSelectedSecPlateform]=useState('all')
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [loading, setLoading] = useState(true);
   const [analysisHistory, setAnalysisHistory] = useState<AnalysisHistory[]>([]);
@@ -106,11 +105,6 @@ export default function BrandAnalyticsPage() {
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<any>(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
-  const [isPlatformDropdownOpen, setIsPlatformDropdownOpen] = useState(false);
-  const[isSecPlateform , setIsSecPlateform]=useState(false)
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
-  const [isFollwersRange, setIsFollwersRange] = useState(false);
-const [isLevel, setIsLevel] = useState(false);
   // Load competitor data and analysis history
   useEffect(() => {
     if (user && user.role === 'brand') {
@@ -273,7 +267,31 @@ const [isLevel, setIsLevel] = useState(false);
     }
   };
 
+  // Auto-detect platform from an entered URL
+  const detectPlatformFromInput = (input: string): string | null => {
+    const trimmed = input.trim();
+    if (!trimmed) return null;
+    try {
+      const url = new URL(trimmed);
+      const hostname = url.hostname.toLowerCase();
+      if (hostname.includes('instagram.com')) return 'instagram';
+      if (hostname.includes('twitter.com') || hostname.includes('x.com')) return 'twitter';
+      if (hostname.includes('youtube.com')) return 'youtube';
+      if (hostname.includes('linkedin.com')) return 'linkedin';
+      if (hostname.includes('facebook.com')) return 'facebook';
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
   const fetchCompetitorData = async () => {
+    const blocked = new Set(['instagram', 'facebook', 'linkedin']);
+    if (blocked.has(quickPlatform)) {
+      setQuickError('Fetching for Instagram, Facebook, and LinkedIn is currently unavailable.');
+      setShowPreview(false);
+      return;
+    }
     const profileUrl = buildProfileUrl(quickPlatform, quickInput);
     if (!profileUrl) {
       setQuickError('Enter a valid username or full profile URL');
@@ -301,8 +319,7 @@ const [isLevel, setIsLevel] = useState(false);
       }
     } catch (e: unknown) {
       const err = e as { message?: string } | undefined;
-      console.error('Error fetching competitor data:', err);
-      setQuickError(err?.message || 'Failed to fetch competitor data. Please check if the backend server is running.');
+      setQuickError(err?.message || 'Failed to fetch competitor data. Please try again.');
     } finally {
       setQuickLoading(false);
     }
@@ -326,7 +343,7 @@ const [isLevel, setIsLevel] = useState(false);
           body: JSON.stringify({
             competitorUrls: [fetchedData.profile.profileUrl],
             analysisType: 'comprehensive',
-            platform: quickPlatform,
+            platforms: [quickPlatform],
             options: { 
               maxPosts: 30, 
               timePeriodDays: 30, 
@@ -444,33 +461,9 @@ const [isLevel, setIsLevel] = useState(false);
             <h1 className="text-2xl font-bold text-gray-900">Competitor Analysis</h1>
             <p className="text-gray-600 mt-1">Analyze your competitors and discover market opportunities</p>
           </div>
-          <div className="flex items-center space-x-4 w-full sm:w-auto sm:justify-end">
-            <Link href="/creator/competitors/analyze">
-              <button className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white px-4 py-1.5 rounded-sm  transition-colors flex items-center space-x-2 text-sm">
-                <Plus className="w-4 h-4" />
-                <span>New Analysis</span>
-              </button>
-            </Link>
-          </div>
+          
           <div className='flex gap-2'>
-            <button
-              onClick={testAIServices}
-              disabled={aiTestStatus === 'testing'}
-              className={`px-3 py-1.5 rounded-sm transition-colors flex items-center space-x-2 text-sm ${
-                aiTestStatus === 'success' 
-                  ? 'bg-green-100 text-green-700 border border-green-300' 
-                  : aiTestStatus === 'error'
-                  ? 'bg-red-100 text-red-700 border border-red-300'
-                  : 'border border-gray-200/08 text-gray-800 hover:bg-gray-50'
-              }`}
-            >
-              <Zap className="w-4 h-4" />
-              <span>
-                {aiTestStatus === 'testing' ? 'Testing AI...' : 
-                 aiTestStatus === 'success' ? 'AI Connected' :
-                 aiTestStatus === 'error' ? 'AI Error' : 'Test AI'}
-              </span>
-            </button>
+          
             <button
               onClick={() => setShowHistory(!showHistory)}
               className="border border-gray-200/08 text-gray-800 px-3 py-1.5 rounded-sm hover:bg-gray-50 transition-colors flex items-center space-x-2 text-sm"
@@ -478,7 +471,7 @@ const [isLevel, setIsLevel] = useState(false);
               <BarChart3 className="w-4 h-4" />
               <span>History</span>
             </button>
-           </div>
+           
             <div className="relative w-full sm:w-auto">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-800 w-4 h-4" />
               <input
@@ -488,6 +481,7 @@ const [isLevel, setIsLevel] = useState(false);
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-3 py-2 border border-gray-200/04 rounded-sm  bg-white  focus:outline-none transition-colors duration-200 w-full sm:min-w-[260px] text-sm"
               />
+            </div>
             </div>
         </div>
       </div>
@@ -527,81 +521,46 @@ const [isLevel, setIsLevel] = useState(false);
 </div>
 
         </div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end relative">
-
-
-            <div className="relative z-[100] overflow-visible" data-dropdown>
-<label className="block text-sm font-medium text-gray-800">Plateform</label>
-                <button
-                  type="button"
-             className="w-full inline-flex items-center gap-2 px-4 py-2 border border-gray-200/04 rounded-sm focus:outline-none transition-colors text-left"
-
-                  onClick={() => setIsPlatformDropdownOpen(!isPlatformDropdownOpen)}
-                >
-                  <span className="text-gray-700">
-                    {platformOptions.find(opt => opt.value === selectedPlatform)?.label}
-                  </span>
-                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ml-auto ${isPlatformDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-                
-               {isPlatformDropdownOpen && (
-  <div className="
-      absolute top-full left-0 mt-1 w-full bg-white 
-      border border-gray-200 rounded-md shadow-lg 
-      z-[999999]
-      overflow-hidden
-      isolate
-  ">
-    <div className="p-2">
-      {platformOptions.map((option) => (
-        <button
-          key={option.value}
-          className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded text-left transition-colors"
-          onClick={() => {
-            setSelectedPlatform(option.value);
-            setIsPlatformDropdownOpen(false);
-          }}
-        >
-          <span className="text-sm text-gray-700">{option.label}</span>
-          {selectedPlatform === option.value && (
-            <CheckIcon className="w-4 h-4 text-blue-600 ml-auto" />
-          )}
-        </button>
-      ))}
-    </div>
-  </div>
-)}
-
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+          {/* Platform Filter */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-800">Platform</label>
+            <select 
+              className="w-full border text-black border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-800 transition-colors duration-200" 
+              value={quickPlatform}
+              onChange={(e) => setQuickPlatform(e.target.value)}
+            >
+              <option value="instagram" disabled>Instagram (disabled)</option>
+              <option value="youtube">YouTube</option>
+              <option value="twitter">Twitter</option>
+              <option value="linkedin" disabled>LinkedIn (disabled)</option>
+              <option value="facebook" disabled>Facebook (disabled)</option>
+            </select>
+          </div>
           <div className="space-y-2 md:col-span-2">
             <label className="block text-sm font-medium text-gray-800">Profile URL or Username</label>
             <input
               type="text"
               value={quickInput}
-              onChange={(e) => setQuickInput(e.target.value)}
-              placeholder="e.g.https://instagram.com/creator or @creator"
-              className="w-full border text-black border-gray-200/04 rounded-sm px-4 py-2 text-sm focus:outline-none bg-white  transition-colors duration-200"
+              onChange={(e) => {
+                const val = e.target.value;
+                setQuickInput(val);
+                const detected = detectPlatformFromInput(val);
+                if (detected) setQuickPlatform(detected);
+              }}
+              placeholder="e.g. https://youtube.com/@channel or https://twitter.com/username"
+              className="w-full border text-black border-gray-200/04 rounded-sm px-3 py-3 text-sm  focus:outline-none bg-white  transition-colors duration-200"
             />
             {quickError && <div className="text-sm text-red-600">{quickError}</div>}
           </div>
           <div>
-            {!showPreview ? (
-              <button
-                onClick={fetchCompetitorData}
-                disabled={quickLoading}
-                className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white px-4 py-2 rounded-sm hover:bg-blue-700 transition-colors disabled:bg-gray-800 text-sm"
-              >
-                {quickLoading ? 'Fetching Data…' : 'Fetch Competitor Data'}
-              </button>
-            ) : (
-              <button
-                onClick={startQuickAnalysis}
-                disabled={analysisLoading}
-                className="w-full bg-green-600 text-white px-4 py-2 rounded-sm hover:bg-green-700 transition-colors disabled:bg-gray-800 text-sm"
-              >
-                {analysisLoading ? 'AI Analyzing…' : 'Start AI Analysis'}
-              </button>
-            )}
+            <button
+              onClick={fetchCompetitorData}
+              disabled={quickLoading || !quickInput.trim()}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600  text-white px-4 py-3 rounded-sm hover:bg-blue-700 transition-colors disabled:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70 text-sm"
+            >
+              {quickLoading ? 'Fetching Data…' : showPreview ? 'Refetch Competitor Data' : 'Fetch Competitor Data'}
+            </button>
           </div>
         </div>
       </div>
@@ -728,15 +687,24 @@ const [isLevel, setIsLevel] = useState(false);
             </div>
           </div>
 
-          {/* AI Services Status */}
+          {/* AI Services Section */}
           <div className="mt-2 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-            <div className="flex items-center">
-              <Zap className="w-4 h-4 text-yellow-600 mr-2" />
-              <span className="text-sm font-medium text-yellow-800">
-                AI Services: Ready for Analysis
-              </span>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center">
+                <Zap className="w-4 h-4 text-yellow-600 mr-2" />
+                <span className="text-sm font-medium text-yellow-800">
+                  AI Services: Ready for Analysis
+                </span>
+              </div>
+              <button
+                onClick={startQuickAnalysis}
+                disabled={analysisLoading}
+                className="bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-800 text-xs"
+              >
+                {analysisLoading ? 'AI Analyzing…' : 'Start AI Analysis'}
+              </button>
             </div>
-            <p className="text-xs text-yellow-700 mt-1">
+            <p className="text-xs text-yellow-700 mt-2">
               Enhanced AI analysis will be performed. If AI services are unavailable, basic analysis will be provided.
             </p>
           </div>
@@ -744,7 +712,8 @@ const [isLevel, setIsLevel] = useState(false);
       )}
 
       {/* Enhanced Filters Section */}
-      <div className="bg-white/80  rounded-sm  border border-gray-200/04 p-5 mb-8 hover:shadow-md transition-all duration-200">
+      {!loading && filteredCompetitors.length > 0 && (
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-800/50 p-5 mb-8 hover:shadow-md transition-all duration-200">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
            <div className="flex items-center gap-3 sm:gap-3 ">
   <div className="w-10 h-8 lg:w-10 lg:h-10  bg-gradient-to-r from-blue-500 to-purple-600 rounded-sm flex items-center justify-center">
@@ -766,164 +735,80 @@ const [isLevel, setIsLevel] = useState(false);
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-         <div className="relative z-10 " data-dropdown>
-                <button
-                  type="button"
-             className="w-full inline-flex items-center gap-2 px-4 py-3 border border-gray-200/04 rounded-sm focus:outline-none transition-colors text-left"
-
-                  onClick={() => setIsSecPlateform(!isSecPlateform)}
-                >
-                  <span className="text-gray-700">
-                    {platformOptions.find(opt => opt.value === selectedsecPlateform)?.label}
-                  </span>
-                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ml-auto ${isPlatformDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {isSecPlateform && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200/04 rounded-sm shadow-sm">
-                    <div className="p-2">
-                      {platformOptions.map((option) => (
-                        <button
-                          key={option.value}
-                          className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded text-left transition-colors"
-                          onClick={() => {
-                            setSelectedSecPlateform(option.value);
-                            setIsSecPlateform(false);
-                          }}
-                        >
-                        
-                          <span className="text-sm text-gray-700">{option.label}</span>
-                          {selectedPlatform === option.value && (
-                            <CheckIcon className="w-4 h-4 text-blue-600 ml-auto" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-           <div className="relative" data-dropdown>
-                <button
-                  type="button"
-              className="w-full inline-flex items-center gap-2 px-4 py-3 border border-gray-200/04 rounded-sm focus:outline-none transition-colors text-left"
-
-                  onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-                >
-                 <span className="text-gray-700">
-  {categoryOptions.find(opt => opt.value === selectedCategory)?.label}
-</span>
-                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 ml-auto transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {isCategoryDropdownOpen && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200/04 rounded-sm shadow-lg">
-                    <div className="p-2">
-                      {categoryOptions.map((option) => (
-                        <button
-                          key={option.value}
-                          className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded text-left transition-colors"
-                          onClick={() => {
-                            setSelectedCategory(option.value);
-                            setIsCategoryDropdownOpen(false);
-                          }}
-                        >
-                          {/* <span>{option.icon}</span> */}
-                          <span className="text-sm text-gray-700">{option.label}</span>
-                          {selectedCategory === option.value && (
-                            <CheckIcon className="w-4 h-4 text-blue-600 ml-auto" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-        
-        <div className="relative" data-dropdown>
-                <button
-                  type="button"
-              className="w-full inline-flex items-center gap-2 px-4 py-3 border border-gray-200/04 rounded-sm focus:outline-none transition-colors text-left"
-
-                  onClick={() => setIsFollwersRange(!isFollwersRange)}
-                >
-                 <span className="text-gray-700">
-  {followersrange.find(opt => opt.value === selectedFollowers)?.label}
-</span>
-                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 ml-auto transition-transform ${isFollwersRange ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {isFollwersRange && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200/04 rounded-sm shadow-lg">
-                    <div className="p-2">
-                      {followersrange.map((option) => (
-                        <button
-                          key={option.value}
-                          className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded text-left transition-colors"
-                          onClick={() => {
-                            setSelectedFollwers(option.value);
-                            setIsFollwersRange(false);
-                          }}
-                        >
-                          {/* <span>{option.icon}</span> */}
-                          <span className="text-sm text-gray-700">{option.label}</span>
-                          {selectedFollowers === option.value && (
-                            <CheckIcon className="w-4 h-4 text-blue-600 ml-auto" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-800">Platform</label>
+            <select 
+              className="w-full border text-black border-gray-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-800 transition-colors duration-200" 
+              value={selectedPlatform} 
+              onChange={(e) => setSelectedPlatform(e.target.value)}
+            >
+              <option value="all">All Platforms</option>
+              <option value="youtube"> YouTube</option>
+              <option value="instagram"> Instagram</option>
+              <option value="twitter"> Twitter</option>
+              <option value="linkedin"> LinkedIn</option>
+              <option value="facebook"> Facebook</option>
+            </select>
+          </div>
           
-         <div className="relative" data-dropdown>
-                <button
-                  type="button"
-              className="w-full inline-flex items-center gap-2 px-4 py-3 border border-gray-200/04 rounded-sm focus:outline-none transition-colors text-left"
-
-                  onClick={() => setIsLevel(!isLevel)}
-                >
-                 <span className="text-gray-700">
-  {engagementlevel.find(opt => opt.value === selectedlevel)?.label}
-</span>
-                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 ml-auto transition-transform ${isLevel ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {isLevel&& (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200/04 rounded-sm shadow-lg">
-                    <div className="p-2">
-                      {engagementlevel.map((option) => (
-                        <button
-                          key={option.value}
-                          className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded text-left transition-colors"
-                          onClick={() => {
-                            setSelectedLevel(option.value);
-                            setIsLevel(false);
-                          }}
-                        >
-                          {/* <span>{option.icon}</span> */}
-                          <span className="text-sm text-gray-700">{option.label}</span>
-                          {selectedlevel === option.value && (
-                            <CheckIcon className="w-4 h-4 text-blue-600 ml-auto" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-800">Category</label>
+            <select 
+              className="w-full border text-black border-gray-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-800 transition-colors duration-200" 
+              value={selectedCategory} 
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              <option value="all">All Categories</option>
+              <option value="technology">Technology</option>
+              <option value="fashion"> Fashion</option>
+              <option value="fitness"> Fitness</option>
+              <option value="food"> Food</option>
+              <option value="travel"> Travel</option>
+              <option value="beauty"> Beauty</option>
+              <option value="gaming"> Gaming</option>
+            </select>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-800">Follower Range</label>
+            <select 
+              className="w-full border text-black border-gray-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-800 transition-colors duration-200"
+              value={selectedFollowers}
+              onChange={(e) => setSelectedFollwers(e.target.value)}
+            >
+              <option value="any">Any Size</option>
+              <option value="micro"> Micro (1K-100K)</option>
+              <option value="mid">Mid-tier (100K-1M)</option>
+              <option value="macro"> Macro (1M+)</option>
+              <option value="mega"> Mega (10M+)</option>
+            </select>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-800">Engagement Level</label>
+            <select 
+              className="w-full border text-black border-gray-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white hover:border-gray-800 transition-colors duration-200"
+              value={selectedlevel}
+              onChange={(e) => setSelectedLevel(e.target.value)}
+            >
+              <option value="all">Any Level</option>
+              <option value="high"> High (7%+)</option>
+              <option value="medium"> Medium (4-7%)</option>
+              <option value="low"> Low (&lt;4%)</option>
+            </select>
+          </div>
         </div>
         
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-400 flex-wrap gap-2 mb-3 mt-3">
-          <div className="flex flex-wrap mb-1 items-center space-x-2 gap-2">
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-800 flex-wrap gap-2">
+          <div className="flex items-center space-x-2">
             <span className="text-xs text-gray-900">Quick filters:</span>
-            <button className="px-3 py-1 text-xs bg-green-100 border border-green-700 text-green-700 rounded-full hover:bg-green-200 transition-colors duration-200">
+            <button className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors duration-200">
               High Engagement
             </button>
-            <button className="px-3 py-1 text-xs bg-blue-100 border border-blue-700 text-blue-700 rounded-full hover:bg-blue-200 transition-colors duration-200">
+            <button className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors duration-200">
               Verified Only
             </button>
-            <button className="px-3 py-1 text-xs bg-purple-100 border border-purple-700 text-purple-700 rounded-full hover:bg-purple-200 transition-colors duration-200">
+            <button className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 transition-colors duration-200">
               Fast Growing
             </button>
           </div>
@@ -932,6 +817,7 @@ const [isLevel, setIsLevel] = useState(false);
           </button>
         </div>
       </div>
+      )}
 
       {/* Analysis History Section */}
       {showHistory && (

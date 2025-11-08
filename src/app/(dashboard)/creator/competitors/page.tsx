@@ -409,12 +409,12 @@ const CompetitorAnalysisPage = () => {
             <p className="hidden md:block mt-2 text-gray-400">Analyze your competitors and discover growth opportunities</p>
           </div> */}
           <div className="flex items-center space-x-4 w-full sm:w-auto sm:justify-end">
-            <Link href="/creator/competitors/analyze">
+            {/* <Link href="/creator/competitors/analyze">
               <button className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white px-4 py-1.5 rounded-sm  transition-colors flex items-center space-x-2 text-sm">
                 <Plus className="w-4 h-4" />
                 <span>New Analysis</span>
               </button>
-            </Link>
+            </Link> */}
           </div>
           <div className='flex gap-2'>
           
