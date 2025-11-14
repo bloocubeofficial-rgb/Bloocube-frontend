@@ -38,6 +38,7 @@ export default function CreatorMarketplacePage() {
   const [isPlatformDropdownOpen, setIsPlatformDropdownOpen] = useState(false);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [isBudgetDropdownOpen, setIsBudgetDropdownOpen] = useState(false);
+const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
   // Helper function to get bid status for a campaign
   const getBidStatus = (campaignId: string) => {
@@ -310,6 +311,9 @@ const platformOptions = [
                           onClick={() => {
                             setSelectedPlatform(option.value);
                             setIsPlatformDropdownOpen(false);
+                            if (option.value !== "all" && !activeFilters.includes(option.label)) {
+    setActiveFilters([...activeFilters, option.label]);
+  }
                           }}
                         >
                         
@@ -348,6 +352,9 @@ const platformOptions = [
                           onClick={() => {
                             setSelectedSort(option.value);
                             setIsSortDropdownOpen(false);
+                            if (option.value !== "all" && !activeFilters.includes(option.label)) {
+    setActiveFilters([...activeFilters, option.label]);
+  }
                           }}
                         >
                           {/* <span>{option.icon}</span> */}
@@ -386,6 +393,9 @@ const platformOptions = [
                           onClick={() => {
                             setSelectedBudget(option.value);
                             setIsBudgetDropdownOpen(false);
+                            if (option.value !== "all" && !activeFilters.includes(option.label)) {
+    setActiveFilters([...activeFilters, option.label]);
+  }
                           }}
                         >
                           {/* <span>{option.icon}</span> */}
@@ -401,7 +411,7 @@ const platformOptions = [
               </div>
         </div>
         
-       <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-400 flex-wrap gap-2 mb-3 mt-3">
+       {/* <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-400 flex-wrap gap-2 mb-3 mt-3">
           <div className="flex flex-wrap mb-1 items-center space-x-2 gap-2">
             <span className="text-xs text-gray-500">Quick filters:</span>
             <button className="px-3 py-1 text-xs bg-blue-100 text-blue-700  border border-blue-700 rounded-full hover:bg-blue-200 transition-colors duration-200">
@@ -417,7 +427,48 @@ const platformOptions = [
           <button className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200 w-full sm:w-auto text-left sm:text-right">
             Clear all filters
           </button>
-        </div>
+        </div> */}
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-400 flex-wrap gap-2 mb-3">
+  <div className="flex flex-wrap mb-1 items-center space-x-2 gap-2">
+    <span className="text-xs text-gray-500">Quick filters:</span>
+
+    {activeFilters.length > 0 ? (
+      activeFilters.map((filter, index) => (
+        <button
+          key={index}
+          className="px-3 py-1 text-xs bg-blue-100 text-blue-700 border border-blue-700 rounded-full hover:bg-blue-200 transition-colors duration-200 flex items-center gap-1"
+        >
+          {filter}
+          <span
+            onClick={() =>
+              setActiveFilters(activeFilters.filter((f) => f !== filter))
+            }
+            className="ml-1 text-blue-600 hover:text-blue-800 cursor-pointer"
+          >
+            ✕
+          </span>
+        </button>
+      ))
+    ) : (
+      <span className="text-xs text-gray-400">No active filters</span>
+    )}
+  </div>
+
+  {activeFilters.length > 0 && (
+    <button
+      onClick={() => {
+        setActiveFilters([]);
+        setSelectedPlatform("all");
+        setSelectedCategory("all");
+        setSelectedBudget("rating");
+      }}
+      className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200 w-full sm:w-auto text-left sm:text-right"
+    >
+      Clear all filters
+    </button>
+  )}
+</div>
+
       </div>
 
       {/* Loading and Error States */}

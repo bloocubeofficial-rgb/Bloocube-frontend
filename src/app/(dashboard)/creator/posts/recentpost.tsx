@@ -289,11 +289,14 @@ const RecentPosts = () => {
             No published posts yet
           </div>
         ) : (
-          <div className="space-y-4">
-            {posts.map((post) => {
-              const PlatformIcon = platformIcons[post.platform?.toLowerCase()] || Facebook;
-              const platformColor = platformColors[post.platform?.toLowerCase()] || 'text-gray-600';
-              
+          // <div className="space-y-4">
+          //   {posts.map((post) => {
+          //     const PlatformIcon = platformIcons[post.platform?.toLowerCase()] || Facebook;
+          //     const platformColor = platformColors[post.platform?.toLowerCase()] || 'text-gray-600';
+               <div className="max-h-96 overflow-y-auto space-y-4 pr-2">
+      {posts.slice(0, 20).map((post) => {
+        const PlatformIcon = platformIcons[post.platform?.toLowerCase()] || Facebook;
+        const platformColor = platformColors[post.platform?.toLowerCase()] || 'text-gray-600';
               return (
                 <div key={post._id} className="border p-4 rounded-lg hover:bg-gray-50/50 transition-all">
                   <div className="flex items-start justify-between mb-3">
@@ -381,6 +384,16 @@ const RecentPosts = () => {
                               </Button>
                             </Link>
                           )}
+                          <Link href="/creator/posts?status=published">
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-7 px-3 text-xs hover:bg-gray-100 bg-gray-100 rounded-sm border border-gray-300 hover:text-black-700 transition-colors"
+      title="View full post"
+    >
+      View Post
+    </Button>
+  </Link>
                         </div>
                       </div>
                     );

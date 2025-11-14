@@ -870,7 +870,7 @@ function SettingsPageContent() {
                     Upload a profile picture to personalize your account
                   </p>
 
-                  <div className="flex  flex-col items-center gap-4">
+                  <div className="flex  flex-col   gap-4">
                     <div className="relative">
                       {(() => {
                         // Use the same pattern as CreatorLayout - prioritize hook profile
