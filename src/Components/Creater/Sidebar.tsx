@@ -117,7 +117,7 @@ const Sidebar = React.memo(({ sidebarOpen,setSidebarOpen }: SidebarProps) => {
       <img
         src="/logo.png"
         alt="Bloocube Logo"
-        className="w-10 h-10 sm:w-16 sm:h-16 object-contain"
+        className="w-16 h-16 sm:w-16 sm:h-16 object-contain"
       />
    <span className={`font-bold text-lg sm:text-xl transition-all duration-300 
   ${sidebarOpen ? 'lg:inline' : 'lg:hidden'}`}>

@@ -52,7 +52,7 @@ const Navbar = () => {
               <Link href="/" className="group">
                 <motion.div
                   whileHover={{ rotate: 6, scale: 1.05 }}
-                  className="relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 transition-all duration-300 overflow-hidden"
+                  className="relative w-18 h-18 sm:w-18 sm:h-18 md:w-20 md:h-20 transition-all duration-300 overflow-hidden"
                 >
                   <Image
                     src="/logo.png"
@@ -118,7 +118,7 @@ const Navbar = () => {
                   </Link>
                 ) : (
                   <Link href="/login">
-                    <Button variant="ghost"  className="px-4 py-3 rounded-2xl hover:text-white border border-white/20 bg-transparent  hover:border-white/40 hover:bg-white/5 transition-all duration-300">
+                    <Button variant="ghost"  className="px-4 py-3 rounded-2xl hover:text-white border border-white/20 bg-transparent  hover:border-white/40 transition-all duration-300">
                       Sign In
                     </Button>
                   </Link>
@@ -128,7 +128,7 @@ const Navbar = () => {
               {/* Mobile menu toggle */}
               <button
                 aria-label="Toggle navigation"
-                className="md:hidden inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] p-3 text-white hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 hover:scale-105 touch-manipulation"
+                className="md:hidden inline-flex items-center justify-center rounded-xl border border-white/10 bg-transarent p-3 text-white  transition-all duration-300 hover:scale-105 touch-manipulation"
                 onClick={() => setOpen(!open)}
               >
                 {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -188,13 +188,13 @@ const Navbar = () => {
                       </span>
                     </div>
                   )}
-                  <Button variant="outline" size="sm" className="flex-1 rounded-full border-white/20 hover:border-white/40 py-3 text-base">
+                  <Button variant="outline" size="sm" className="flex-1 rounded-full border-white/20 bg-transparent hover:border-white/40 py-3 text-base">
                     My Profile
                   </Button>
                 </Link>
               ) : (
                 <Link href="/login" onClick={() => setOpen(false)}>
-                  <Button variant="outline" size="sm" className="w-full rounded-full border-white/20 hover:border-white/40 py-3 text-base">
+                  <Button variant="outline" size="sm" className="w-full rounded-full border-white/20  bg-transparent hover:border-white/40 py-3 text-base">
                     Sign In
                   </Button>
                 </Link>
