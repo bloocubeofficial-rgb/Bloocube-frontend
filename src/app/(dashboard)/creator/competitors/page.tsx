@@ -403,7 +403,7 @@ const CompetitorAnalysisPage = () => {
     >
       {/* Header Section */}
       <div className="mb-8">
-        <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center justify-start flex-wrap gap-3">
           {/* <div>
             <h1 className="hidden md:block text-3xl font-bold text-gray-300">Competitors</h1>
             <p className="hidden md:block mt-2 text-gray-400">Analyze your competitors and discover growth opportunities</p>
