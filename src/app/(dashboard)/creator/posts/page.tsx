@@ -2784,7 +2784,8 @@ const pathname = usePathname();
         </div>
       )}
 
-      {/* Action Buttons */}
+                    {/* Action Buttons */}
+                    {/* a ctions */}
       {selectedPlatform && selectedPostType && (
         <div className="flex flex-wrap gap-3 pt-6 border-t border-gray-200 mt-6">
           <button
