@@ -118,7 +118,7 @@ const Navbar = () => {
                   </Link>
                 ) : (
                   <Link href="/login">
-                    <Button variant="ghost"  className="px-4 py-3 rounded-2xl hover:text-white border border-white/20 bg-transparent  hover:border-white/40 transition-all duration-300">
+                    <Button variant="ghost"  className="px-4 py-3 rounded-2xl hover:text-white border hover:bg-transparent border-white/20 bg-transparent  hover:border-white/40 transition-all duration-300">
                       Sign In
                     </Button>
                   </Link>
