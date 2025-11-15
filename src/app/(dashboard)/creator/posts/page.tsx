@@ -2327,14 +2327,14 @@ const pathname = usePathname();
   };
 
   
-  const headerActions = (
-    <>
-      <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-sm  text-white px-4 py-2.5 rounded-sm flex items-center space-x-1 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md">
-        <Plus className="w-4 h-4" />
-        <span>Create New Post</span>
-      </button>
-    </>
-  );
+  // const headerActions = (
+  //   <>
+  //     <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-sm  text-white px-4 py-2.5 rounded-sm flex items-center space-x-1 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md">
+  //       <Plus className="w-4 h-4" />
+  //       <span>Create New Post</span>
+  //     </button>
+  //   </>
+  // );
 
   return (
     <CreatorLayout
@@ -2511,12 +2511,12 @@ const pathname = usePathname();
           </button>
       </div>
       
-     {headerActions && (
+     {/* {headerActions && (
      <div className="flex items-center space-x-2">
      {headerActions}
       </div>
      )}
-     
+      */}
       </div>
     
 

@@ -657,7 +657,7 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
       )}
 
       {/* Date Range Selection with Refresh */}
-      <div className="bg-white/80  rounded-sm p-3 md:p-4 mb-6 hover:shadow-sm border border-gray-200/100">
+      {/* <div className="bg-white/80  rounded-sm p-3 md:p-4 mb-6 hover:shadow-sm border border-gray-200/100">
         <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
           <div>
             <h3 className="text-sm font-medium mb-1">Data Range Selection</h3>
@@ -706,7 +706,7 @@ const chartOptions: import("chart.js").ChartOptions<"line"> = {
             } ${loading || refreshing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           >90d</button>
         </div>
-      </div>
+      </div> */}
 
       
       
