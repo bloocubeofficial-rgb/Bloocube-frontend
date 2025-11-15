@@ -439,6 +439,7 @@ const CompetitorAnalysisPage = () => {
         </div>
       </div>
 
+    {/* ai servecies */}
       {/* AI Services Status */}
       {aiTestMessage && (
         <div className={`mb-4 p-4 rounded-sm border ${
