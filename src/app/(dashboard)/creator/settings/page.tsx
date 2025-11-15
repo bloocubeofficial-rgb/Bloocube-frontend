@@ -871,113 +871,141 @@ function SettingsPageContent() {
                   </p>
 
                   <div className="flex  flex-col items-center gap-4">
-                    <div className="relative">
-                      {(() => {
-                        // Use the same pattern as CreatorLayout - prioritize hook profile
-                        const profileAvatar = userProfileFromHook?.profile?.avatar_url;
-                        const userProfileAvatar = user?.profile?.avatar_url;
-                        const rawAvatarUrl = profileAvatar || userProfileAvatar;
-                        const avatarUrl = rawAvatarUrl ? getAvatarUrl(rawAvatarUrl) : null;
-                        
-                        const userName = userProfileFromHook?.name || user?.name || 'User';
-                        const firstLetter = userName.charAt(0).toUpperCase();
-                        
-                        // Debug logging
-                        console.log('🖼️ Settings Avatar Debug:', {
-                          profileAvatar,
-                          userProfileAvatar,
-                          rawAvatarUrl,
-                          processedUrl: avatarUrl,
-                          hasHook: !!userProfileFromHook,
-                          hasUser: !!user
-                        });
-                        
-                        // Render image if we have a valid URL - match CreatorLayout pattern
-                        if (avatarUrl) {
-                          return (
-                            <div 
-                              className="w-20 h-20 relative rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100" 
-                              key={`avatar-${rawAvatarUrl}`}
-                            >
-                              <Image
-                                src={avatarUrl}
-                                alt={userName}
-                                width={80}
-                                height={80}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  console.error('❌ Avatar image failed to load:', avatarUrl, e);
-                                  const target = e.currentTarget;
-                                  target.style.display = 'none';
-                                  const fallback = target.nextElementSibling as HTMLElement;
-                                  if (fallback) fallback.style.display = 'flex';
-                                }}
-                              />
-                              {/* Fallback that's hidden by default - shown only on image error */}
-                              <div className="hidden absolute inset-0 w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center">
-                                <span className="text-white text-2xl font-semibold">
-                                  {firstLetter}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        } else {
-                          // Show fallback when no avatar
-                          return (
-                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-semibold">
-                              {firstLetter}
-                            </div>
-                          );
-                        }
-                      })()}
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <label className="block flex-1">
-                      <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleAvatarUpload}
-                            disabled={uploadingAvatar || removingAvatar}
-                            className="hidden"
-                            id="avatar-upload"
-                          />
-                          <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600  text-white rounded-sm hover:bg-blue-700 transition-colors cursor-pointer text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
-                            {uploadingAvatar ? (
-                              <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                Uploading...
-                              </>
-                            ) : (
-                              <>
-                                <Upload className="w-4 h-4" />
-                                {displayUser?.profile?.avatar_url ? 'Change Picture' : 'Upload Picture'}
-                              </>
-                            )}
-                          </span>
-                        </label>
-                        {displayUser?.profile?.avatar_url && (
-                      <button
-                            onClick={handleRemoveAvatar}
-                            disabled={removingAvatar || uploadingAvatar}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors cursor-pointer text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                            {removingAvatar ? (
-                              <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                Removing...
-                              </>
-                            ) : (
-                              <>
-                                <Trash2 className="w-4 h-4" />
-                                Remove
-                              </>
-                            )}
-                      </button>
-                        )}
-                    </div>
-                      <p className="text-xs text-gray-500">JPG, PNG or GIF. Max size 5MB</p>
-                  </div>
+                  <div className="
+  flex 
+  justify-center sm:justify-start 
+  w-full
+">
+  <div className="relative">
+    {(() => {
+      const profileAvatar = userProfileFromHook?.profile?.avatar_url;
+      const userProfileAvatar = user?.profile?.avatar_url;
+      const rawAvatarUrl = profileAvatar || userProfileAvatar;
+      const avatarUrl = rawAvatarUrl ? getAvatarUrl(rawAvatarUrl) : null;
+
+      const userName = userProfileFromHook?.name || user?.name || 'User';
+      const firstLetter = userName.charAt(0).toUpperCase();
+
+      if (avatarUrl) {
+        return (
+          <div
+            className="w-20 h-20 relative rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100"
+            key={`avatar-${rawAvatarUrl}`}
+          >
+            <Image
+              src={avatarUrl}
+              alt={userName}
+              width={80}
+              height={80}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.currentTarget;
+                target.style.display = 'none';
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) fallback.style.display = 'flex';
+              }}
+            />
+
+            <div className="hidden absolute inset-0 w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center">
+              <span className="text-white text-2xl font-semibold">
+                {firstLetter}
+              </span>
+            </div>
+          </div>
+        );
+      } else {
+        return (
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-semibold">
+            {firstLetter}
+          </div>
+        );
+      }
+    })()}
+  </div>
+</div>
+
+                   <div className="
+  flex flex-col gap-1 
+  w-full
+">
+
+  {/* Buttons section */}
+  <div
+    className="
+      flex flex-col sm:flex-row 
+      items-center sm:items-start 
+      gap-3 sm:gap-2
+      w-full
+    "
+  >
+    <label className="block w-full sm:w-auto">
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleAvatarUpload}
+        disabled={uploadingAvatar || removingAvatar}
+        className="hidden"
+        id="avatar-upload"
+      />
+      <span className="
+        inline-flex items-center justify-center gap-2
+        px-4 py-2 
+        bg-gradient-to-r from-blue-600 to-purple-600
+        text-white rounded-sm
+        hover:bg-blue-700 transition-colors
+        cursor-pointer text-sm font-medium
+        disabled:opacity-50 disabled:cursor-not-allowed
+        w-full sm:w-auto
+      ">
+        {uploadingAvatar ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            Uploading...
+          </>
+        ) : (
+          <>
+            <Upload className="w-4 h-4" />
+            {displayUser?.profile?.avatar_url ? 'Change Picture' : 'Upload Picture'}
+          </>
+        )}
+      </span>
+    </label>
+
+    {displayUser?.profile?.avatar_url && (
+      <button
+        onClick={handleRemoveAvatar}
+        disabled={removingAvatar || uploadingAvatar}
+        className="
+          inline-flex items-center justify-center gap-2
+          px-4 py-2 
+          bg-red-600 text-white rounded-md
+          hover:bg-red-700 transition-colors
+          text-sm font-medium
+          disabled:opacity-50 disabled:cursor-not-allowed
+          w-full sm:w-auto
+        "
+      >
+        {removingAvatar ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            Removing...
+          </>
+        ) : (
+          <>
+            <Trash2 className="w-4 h-4" />
+            Remove
+          </>
+        )}
+      </button>
+    )}
+  </div>
+
+  {/* Text Note */}
+  <p className="text-xs text-gray-500 text-center sm:text-left">
+    JPG, PNG or GIF. Max size 5MB
+  </p>
+</div>
+
                   </div>
                 </div>
               </div>

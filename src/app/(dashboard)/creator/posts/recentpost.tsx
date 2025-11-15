@@ -381,6 +381,16 @@ const RecentPosts = () => {
                               </Button>
                             </Link>
                           )}
+                          <Link href="/creator/posts?status=published">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                title="View post details"
+                              >
+                                View Post
+                              </Button>
+                            </Link>
                         </div>
                       </div>
                     );

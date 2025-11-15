@@ -403,24 +403,24 @@ const CompetitorAnalysisPage = () => {
     >
       {/* Header Section */}
       <div className="mb-8">
-        <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center justify-start flex-wrap gap-3">
           {/* <div>
             <h1 className="hidden md:block text-3xl font-bold text-gray-300">Competitors</h1>
             <p className="hidden md:block mt-2 text-gray-400">Analyze your competitors and discover growth opportunities</p>
           </div> */}
-          <div className="flex items-center space-x-4 w-full sm:w-auto sm:justify-end">
-            {/* <Link href="/creator/competitors/analyze">
+          {/* <div className="flex items-center  w-full sm:w-auto sm:justify-end">
+            <Link href="/creator/competitors/analyze">
               <button className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white px-4 py-1.5 rounded-sm  transition-colors flex items-center space-x-2 text-sm">
                 <Plus className="w-4 h-4" />
                 <span>New Analysis</span>
               </button>
-            </Link> */}
-          </div>
+            </Link>
+          </div> */}
           <div className='flex gap-2'>
           
             <button
               onClick={() => setShowHistory(!showHistory)}
-              className="border border-gray-200/08 text-gray-800 px-3 py-1.5 rounded-sm hover:bg-gray-50 transition-colors flex items-center space-x-2 text-sm"
+              className="border border-gray-200/08 text-gray-800 px-5 py-1.5 rounded-sm hover:bg-gray-50 transition-colors flex items-center  text-sm"
             >
               <BarChart3 className="w-4 h-4" />
               <span>History</span>
@@ -556,7 +556,7 @@ const CompetitorAnalysisPage = () => {
 
       {/* Competitor Data Preview */}
       {showPreview && fetchedData && (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-800/50 p-6 mb-8">
+        <div className="bg-white/80 backdrop-blur-sm rounded-sm hover:shadow-sm border border-gray-800/50 p-6 mb-8">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-xl flex items-center justify-center">
@@ -803,7 +803,7 @@ const CompetitorAnalysisPage = () => {
 
       {/* Analysis History Section */}
       {showHistory && (
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
+        <div className="bg-white rounded-sm hover:shadow-sm border p-6 mb-8">
           <h2 className="text-lg font-semibold mb-4">Analysis History</h2>
           {analysisHistory.length > 0 ? (
             <div className="space-y-4">

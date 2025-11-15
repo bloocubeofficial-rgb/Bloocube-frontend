@@ -346,24 +346,37 @@ export default function BrandSettingsPage() {
           </div>
           Security Settings
         </h3>
-        <div className="space-y-6">
-          <div className="p-6 bg-white rounded-sm hover:shadow-sm border border-gray-200/04  transition-all duration-200">
-            <div className="flex flex-col lg:flex-row   items-center justify-start">
-              <div className="flex flex-col  lg:flex-row  justify-center items-center gap-4">
-                <div className="p-3 bg-blue-100 rounded-sm">
-                  <KeyIcon className="w-6 h-6 text-blue-600" />
-                </div>
-                <div className='text-ceter '>
-                  <h4 className="font-semibold text-gray-900 text-lg text-center">Change Password</h4>
-                  <p className="text-sm text-gray-600 text-center">Update your account password to keep your account secure</p>
-                </div>
-              </div>
-              <button className="px-6 py-3 mt-4 lg:mt-0 bg-gradient-to-r from-purple-500 to-indigo-600  text-white rounded-sm hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
-                Change Password
-              </button>
-            </div>
-          </div>
+       <div className="space-y-6 ">
+  <div className="p-6 bg-white rounded-sm hover:shadow-sm border border-gray-200/40 transition-all duration-200">
+    
+    <div className="flex flex-col lg:flex-row items-center lg:items-start lg:justify-between gap-6">
+
+      {/* LEFT CONTENT */}
+      <div className="flex flex-col items-center lg:items-start text-center lg:text-left gap-3 max-w-sm">
+
+        <div className="p-3 bg-blue-100 rounded-sm">
+          <KeyIcon className="w-6 h-6 text-blue-600" />
         </div>
+
+        <h4 className="font-semibold text-gray-900 text-lg">
+          Change Password
+        </h4>
+
+        <p className="text-sm text-gray-600">
+          Update your account password to keep your account secure
+        </p>
+
+        <button className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-sm hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 w-full sm:w-auto">
+          Change Password
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
       </div>
     </div>
   );
@@ -380,7 +393,7 @@ export default function BrandSettingsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="p-6 bg-white rounded-sm hover:shadow-sm border border-gray-200/04 transition-all duration-200">
             <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-blue-100 rounded-lg">
+              <div className="p-3 bg-blue-100 rounded-sm">
                 <CreditCardIcon className="w-6 h-6 text-blue-600" />
               </div>
               <h4 className="font-semibold text-gray-900 text-lg">Current Plan</h4>
@@ -390,7 +403,7 @@ export default function BrandSettingsPage() {
           </div>
             <div className="p-6 bg-white rounded-sm hover:shadow-sm border border-gray-200/04 transition-all duration-200">
             <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-green-100 rounded-lg">
+              <div className="p-3 bg-green-100 rounded-sm">
                 <CreditCardIcon className="w-6 h-6 text-green-600" />
               </div>
               <h4 className="font-semibold text-gray-900 text-lg">Next Billing</h4>
