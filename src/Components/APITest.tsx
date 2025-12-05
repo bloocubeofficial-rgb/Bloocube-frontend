@@ -42,8 +42,12 @@ export function APITest() {
         addResult(`Error: ${errorText}`);
       }
 
-    } catch (error) {
-      addResult(`❌ Exception: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (error: unknown) {
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      addResult(`❌ Exception: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }

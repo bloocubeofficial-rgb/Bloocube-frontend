@@ -46,7 +46,11 @@ export const InstagramPost: React.FC<InstagramPostProps> = ({ className = '' }) 
 
     } catch (error: unknown) {
       console.error('Media upload error:', error);
-      alert('Failed to upload media: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = (error as Error).message;
+      }
+      alert('Failed to upload media: ' + errorMessage);
       setSelectedFile(null);
       setMediaUrl(null);
     } finally {
@@ -91,7 +95,11 @@ export const InstagramPost: React.FC<InstagramPostProps> = ({ className = '' }) 
       }
     } catch (error: unknown) {
       console.error('Instagram posting error:', error);
-      alert('Failed to post to Instagram: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = (error as Error).message;
+      }
+      alert('Failed to post to Instagram: ' + errorMessage);
     } finally {
       setIsPosting(false);
     }

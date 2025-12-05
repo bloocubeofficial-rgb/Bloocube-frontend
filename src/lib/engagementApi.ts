@@ -118,11 +118,15 @@ export async function fetchPlatformEngagement(platform: string): Promise<Platfor
   } catch (error) {
     console.error(`Error fetching platform engagement for ${platform}:`, error);
     // Return error structure
+    let errorMessage = 'Failed to fetch engagement data';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     return {
       success: false,
       platform,
       metrics: { likes: 0, comments: 0, shares: 0, views: 0 },
-      error: error instanceof Error ? error.message : 'Failed to fetch engagement data'
+      error: errorMessage
     };
   }
 }

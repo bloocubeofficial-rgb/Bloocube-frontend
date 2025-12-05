@@ -740,7 +740,10 @@ const pathname = usePathname();
       // Only clear if this was a force refresh
       if (force) {
         setConnectedPlatforms([]);
-        const errorMessage = error instanceof Error ? error.message : "Failed to check platform connections. Please try again.";
+        let errorMessage = "Failed to check platform connections. Please try again.";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
         showNotification('error', errorMessage);
       }
       // For non-force errors, silently fail to avoid disrupting user experience
@@ -903,6 +906,52 @@ const pathname = usePathname();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
+  // Background refresh for posts (smart polling) - Phase 1 Optimization
+  useEffect(() => {
+    if (activeTab !== "published") return;
+    
+    let intervalId: NodeJS.Timeout | null = null;
+    let isPageVisible = !document.hidden;
+    
+    const refreshPosts = () => {
+      // Silent refresh (no loading indicator, no force)
+      loadPosts(false, false).catch(err => {
+        console.warn("Background refresh failed:", err);
+      });
+    };
+    
+    const handleVisibilityChange = () => {
+      isPageVisible = !document.hidden;
+      
+      if (isPageVisible) {
+        // Refresh immediately when page becomes visible
+        refreshPosts();
+        // Then set up regular polling (5 minutes)
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(refreshPosts, 5 * 60 * 1000);
+      } else {
+        // Clear interval when page hidden
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
+      }
+    };
+    
+    // Initial setup
+    if (isPageVisible) {
+      // Wait 5 minutes before first background refresh
+      intervalId = setInterval(refreshPosts, 5 * 60 * 1000);
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [activeTab]);
+
   // Refresh connections when window regains focus (user returns from settings) - with debounce
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
@@ -1013,25 +1062,57 @@ const pathname = usePathname();
         console.warn('Failed to fetch engagement metrics:', err);
       }
       
-      const [publishedRes, scheduledRes, draftsRes, failedRes] =
-        await Promise.all([
-          apiRequest<{ posts: Post[]; pagination: any }>(
-            "/api/posts?status=published"
-          ),
-          apiRequest<{ scheduled: Post[]; pagination: any }>(
-            "/api/posts/scheduled"
-          ),
-          apiRequest<{ posts: Post[]; pagination: any }>(
-            "/api/posts?status=draft"
-          ),
-          apiRequest<{ posts: Post[]; pagination: any }>(
-            "/api/posts?status=failed"
-          ),
-        ]);
-      setPosts(publishedRes.posts || []);
-      setScheduledPosts((scheduledRes as any).scheduled || []);
-      const draftsList = (draftsRes.posts || []).concat(failedRes.posts || []);
-      setDrafts(draftsList);
+      // Phase 1 Optimization: Use batch endpoint instead of 4 separate calls
+      try {
+        const batchRes = await apiRequest<{
+          success: boolean;
+          data: {
+            published?: Post[];
+            scheduled?: Post[];
+            drafts?: Post[];
+            failed?: Post[];
+          };
+          pagination: any;
+        }>("/api/posts/batch", {
+          method: "POST",
+          body: JSON.stringify({
+            include: ["published", "scheduled", "drafts", "failed"],
+            options: { page: 1, limit: 50 }
+          })
+        });
+
+        if (batchRes.success && batchRes.data) {
+          setPosts(batchRes.data.published || []);
+          setScheduledPosts(batchRes.data.scheduled || []);
+          const draftsList = (batchRes.data.drafts || []).concat(batchRes.data.failed || []);
+          setDrafts(draftsList);
+        } else {
+          throw new Error("Batch request failed");
+        }
+      } catch (batchError) {
+        // Fallback to individual requests if batch fails
+        console.warn("Batch endpoint failed, falling back to individual requests:", batchError);
+        
+        const [publishedRes, scheduledRes, draftsRes, failedRes] =
+          await Promise.all([
+            apiRequest<{ posts: Post[]; pagination: any }>(
+              "/api/posts?status=published"
+            ),
+            apiRequest<{ scheduled: Post[]; pagination: any }>(
+              "/api/posts/scheduled"
+            ),
+            apiRequest<{ posts: Post[]; pagination: any }>(
+              "/api/posts?status=draft"
+            ),
+            apiRequest<{ posts: Post[]; pagination: any }>(
+              "/api/posts?status=failed"
+            ),
+          ]);
+        setPosts(publishedRes.posts || []);
+        setScheduledPosts((scheduledRes as any).scheduled || []);
+        const draftsList = (draftsRes.posts || []).concat(failedRes.posts || []);
+        setDrafts(draftsList);
+      }
 
       // Fetch analytics for published posts
       const userId = getUserId();

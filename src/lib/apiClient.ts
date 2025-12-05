@@ -85,10 +85,37 @@ function shouldCache(path: string, method: string): boolean {
 
 // Get cache TTL based on endpoint
 function getCacheTTL(path: string): number {
-  if (path.includes('/profile') || path.includes('/channel')) return CACHE_TTL.MEDIUM;
-  if (path.includes('/analytics') || path.includes('/campaigns')) return CACHE_TTL.SHORT;
-  if (path.includes('/auth/status')) return CACHE_TTL.LONG; // User status rarely changes
-  return CACHE_TTL.SHORT;
+  // Posts data - relatively stable, can cache longer (optimized from 30s to 2min)
+  if (path.includes('/posts') && !path.includes('/sync') && !path.includes('/publish') && !path.includes('/schedule')) {
+    return 2 * 60 * 1000; // 2 minutes (was 30 seconds)
+  }
+  
+  // Analytics - changes frequently, keep short
+  if (path.includes('/analytics')) {
+    return CACHE_TTL.SHORT; // 30 seconds
+  }
+  
+  // Platform connections - stable, cache longer
+  if (path.includes('/platform') || path.includes('/connection')) {
+    return CACHE_TTL.MEDIUM; // 5 minutes
+  }
+  
+  // Profile - very stable
+  if (path.includes('/profile') || path.includes('/channel')) {
+    return 10 * 60 * 1000; // 10 minutes (was 5 minutes)
+  }
+  
+  // Campaigns - moderate stability
+  if (path.includes('/campaigns')) {
+    return CACHE_TTL.SHORT; // 30 seconds
+  }
+  
+  // Auth status - very stable
+  if (path.includes('/auth/status')) {
+    return CACHE_TTL.LONG; // 30 minutes
+  }
+  
+  return CACHE_TTL.SHORT; // Default: 30 seconds
 }
 
 // Cleanup old cache entries and enforce size limits

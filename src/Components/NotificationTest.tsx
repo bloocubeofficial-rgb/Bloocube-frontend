@@ -26,8 +26,12 @@ export function NotificationTest() {
       const notificationsResponse = await notificationService.getNotifications({ limit: 5 });
       addResult(`Notifications response: ${JSON.stringify(notificationsResponse)}`);
 
-    } catch (error) {
-      addResult(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (error: unknown) {
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      addResult(`❌ Error: ${errorMessage}`);
       console.error('Notification test error:', error);
     } finally {
       setIsLoading(false);
