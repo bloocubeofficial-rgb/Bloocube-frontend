@@ -752,6 +752,13 @@ const pathname = usePathname();
   // Handle platform selection
   const handlePlatformSelect = async (platform: string) => {
     clearNotifications(); // Clear previous notifications
+    
+    // Check if Instagram posting is attempted
+    if (platform === "instagram") {
+      showNotification('info', 'Instagram posting is coming soon! Stay tuned for updates.');
+      return;
+    }
+    
     setSelectedPlatform(platform);
     try {
       const firstType = PLATFORM_CONFIGS[platform as keyof typeof PLATFORM_CONFIGS]?.postTypes?.[0] || "";
@@ -1525,6 +1532,12 @@ const pathname = usePathname();
 
   const createPost = async (action: "draft" | "publish" | "schedule") => {
     try {
+      // Check if Instagram posting is attempted
+      if (selectedPlatform === "instagram") {
+        showNotification('info', 'Instagram posting is coming soon! Stay tuned for updates.');
+        return;
+      }
+
       setLoading(true);
       if (action === "publish") setShowPublishingDialog(true);
       clearNotifications(); // Clear previous notifications before starting
@@ -2565,6 +2578,7 @@ const pathname = usePathname();
                   const IconComponent = config.icon;
                   const isConnected = connectedPlatforms.includes(platform);
                   const isSelected = selectedPlatform === platform;
+                  const isInstagram = platform === "instagram";
 
                   return (
                     <div
@@ -2573,7 +2587,7 @@ const pathname = usePathname();
                       className={`p-4 rounded-sm border transition-all duration-200 ${isSelected
                           ? `border-${config.color}-500 bg-${config.color}-50  hover:shadow:sm`
                           : "border-gray-200/80 bg-white"
-                        }`}
+                        } ${isInstagram ? 'opacity-90' : ''}`}
                     >
                       <div className="flex flex-col  space-x-3">
                         <div className="relative flex gap-3 item-center  ">
@@ -2583,9 +2597,14 @@ const pathname = usePathname();
                           />
                           {checkingConnections ? (
                             <div className="absolute -top-1 -right-1 w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                          ) : isConnected ? (
+                          ) : isConnected && !isInstagram ? (
                             <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                           ) : null}
+                          {isInstagram && (
+                            <div className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-semibold rounded-full border border-white shadow-sm">
+                              Coming Soon
+                            </div>
+                          )}
                           <h4 className="text-sm font-sm text-gray-900">
                             {config.name}
                           </h4>
@@ -2593,7 +2612,23 @@ const pathname = usePathname();
                         <div className="flex-1">
                           
                           <div className="mt-3">
-                            {checkingConnections ? (
+                            {isInstagram ? (
+                              <div className="flex flex-col justify-start">
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-pink-100 border border-purple-300 text-purple-800 w-fit mb-3">
+                                  <Sparkles className="w-3 h-3" />
+                                  <span>Coming Soon</span>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    showNotification('info', 'Instagram posting is coming soon! Stay tuned for updates.');
+                                  }}
+                                  disabled
+                                  className="cursor-not-allowed px-2 py-3 bg-gray-300 text-gray-500 text-sm shadow-sm border border-gray-200/100 rounded hover:shadow:md transition-all duration-150 mt-3 opacity-60"
+                                >
+                                  Select
+                                </button>
+                              </div>
+                            ) : checkingConnections ? (
                               <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                                 <span className="w-3 h-3 mr-2 border border-gray-400 border-t-transparent rounded-full animate-spin"></span>
                                 Checking...

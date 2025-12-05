@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { useInstagram } from '@/hooks/useInstagram';
-import { Loader2, Send, Image, X, Instagram, Camera } from 'lucide-react';
+import { Loader2, Send, Image, X, Instagram, Camera, Sparkles } from 'lucide-react';
 import { InstagramIntegration } from './InstagramIntegration';
 import { InstagramPostData } from '@/types/instagram';
 
@@ -55,6 +55,10 @@ export const InstagramPost: React.FC<InstagramPostProps> = ({ className = '' }) 
   };
 
   const handlePost = async () => {
+    // Show coming soon message
+    alert('Instagram posting is coming soon! Stay tuned for updates.');
+    return;
+
     if (!content.trim() && !selectedFile) {
       alert('Please enter some content or select a media file for your Instagram post');
       return;
@@ -108,6 +112,16 @@ export const InstagramPost: React.FC<InstagramPostProps> = ({ className = '' }) 
 
   return (
     <div className={`bg-white border border-gray-200 rounded-lg p-6 ${className}`}>
+      {/* Coming Soon Banner */}
+      <div className="mb-4 p-3 bg-gradient-to-r from-purple-100 to-pink-100 border border-purple-300 rounded-lg">
+        <div className="flex items-center space-x-2">
+          <Sparkles className="w-5 h-5 text-purple-600" />
+          <p className="text-sm font-medium text-purple-900">
+            Instagram posting is coming soon! Stay tuned for updates.
+          </p>
+        </div>
+      </div>
+
       <div className="flex items-center space-x-3 mb-4">
         <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
           <Instagram className="w-5 h-5 text-white" />
@@ -218,20 +232,12 @@ export const InstagramPost: React.FC<InstagramPostProps> = ({ className = '' }) 
 
           <button
             onClick={handlePost}
-            disabled={isPosting || loading || (!content.trim() && !selectedFile)}
-            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-md hover:from-purple-600 hover:to-pink-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            disabled={true}
+            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-md hover:from-purple-600 hover:to-pink-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 relative"
+            title="Instagram posting is coming soon!"
           >
-            {isPosting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Posting...</span>
-              </>
-            ) : (
-              <>
-                <Send className="w-4 h-4" />
-                <span>Post {postType === 'story' ? 'Story' : 'Content'}</span>
-              </>
-            )}
+            <Send className="w-4 h-4" />
+            <span>Coming Soon</span>
           </button>
         </div>
       </div>
