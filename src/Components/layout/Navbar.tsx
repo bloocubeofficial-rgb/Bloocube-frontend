@@ -52,7 +52,7 @@ const Navbar = () => {
               <Link href="/" className="group">
                 <motion.div
                   whileHover={{ rotate: 6, scale: 1.05 }}
-                  className="relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 transition-all duration-300 overflow-hidden"
+                  className="relative w-18 h-18 sm:w-16 sm:h-16 md:w-20 md:h-20 transition-all duration-300 overflow-hidden"
                 >
                   <Image
                     src="/logo.png"
@@ -118,7 +118,7 @@ const Navbar = () => {
                   </Link>
                 ) : (
                   <Link href="/login">
-                    <Button variant="ghost"  className="px-4 py-3 rounded-2xl hover:text-white border border-white/20 bg-transparent  hover:border-white/40 hover:bg-white/5 transition-all duration-300">
+                    <Button variant="ghost"  className="px-4 py-3 rounded-2xl hover:text-white border border-white/20 bg-transparent hover:bg-transparent hover:border-white/40 transition-all duration-300">
                       Sign In
                     </Button>
                   </Link>
@@ -194,7 +194,7 @@ const Navbar = () => {
                 </Link>
               ) : (
                 <Link href="/login" onClick={() => setOpen(false)}>
-                  <Button variant="outline" size="sm" className="w-full rounded-full border-white/20 hover:border-white/40 py-3 text-base">
+                  <Button variant="outline" size="sm" className="w-full rounded-full border-white/20 hover:border-white/40 bg-transparent hover:bg-transparent py-3 text-base">
                     Sign In
                   </Button>
                 </Link>

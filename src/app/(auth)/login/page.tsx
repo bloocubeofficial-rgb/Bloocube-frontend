@@ -132,7 +132,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#050510] via-[#0f0520] to-[#1b0635] px-4 py-16">
+    <section className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#050510] via-[#0f0520] to-[#1b0635] px-2 py-16">
       {/* Background glow effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl animate-pulse" />
@@ -155,7 +155,7 @@ const LoginPage: React.FC = () => {
         transition={{ duration: 0.6 }}
         className="relative z-10 w-full max-w-md"
       >
-        <div className="relative bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-[0_0_40px_rgba(99,102,241,0.25)] p-8 sm:p-10">
+        <div className="relative bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-[0_0_40px_rgba(99,102,241,0.25)] p-6 sm:p-10">
           <div className="absolute -top-2 -left-2 w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-500 rounded-tl-3xl blur-2xl opacity-50" />
           <div className="absolute -bottom-2 -right-2 w-24 h-24 bg-gradient-to-tl from-pink-500 to-cyan-500 rounded-br-3xl blur-2xl opacity-50" />
 
@@ -229,7 +229,8 @@ const LoginPage: React.FC = () => {
             </div>
 
             {/* Remember me */}
-            <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between w-full">
+
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="remember"
@@ -241,14 +242,14 @@ const LoginPage: React.FC = () => {
                 />
                 <label
                   htmlFor="remember"
-                  className="text-sm text-gray-300 cursor-pointer"
+                  className="text-sm text-gray-300 cursor-pointer whitespace-nowrap"
                 >
                   Remember me
                 </label>
               </div>
               <a
                 href="/forgot-password"
-                className="text-sm text-indigo-400 hover:text-indigo-300"
+                className="text-sm text-indigo-400 hover:text-indigo-300 whitespace-nowrap"
               >
                 Forgot password?
               </a>
