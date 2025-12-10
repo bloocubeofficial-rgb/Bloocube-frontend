@@ -217,7 +217,7 @@ const SignupForm: React.FC = () => {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#050510] px-4 py-6">
+    <section className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#050510] px-2 py-6">
       {/* Animated glowing background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 w-[450px] h-[450px] bg-gradient-to-br from-indigo-600/30 to-purple-500/20 rounded-full blur-3xl animate-pulse" />
@@ -506,7 +506,7 @@ const SignupForm: React.FC = () => {
             <span className="text-sm font-medium">Sign up with Google</span>
           </button>
 
-          <p className="mt-5 text-center text-zinc-400 text-sm">
+          <p className="mt-5 text-center text-zinc-400 text-sm z-50">
             Already have an account?{" "}
             <Link
               href="/login"
