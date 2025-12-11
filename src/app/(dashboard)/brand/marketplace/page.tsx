@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { userService, type CreatorUser } from '@/lib/userService';
 import { Search, Filter, Users, Star, MapPin, Eye, MessageCircle, Plus, Zap, ChevronDownIcon, CheckIcon } from 'lucide-react';
 import { useCampaigns } from '@/hooks/useCampaigns';
@@ -266,10 +267,13 @@ const [isExpanded, setIsExpanded] = useState(false);
                   className="w-full sm:w-80 pl-10 pr-4 py-3 border border-gray-300 rounded-sm  focus:outline-none transition-colors"
                 />
               </div>
-              <button className="inline-flex items-center justify-center px-6 py-3  bg-gradient-to-r from-blue-600 to-purple-600  text-white font-medium rounded-sm hover:bg-blue-700 focus:outline-none  transition-colors duration-200 w-full sm:w-auto">
+              <Link 
+                href="/brand/campaigns"
+                className="inline-flex items-center justify-center px-6 py-3  bg-gradient-to-r from-blue-600 to-purple-600  text-white font-medium rounded-sm hover:bg-blue-700 focus:outline-none  transition-colors duration-200 w-full sm:w-auto"
+              >
                 <Plus className="w-5 h-5 mr-2" />
                 Create Campaign
-              </button>
+              </Link>
             </div>
           </div>
         </div>
