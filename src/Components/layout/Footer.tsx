@@ -38,8 +38,8 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold mb-3">Company</h4>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
+              <li><Link href="/cancellation-refund" className="hover:text-white transition-colors">Cancellation & Refund Policy</Link></li>
+              <li><Link href="/shipping-delivery" className="hover:text-white transition-colors">Shipping & Delivery Policy</Link></li>
               <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
               <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
             </ul>
