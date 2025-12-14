@@ -11,7 +11,7 @@ const Footer = () => {
               <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24">
                 <Image
                   src="/logo.png"
-                  alt="Bloocube Logo"
+                  alt="Bloocube"
                   fill
                   className="object-contain p-1"
                 />

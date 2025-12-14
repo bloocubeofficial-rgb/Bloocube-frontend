@@ -56,7 +56,7 @@ const Navbar = () => {
                 >
                   <Image
                     src="/logo.png"
-                    alt="Bloocube Logo"
+                    alt="Bloocube"
                     fill
                     className="object-contain p-1"
                     priority
