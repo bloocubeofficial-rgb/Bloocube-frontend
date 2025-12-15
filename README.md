@@ -40,7 +40,7 @@ Open `http://localhost:3000`.
 ### Hero Interactions
 - Social media icons have subtle “wander” motion (premium, slow drift).
 - Typewriter effect animates a word in the headline.
-- Optional (if present): a canvas can draw animated connections from `.social-icon` elements to `#bloocube-logo` using requestAnimationFrame.
+- Optional (if present): a canvas can draw animated connections from `.social-icon` elements to `#Bloocube-logo` using requestAnimationFrame.
 
 ### Production Build
 

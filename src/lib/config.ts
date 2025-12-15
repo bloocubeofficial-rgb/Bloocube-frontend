@@ -9,7 +9,7 @@ const getFrontendUrl = (): string => {
 
   // Server-side: use environment variable with fallback
   if (process.env.NODE_ENV === 'production') {
-    return process.env.FRONTEND_URL || 'https://bloocube.com';
+    return process.env.FRONTEND_URL || 'https://Bloocube.com';
   }
   return process.env.FRONTEND_URL || 'http://localhost:3000';
 };
@@ -50,7 +50,7 @@ export const getApiBase = (): string => {
   if (!base) {
     console.warn('⚠️ NEXT_PUBLIC_API_URL is not set. Using fallback configuration.');
     // Fallback to production API URL
-    return 'https://api-backend.bloocube.com';
+    return 'https://api-backend.Bloocube.com';
   }
   return base.replace(/\/+$/, '');
 };

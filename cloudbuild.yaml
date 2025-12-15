@@ -11,9 +11,9 @@ steps:
       - '-f'
       - 'Bloocube-frontend/Dockerfile'
       - '-t'
-      - 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/bloocube/bloocube-frontend:latest'
+      - 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/Bloocube/Bloocube-frontend:latest'
       - '--build-arg'
-      - 'NEXT_PUBLIC_API_URL=https://api-backend.bloocube.com'
+      - 'NEXT_PUBLIC_API_URL=https://api-backend.Bloocube.com'
       - 'Bloocube-frontend'
 
   # Step 2: Push image to Artifact Registry
@@ -22,7 +22,7 @@ steps:
     waitFor: ['build-image']
     args:
       - push
-      - 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/bloocube/bloocube-frontend:latest'
+      - 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/Bloocube/Bloocube-frontend:latest'
 
   # Step 3: Deploy to Cloud Run
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
@@ -32,8 +32,8 @@ steps:
     args:
       - run
       - deploy
-      - 'bloocube-frontend'
-      - '--image=asia-southeast1-docker.pkg.dev/$PROJECT_ID/bloocube/bloocube-frontend:latest'
+      - 'Bloocube-frontend'
+      - '--image=asia-southeast1-docker.pkg.dev/$PROJECT_ID/Bloocube/Bloocube-frontend:latest'
       - '--region=asia-southeast1'
       - '--platform=managed'
       - '--allow-unauthenticated'
@@ -43,11 +43,11 @@ steps:
       - '--timeout=300'
       - '--max-instances=10'
       - '--min-instances=0'
-      - '--set-env-vars=NEXT_PUBLIC_API_URL=https://api-backend.bloocube.com,NODE_ENV=production'
+      - '--set-env-vars=NEXT_PUBLIC_API_URL=https://api-backend.Bloocube.com,NODE_ENV=production'
 
 # Images to be pushed to registry
 images:
-  - 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/bloocube/bloocube-frontend:latest'
+  - 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/Bloocube/Bloocube-frontend:latest'
 
 # Timeout for entire build (increase if needed)
 timeout: '1800s'

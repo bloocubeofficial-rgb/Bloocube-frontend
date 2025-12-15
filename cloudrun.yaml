@@ -1,7 +1,7 @@
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: bloocube-frontend
+  name: Bloocube-frontend
   annotations:
     run.googleapis.com/ingress: all
 spec:
@@ -17,6 +17,6 @@ spec:
             - name: HOSTNAME
               value: 0.0.0.0
             - name: NEXT_PUBLIC_API_URL
-              value: "https://api-backend.bloocube.com"
+              value: "https://api-backend.Bloocube.com"
       containerConcurrency: 80
       timeoutSeconds: 300

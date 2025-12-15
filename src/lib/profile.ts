@@ -196,7 +196,7 @@ export const getAvatarUrl = (avatarUrl: string | undefined | null): string | und
       console.warn('Failed to import config, using fallback');
       const apiBase = typeof window !== 'undefined' && window.location.hostname === 'localhost'
         ? 'http://localhost:5000'
-        : 'https://api-backend.bloocube.com';
+        : 'https://api-backend.Bloocube.com';
       return `${apiBase}${trimmedUrl}`;
     }
   }

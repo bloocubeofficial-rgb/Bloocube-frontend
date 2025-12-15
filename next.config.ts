@@ -62,7 +62,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'api-backend.bloocube.com',
+        hostname: 'api-backend.Bloocube.com',
         pathname: '/uploads/**',
       },
       // Allow any hostname for GCS or other cloud storage

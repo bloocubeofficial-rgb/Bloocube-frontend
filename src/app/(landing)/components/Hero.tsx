@@ -52,6 +52,21 @@ const Hero = React.memo(() => {
       <section className="relative z-10 max-w-7xl mt-8 md:mt-18 mx-auto px-4 sm:px-6 pt-12 pb-10 flex flex-col lg:flex-row items-center lg:items-start gap-10">
         {/* LEFT SECTION */}
         <div className="flex-1 text-center lg:text-left w-full">
+          {/* App Name - Visible for OAuth verification */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mb-4"
+          >
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-2">
+              Bloocube
+            </h1>
+            <p className="text-lg sm:text-xl lg:text-2xl text-zinc-300 font-medium">
+              AI-powered creator & brand collaboration platform
+            </p>
+          </motion.div>
+
           {/* Animated Mode Button */}
           <AnimatePresence mode="wait">
             <motion.div
@@ -84,7 +99,7 @@ const Hero = React.memo(() => {
 
           {/* Animated Heading */}
           <AnimatePresence mode="wait">
-            <motion.h1
+            <motion.h2
               key={activeMode}
               initial={firstRender.current ? false : { opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
@@ -112,7 +127,7 @@ const Hero = React.memo(() => {
                   Grow Together
                 </>
               )}
-            </motion.h1>
+            </motion.h2>
           </AnimatePresence>
 
           {/* Static Paragraph */}

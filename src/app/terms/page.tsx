@@ -72,7 +72,7 @@ const TermsPage: React.FC = () => {
       <section className="space-y-4 mb-10">
         <h2 className="text-xl font-semibold text-white">Contact</h2>
         <p>
-          For questions about these Terms, contact legal@bloocube.com.
+          For questions about these Terms, contact legal@Bloocube.com.
         </p>
       </section>
       </main>

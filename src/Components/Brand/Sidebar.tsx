@@ -172,7 +172,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen ,setSidebarOpen}) => {
       ) : (
         <div className="space-y-1">
           <p className="text-sm font-bold text-gray-900 truncate">{profile?.name || 'Brand Account'}</p>
-          <p className="text-xs text-gray-500 truncate font-medium">{profile?.email || 'brand@bloocube.com'}</p>
+          <p className="text-xs text-gray-500 truncate font-medium">{profile?.email || 'brand@Bloocube.com'}</p>
         </div>
       )}
     </div>

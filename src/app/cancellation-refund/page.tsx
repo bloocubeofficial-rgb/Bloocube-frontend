@@ -10,7 +10,7 @@ const CancellationRefundPage: React.FC = () => {
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gradient-to-tr from-indigo-500 via-fuchsia-500 to-pink-500 opacity-16 md:opacity-24 rounded-full blur-[140px] animate-gradient-60" />
       </div>
       <main className="relative z-10 max-w-3xl mx-auto px-6 py-16 text-zinc-300">
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">Cancellation & Refund Policy – BlooCube</h1>
+        <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">Cancellation & Refund Policy – Bloocube</h1>
         <p className="text-sm text-zinc-400 mb-10">
           Effective Date: 07/11/2025<br />
           Last Updated: 07/11/2025
@@ -18,10 +18,10 @@ const CancellationRefundPage: React.FC = () => {
 
         <section className="space-y-4 mb-10">
           <p>
-            BlooCube ("we," "our," "us") is an AI-powered SaaS and marketplace platform. This Cancellation & Refund Policy explains how cancellations and refunds are handled for subscriptions and marketplace transactions.
+            Bloocube ("we," "our," "us") is an AI-powered SaaS and marketplace platform. This Cancellation & Refund Policy explains how cancellations and refunds are handled for subscriptions and marketplace transactions.
           </p>
           <p>
-            By using BlooCube, you agree to this policy.
+            By using Bloocube, you agree to this policy.
           </p>
         </section>
 
@@ -41,14 +41,14 @@ const CancellationRefundPage: React.FC = () => {
         <section className="space-y-4 mb-10">
           <h2 className="text-xl font-semibold text-white">2. Subscription Refund Policy</h2>
           <p>
-            BlooCube follows a no-refund policy for subscription fees once payment is successfully processed.
+            Bloocube follows a no-refund policy for subscription fees once payment is successfully processed.
           </p>
           <ul className="list-disc pl-5 space-y-2">
             <li>This applies to monthly, quarterly, or annual plans.</li>
           </ul>
           <div className="mt-4 p-4 bg-white/5 rounded-lg border border-white/10">
             <p className="font-semibold text-white mb-2">💡 Reason:</p>
-            <p>BlooCube provides instant access to digital tools, AI features, and platform resources, which cannot be "returned."</p>
+            <p>Bloocube provides instant access to digital tools, AI features, and platform resources, which cannot be "returned."</p>
           </div>
         </section>
 
@@ -63,7 +63,7 @@ const CancellationRefundPage: React.FC = () => {
         <section className="space-y-4 mb-10">
           <h2 className="text-xl font-semibold text-white">4. Marketplace Transactions (Brands & Creators)</h2>
           <p>
-            BlooCube marketplace payments are protected through an escrow system.
+            Bloocube marketplace payments are protected through an escrow system.
           </p>
           
           <div className="mt-4 space-y-4">
@@ -96,26 +96,26 @@ const CancellationRefundPage: React.FC = () => {
         <section className="space-y-4 mb-10">
           <h2 className="text-xl font-semibold text-white">5. Platform Fees</h2>
           <p>
-            Platform or service fees charged by BlooCube are non-refundable, including marketplace facilitation, escrow, or transaction processing fees.
+            Platform or service fees charged by Bloocube are non-refundable, including marketplace facilitation, escrow, or transaction processing fees.
           </p>
         </section>
 
         <section className="space-y-4 mb-10">
           <h2 className="text-xl font-semibold text-white">6. Disputes & Resolution</h2>
           <ul className="list-disc pl-5 space-y-2">
-            <li>In case of a dispute between a brand and creator, BlooCube may review submitted evidence (messages, deliverables, timelines).</li>
-            <li>BlooCube's decision will be final and binding to ensure fairness to both parties.</li>
+            <li>In case of a dispute between a brand and creator, Bloocube may review submitted evidence (messages, deliverables, timelines).</li>
+            <li>Bloocube's decision will be final and binding to ensure fairness to both parties.</li>
           </ul>
         </section>
 
         <section className="space-y-4 mb-10">
           <h2 className="text-xl font-semibold text-white">7. Exceptional Cases</h2>
           <p>
-            Refunds may be considered only at BlooCube's discretion in rare situations such as:
+            Refunds may be considered only at Bloocube's discretion in rare situations such as:
           </p>
           <ul className="list-disc pl-5 space-y-2">
             <li>Duplicate payments</li>
-            <li>Technical errors caused solely by BlooCube</li>
+            <li>Technical errors caused solely by Bloocube</li>
             <li>Unauthorized charges verified after investigation</li>
           </ul>
         </section>
@@ -123,7 +123,7 @@ const CancellationRefundPage: React.FC = () => {
         <section className="space-y-4 mb-10">
           <h2 className="text-xl font-semibold text-white">8. Policy Changes</h2>
           <p>
-            BlooCube reserves the right to update or modify this policy at any time. Changes will be effective immediately upon posting on the website.
+            Bloocube reserves the right to update or modify this policy at any time. Changes will be effective immediately upon posting on the website.
           </p>
         </section>
 
@@ -133,8 +133,8 @@ const CancellationRefundPage: React.FC = () => {
             For cancellation, refund queries, or disputes, contact us at:
           </p>
           <ul className="list-none space-y-2 mt-2">
-            <li>📧 <a href="mailto:Contact@bloocube.com" className="text-blue-400 hover:text-blue-300 transition-colors">Contact@bloocube.com</a></li>
-            <li>🌐 <a href="https://www.bloocube.com" className="text-blue-400 hover:text-blue-300 transition-colors">www.bloocube.com</a></li>
+            <li>📧 <a href="mailto:Contact@Bloocube.com" className="text-blue-400 hover:text-blue-300 transition-colors">Contact@Bloocube.com</a></li>
+            <li>🌐 <a href="https://www.Bloocube.com" className="text-blue-400 hover:text-blue-300 transition-colors">www.Bloocube.com</a></li>
           </ul>
         </section>
       </main>
@@ -143,4 +143,5 @@ const CancellationRefundPage: React.FC = () => {
 };
 
 export default CancellationRefundPage;
+
 

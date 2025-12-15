@@ -91,7 +91,7 @@ const UserInfo = React.memo(
             <p className="text-xs text-gray-500 truncate font-medium">
               {userProfile?.email ||
                 (user.email as string) ||
-                "creator@bloocube.com"}
+                "creator@Bloocube.com"}
             </p>
           </div>
 
@@ -126,7 +126,7 @@ const UserInfo = React.memo(
               {userName}
             </p>
             <p className="text-xs text-gray-500 truncate font-medium">
-              {(user.email as string) || "creator@bloocube.com"}
+              {(user.email as string) || "creator@Bloocube.com"}
             </p>
           </div>
 

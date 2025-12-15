@@ -221,7 +221,7 @@ const Sidebar = React.memo(({ sidebarOpen,setSidebarOpen }: SidebarProps) => {
                   {user?.name || 'Creator Account'}
                 </p>
                 <p className="text-xs md:text-sm text-gray-500 truncate font-medium">
-                  {user?.email || 'creator@bloocube.com'}
+                  {user?.email || 'creator@Bloocube.com'}
                 </p>
               </div>
             )}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { PerformanceDebugger } from "@/Components/PerformanceDebugger";
 import RouteProgress from "@/Components/ui/RouteProgress";
+import GoogleAnalytics from "@/Components/GoogleAnalytics";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -17,6 +18,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
+        {/* Google Analytics - Scripts are automatically moved to <head> by Next.js */}
+        {process.env.NODE_ENV === "production" && <GoogleAnalytics />}
         <RouteProgress />
         {/* Preload most-hit routes to improve perceived navigation speed */}
         <div className="hidden">
