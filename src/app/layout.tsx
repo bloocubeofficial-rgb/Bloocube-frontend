@@ -18,8 +18,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        {/* Google Analytics - Scripts are automatically moved to <head> by Next.js */}
-        {process.env.NODE_ENV === "production" && <GoogleAnalytics />}
+        {/* Google Analytics - Always load in production */}
+        <GoogleAnalytics />
         <RouteProgress />
         {/* Preload most-hit routes to improve perceived navigation speed */}
         <div className="hidden">

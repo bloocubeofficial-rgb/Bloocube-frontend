@@ -20,12 +20,14 @@ export default function GoogleAnalytics() {
 
   return (
     <>
+      {/* Google Analytics - gtag.js */}
       <Script
         strategy="afterInteractive"
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
       />
+      {/* Google Analytics - Configuration */}
       <Script
-        id="google-analytics"
+        id="google-analytics-config"
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{
           __html: `
