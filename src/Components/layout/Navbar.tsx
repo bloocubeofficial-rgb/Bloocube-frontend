@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, X } from "lucide-react";
+import { Menu, X, Upload, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { Button } from "../ui/Button";
 import React, { useState, useEffect } from "react";
@@ -10,6 +10,8 @@ import clsx from "clsx";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { getAvatarUrl } from "@/lib/profile";
+import img8 from "@/assets/img8.png"
+import { apiRequest } from "@/lib/apiClient";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -21,12 +23,55 @@ const navItems = [
 const Navbar = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [open, setOpen] = useState(false);
+  const [aiDropdownOpen, setAiDropdownOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const { isAuthenticated, user, isLoading } = useAuth();
   const { profile } = useUserProfile();
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => setSelectedImage(e.target?.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleGenerateVideo = async () => {
+    if (!selectedFile) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      await apiRequest('/api/generate-video', {
+        method: 'POST',
+        body: formData,
+      });
+
+      alert('Video generation started successfully!');
+      // Optional: Close dropdown or clear image
+      // setAiDropdownOpen(false);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Failed to start video generation.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const clearImage = () => {
+    setSelectedImage(null);
+    setSelectedFile(null);
+  };
 
   return (
     <motion.nav
@@ -43,96 +88,177 @@ const Navbar = () => {
         <div className="relative r border border-white/10 backdrop-blur-3xl">
           {/* Premium gradient border */}
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-bl from-fuchsia-500/20 via-purple-500/20 to-indigo-500/20 opacity-0 hover:opacity-100 transition-opacity duration-500" />
-          
+
           {/* Content */}
           <div className="relative z-10">
-             <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6">
-              <div className="flex h-14 md:h-16 items-center justify-between gap-2">
-              {/* Logo */}
-              <Link href="/" className="group">
-                <motion.div
-                  whileHover={{ rotate: 6, scale: 1.05 }}
-                  className="relative w-18 h-18 sm:w-16 sm:h-16 md:w-20 md:h-20 transition-all duration-300 overflow-hidden"
-                >
-                  <Image
-                    src="/logo.png"
-                    alt="Bloocube"
-                    fill
-                    className="object-contain p-1"
-                    priority
-                  />
-                  <div className="transition-opacity duration-300" />
-                </motion.div>
-              </Link>
+            <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6">
+              <div className="flex h-14 md:h-16 items-center gap-2">
+                {/* Logo - Left Side */}
+                <div className="flex-1 flex justify-start">
+                  <Link href="/" className="group">
+                    <motion.div
+                      whileHover={{ rotate: 6, scale: 1.05 }}
+                      className="relative w-18 h-18 sm:w-16 sm:h-16 md:w-20 md:h-20 transition-all duration-300 overflow-hidden"
+                    >
+                      <Image
+                        src="/logo.png"
+                        alt="Bloocube"
+                        fill
+                        className="object-contain p-1"
+                        priority
+                      />
+                      <div className="transition-opacity duration-300" />
+                    </motion.div>
+                  </Link>
+                </div>
 
-              {/* Desktop nav */}
-              <div className="hidden md:flex items-center gap-6 lg:gap-8">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={(e) => {
-                      const isHash = item.href.startsWith('#') || item.href.startsWith('/#');
-                      if (isHash && typeof window !== 'undefined' && window.location.pathname === '/') {
-                        e.preventDefault();
-                        const hash = item.href.split('#')[1];
-                        const el = hash ? document.getElementById(hash) : null;
-                        if (el) {
-                          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                          setOpen(false);
+                {/* Desktop nav - Center */}
+                <div className="hidden md:flex items-center justify-center gap-6 lg:gap-8">
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={(e) => {
+                        const isHash = item.href.startsWith('#') || item.href.startsWith('/#');
+                        if (isHash && typeof window !== 'undefined' && window.location.pathname === '/') {
+                          e.preventDefault();
+                          const hash = item.href.split('#')[1];
+                          const el = hash ? document.getElementById(hash) : null;
+                          if (el) {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            setOpen(false);
+                          }
                         }
-                      }
-                    }}
-                    className="group relative text-zinc-300/90 hover:text-white transition-all duration-300 py-2 px-4 rounded-lg hover:bg-white/5"
-                  >
-                    <span className="font-medium">{item.label}</span>
-                    <span className="absolute left-4 right-4 -bottom-1 h-px w-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-sky-500 transition-all duration-300 group-hover:w-[calc(100%-2rem)]" />
-                  </Link>
-                ))}
-              </div>
+                      }}
+                      className="group relative text-zinc-300/90 hover:text-white transition-all duration-300 py-2 px-4 rounded-lg hover:bg-white/5"
+                    >
+                      <span className="font-medium">{item.label}</span>
+                      <span className="absolute left-4 right-4 -bottom-1 h-px w-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-sky-500 transition-all duration-300 group-hover:w-[calc(100%-2rem)]" />
+                    </Link>
+                  ))}
+                </div>
 
-              {/* CTA Buttons */}
-              <div className="hidden md:flex items-center gap-3">
-                {isAuthenticated ? (
-                  <Link href={user?.role === 'brand' ? '/brand' : '/creator'} className="flex items-center gap-2">
-                    {profile && getAvatarUrl(profile.profile?.avatar_url) ? (
-                      <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/30">
-                        <Image
-                          src={getAvatarUrl(profile.profile?.avatar_url) || ''}
-                          alt={profile?.name || 'Profile'}
-                          width={32}
-                          height={32}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                {/* CTA Buttons - Right Side */}
+                <div className="flex-1 flex justify-end items-center gap-3">
+                  <div className="hidden md:flex items-center gap-3">
+                    {isAuthenticated ? (
+                      <>
+                        <div className="relative">
+                          <div
+                            className="mr-6 relative w-10 h-10 cursor-pointer hover:scale-110 transition-transform duration-300"
+                            onClick={() => setAiDropdownOpen(!aiDropdownOpen)}
+                          >
+                            <Image src={img8} alt="AI" fill className="object-contain" />
+                          </div>
+
+                          {/* AI Dropdown */}
+                          {aiDropdownOpen && (
+                            <div className="absolute top-12 left-1/2 -translate-x-1/2 w-80 bg-black/90 backdrop-blur-xl border border-white/20 rounded-2xl p-4 shadow-2xl z-50">
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                  <h3 className="text-white font-semibold flex items-center gap-2">
+                                    AI Video Gen
+                                  </h3>
+                                  <button
+                                    onClick={() => setAiDropdownOpen(false)}
+                                    className="text-zinc-400 hover:text-white"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+
+                                {selectedImage ? (
+                                  <div className="relative w-full h-40 border border-white/20 rounded-xl overflow-hidden group">
+                                    <Image
+                                      src={selectedImage}
+                                      alt="Preview"
+                                      fill
+                                      className="object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                      <button
+                                        onClick={clearImage}
+                                        className="p-2 bg-red-500/80 hover:bg-red-600 rounded-full text-white transition-colors"
+                                      >
+                                        <X className="w-5 h-5" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="p-4 border-2 border-dashed border-white/10 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-center cursor-pointer group">
+                                    <input
+                                      type="file"
+                                      className="hidden"
+                                      id="nav-ai-upload"
+                                      accept="image/*"
+                                      onChange={handleImageUpload}
+                                    />
+                                    <label htmlFor="nav-ai-upload" className="cursor-pointer block">
+                                      <div className="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+                                        <Upload className="w-5 h-5 text-white" />
+                                      </div>
+                                      <p className="text-sm text-zinc-300">Upload Image</p>
+                                      <p className="text-xs text-zinc-500 mt-1">to generate video</p>
+                                    </label>
+                                  </div>
+                                )}
+
+                                <Button
+                                  onClick={handleGenerateVideo}
+                                  disabled={!selectedImage || isUploading}
+                                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white border-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  {isUploading ? 'Uploading...' : 'Generate Video'}
+                                </Button>
+                              </div>
+
+                              {/* Arrow */}
+                              <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-black/90 border-t border-l border-white/20 rotate-45" />
+                            </div>
+                          )}
+                        </div>
+
+                        <Link href={user?.role === 'brand' ? '/brand' : '/creator'} className="flex items-center gap-2">
+                          {profile && getAvatarUrl(profile.profile?.avatar_url) ? (
+                            <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/30">
+                              <Image
+                                src={getAvatarUrl(profile.profile?.avatar_url) || ''}
+                                alt={profile?.name || 'Profile'}
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center border-2 border-white/30">
+                              <span className="text-white text-xs font-semibold">
+                                {(profile?.name || ((user as Record<string, unknown>)?.name as string) || 'U').charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                          <Button variant="ghost" className="px-4 py-3 rounded-2xl hover:text-white border border-white/20  bg-transparent hover:border-white/40 hover:bg-white/5 transition-all duration-300">
+                            My Profile
+                          </Button>
+                        </Link>
+                      </>
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center border-2 border-white/30">
-                        <span className="text-white text-xs font-semibold">
-                          {(profile?.name || ((user as Record<string, unknown>)?.name as string) || 'U').charAt(0).toUpperCase()}
-                        </span>
-                      </div>
+                      <Link href="/login">
+                        <Button variant="ghost" className="px-4 py-3 rounded-2xl hover:text-white border border-white/20 bg-transparent hover:bg-transparent hover:border-white/40 transition-all duration-300">
+                          Sign In
+                        </Button>
+                      </Link>
                     )}
-                    <Button variant="ghost"  className="px-4 py-3 rounded-2xl hover:text-white border border-white/20  bg-transparent hover:border-white/40 hover:bg-white/5 transition-all duration-300">
-                      My Profile
-                    </Button>
-                  </Link>
-                ) : (
-                  <Link href="/login">
-                    <Button variant="ghost"  className="px-4 py-3 rounded-2xl hover:text-white border border-white/20 bg-transparent hover:bg-transparent hover:border-white/40 transition-all duration-300">
-                      Sign In
-                    </Button>
-                  </Link>
-                )}
-              </div>
+                  </div>
 
-              {/* Mobile menu toggle */}
-              <button
-                aria-label="Toggle navigation"
-                className="md:hidden inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] p-3 text-white hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 hover:scale-105 touch-manipulation"
-                onClick={() => setOpen(!open)}
-              >
-                {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
+                  {/* Mobile menu toggle */}
+                  <button
+                    aria-label="Toggle navigation"
+                    className="md:hidden inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] p-3 text-white hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 hover:scale-105 touch-manipulation"
+                    onClick={() => setOpen(!open)}
+                  >
+                    {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -168,6 +294,83 @@ const Navbar = () => {
                 {item.label}
               </Link>
             ))}
+
+            {isAuthenticated && (
+              <div className="border border-white/10 rounded-xl bg-white/5 overflow-hidden transition-all duration-300">
+                <button
+                  onClick={() => setAiDropdownOpen(!aiDropdownOpen)}
+                  className="w-full py-2 px-3 flex items-center gap-3 hover:bg-white/5 transition-colors"
+                >
+                  <div className="relative w-10 h-10 flex-shrink-0">
+                    <Image src={img8} alt="AI" fill className="object-contain" />
+                  </div>
+                  <span className="text-zinc-300 font-medium flex-1 text-left">AI Video Gen</span>
+                  <div className={`transition-transform duration-300 ${aiDropdownOpen ? 'rotate-180' : ''}`}>
+                    <ChevronDown className="w-5 h-5 text-zinc-400" />
+                  </div>
+                </button>
+
+                {/* Mobile AI Dropdown Content */}
+                {aiDropdownOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="p-3 border-t border-white/10 bg-black/20">
+                      <div className="space-y-4">
+                        {selectedImage ? (
+                          <div className="relative w-full h-40 border border-white/20 rounded-xl overflow-hidden group">
+                            <Image
+                              src={selectedImage}
+                              alt="Preview"
+                              fill
+                              className="object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                              <button
+                                onClick={clearImage}
+                                className="p-2 bg-red-500/80 hover:bg-red-600 rounded-full text-white transition-colors"
+                              >
+                                <X className="w-5 h-5" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-4 border-2 border-dashed border-white/10 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-center cursor-pointer group">
+                            <input
+                              type="file"
+                              className="hidden"
+                              id="mobile-nav-ai-upload"
+                              accept="image/*"
+                              onChange={handleImageUpload}
+                            />
+                            <label htmlFor="mobile-nav-ai-upload" className="cursor-pointer block w-full">
+                              <div className="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+                                <Upload className="w-5 h-5 text-white" />
+                              </div>
+                              <p className="text-sm text-zinc-300">Upload Image</p>
+                              <p className="text-xs text-zinc-500 mt-1">to generate video</p>
+                            </label>
+                          </div>
+                        )}
+
+                        <Button
+                          onClick={handleGenerateVideo}
+                          disabled={!selectedImage || isUploading}
+                          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white border-0 py-6 text-lg shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isUploading ? 'Uploading...' : 'Generate Video'}
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            )}
+
             <div className="pt-2 border-t border-white/10 space-y-2">
               {isAuthenticated ? (
                 <Link href={user?.role === 'brand' ? '/brand' : '/creator'} onClick={() => setOpen(false)} className="flex items-center gap-3 w-full">

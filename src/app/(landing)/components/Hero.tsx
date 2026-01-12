@@ -27,7 +27,7 @@ const allIcons = [
   { icon: FaInstagram, mode: "brand", color: "text-pink-500" },
   { icon: "", mode: "creator", img: img5, color: "" },
   { icon: FaTwitter, mode: "brand", color: "text-sky-400" },
-  // { icon: "", mode: "creator", img: img6, color: "" },
+  //{ icon: "", mode: "creator", img: img6, color: "" },
 ];
 
 const Hero = React.memo(() => {
