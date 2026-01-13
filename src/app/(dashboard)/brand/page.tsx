@@ -5,10 +5,10 @@ import { campaignService } from '@/lib/campaignService';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useCompetitors } from '@/hooks/useCompetitors';
-import { 
-  PlusIcon, 
-  EyeIcon, 
-  UsersIcon, 
+import {
+  PlusIcon,
+  EyeIcon,
+  UsersIcon,
   CurrencyDollarIcon,
   CheckCircleIcon,
   ClockIcon,
@@ -21,7 +21,8 @@ import {
   UserGroupIcon,
   HeartIcon,
   ChatBubbleLeftIcon,
-  ShareIcon
+  ShareIcon,
+  VideoCameraIcon
 } from '@heroicons/react/24/outline';
 import { TrendingUp } from 'lucide-react';
 import Link from 'next/link';
@@ -71,13 +72,13 @@ export default function BrandDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       if (!brandId) return;
-      
+
       try {
         setLoading(true);
         // Reduce initial load to improve responsiveness
         const res = await campaignService.listByBrand(brandId as string, { limit: 20 });
         const campaigns = res.data.campaigns || [];
-        
+
         if (campaigns.length === 0) {
           setLoading(false);
           return;
@@ -98,7 +99,7 @@ export default function BrandDashboard() {
               totals.pendingBids += bids.filter(b => b.status === 'pending').length;
               totals.acceptedBids += bids.filter(b => b.status === 'accepted').length;
               totals.totalSpent += bids.filter(b => b.status === 'accepted').reduce((sum, b) => sum + b.bid_amount, 0);
-            } catch {}
+            } catch { }
           }
         }
         await Promise.all(Array.from({ length: Math.min(concurrency, campaigns.length) }, () => worker()));
@@ -113,7 +114,7 @@ export default function BrandDashboard() {
 
     fetchStats();
   }, [brandId]);
-  
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
@@ -286,75 +287,75 @@ export default function BrandDashboard() {
     return num.toString();
   };
 
-  
+
 
   return (
-   
+
     <div>
-      
-  <div className='mb-6 mt-4 lg:mt-1 md:mt-1 flex justify-start lg:justify-end '>
-     <Link href="/creator/posts" >
-  <button className="   bg-gradient-to-r from-blue-600 to-purple-600 text-sm text-white px-4 py-2.5 rounded-sm  flex items-center space-x-1 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md">
-    <Plus className="w-4 h-4" />
-    <span>Create New Post</span>
-  </button>
-</Link>
-      </div> 
+
+      <div className='mb-6 mt-4 lg:mt-1 md:mt-1 flex justify-start lg:justify-end '>
+        <Link href="/creator/posts" >
+          <button className="   bg-gradient-to-r from-blue-600 to-purple-600 text-sm text-white px-4 py-2.5 rounded-sm  flex items-center space-x-1 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md">
+            <Plus className="w-4 h-4" />
+            <span>Create New Post</span>
+          </button>
+        </Link>
+      </div>
       {/* Stats Grid */}
-<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
 
-  <div className="bg-white rounded-sm p-6 hover:shadow-sm border border-gray-200/04">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm text-gray-500">Total Campaigns</p>
-        <p className="text-2xl font-bold text-gray-900">{campaigns?.length || 0}</p>
-      </div>
-      <div className="p-2 bg-blue-100 rounded-sm ">
-        <ChartBarIcon className="w-6 h-6 text-blue-600" />
-      </div>
-    </div>
-  </div>
-<div className="bg-white rounded-sm p-6 hover:shadow-sm border border-gray-200/04">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm text-gray-500">Total Bids</p>
-        <p className="text-2xl font-bold text-gray-900">{loading ? '...' : stats.totalBids}</p>
-      </div>
-      <div className="p-2 bg-green-100 rounded-sm">
-        <UsersIcon className="w-6 h-6 text-green-600" />
-      </div>
-    </div>
-  </div>
+        <div className="bg-white rounded-sm p-6 hover:shadow-sm border border-gray-200/04">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Total Campaigns</p>
+              <p className="text-2xl font-bold text-gray-900">{campaigns?.length || 0}</p>
+            </div>
+            <div className="p-2 bg-blue-100 rounded-sm ">
+              <ChartBarIcon className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-sm p-6 hover:shadow-sm border border-gray-200/04">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Total Bids</p>
+              <p className="text-2xl font-bold text-gray-900">{loading ? '...' : stats.totalBids}</p>
+            </div>
+            <div className="p-2 bg-green-100 rounded-sm">
+              <UsersIcon className="w-6 h-6 text-green-600" />
+            </div>
+          </div>
+        </div>
 
-<div className="bg-white rounded-sm p-6 hover:shadow-sm border border-gray-200/04">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm text-gray-500">Pending Bids</p>
-        <p className="text-2xl font-bold text-gray-900">{loading ? '...' : stats.pendingBids}</p>
-      </div>
-      <div className="p-2 bg-yellow-100 rounded-sm">
-        <ClockIcon className="w-6 h-6 text-yellow-600" />
-      </div>
-    </div>
-  </div>
+        <div className="bg-white rounded-sm p-6 hover:shadow-sm border border-gray-200/04">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Pending Bids</p>
+              <p className="text-2xl font-bold text-gray-900">{loading ? '...' : stats.pendingBids}</p>
+            </div>
+            <div className="p-2 bg-yellow-100 rounded-sm">
+              <ClockIcon className="w-6 h-6 text-yellow-600" />
+            </div>
+          </div>
+        </div>
 
-<div className="bg-white rounded-sm p-6 hover:shadow-sm border border-gray-200/04">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm text-gray-500">Total Spent</p>
-        <p className="text-2xl font-bold text-gray-900">₹{loading ? '...' : stats.totalSpent.toLocaleString()}</p>
-      </div>
-      <div className="p-2 bg-purple-100 rounded-sm">
-        <CurrencyDollarIcon className="w-6 h-6 text-purple-600" />
-      </div>
-    </div>
-  </div>
+        <div className="bg-white rounded-sm p-6 hover:shadow-sm border border-gray-200/04">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Total Spent</p>
+              <p className="text-2xl font-bold text-gray-900">₹{loading ? '...' : stats.totalSpent.toLocaleString()}</p>
+            </div>
+            <div className="p-2 bg-purple-100 rounded-sm">
+              <CurrencyDollarIcon className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
 
-</div>
+      </div>
 
 
       {/* Notifications Section */}
-     <div className="bg-white rounded-sm p-2  hover:shadow-sm border border-gray-200/04 mt-4">
+      <div className="bg-white rounded-sm p-2  hover:shadow-sm border border-gray-200/04 mt-4">
         <div className="p-3 border-b border-gray-200">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
@@ -364,14 +365,14 @@ export default function BrandDashboard() {
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Recent Notifications</h2>
                 <p className="text-sm text-gray-500">
-                  {unreadCount > 0 
+                  {unreadCount > 0
                     ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
                     : 'All caught up!'
                   }
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3 w-full sm:w-auto sm:justify-end">
               <button
                 onClick={handleRefreshNotifications}
@@ -390,7 +391,7 @@ export default function BrandDashboard() {
                   Mark all read
                 </button>
               )}
-              <Link 
+              <Link
                 href="/brand/notifications"
                 className="text-blue-600 hover:text-blue-700 text-sm font-medium"
               >
@@ -399,7 +400,7 @@ export default function BrandDashboard() {
             </div>
           </div>
         </div>
-        
+
         <div className="p-6">
           {notificationsLoading ? (
             <div className="flex items-center justify-center py-8">
@@ -422,17 +423,16 @@ export default function BrandDashboard() {
               {notifications.slice(0, 5).map(notification => (
                 <div
                   key={notification._id}
-                  className={`p-4 rounded-lg border transition-all duration-200 ${
-                    notification.isRead 
-                      ? 'bg-white border-gray-200' 
-                      : `${getNotificationBgColor(notification.type, notification.priority)} border-l-4`
-                  }`}
+                  className={`p-4 rounded-lg border transition-all duration-200 ${notification.isRead
+                    ? 'bg-white border-gray-200'
+                    : `${getNotificationBgColor(notification.type, notification.priority)} border-l-4`
+                    }`}
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-1">
                       {getNotificationIcon(notification.type)}
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -459,7 +459,7 @@ export default function BrandDashboard() {
                             )}
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-2 ml-4">
                           {!notification.isRead && (
                             <button
@@ -470,7 +470,7 @@ export default function BrandDashboard() {
                               <CheckCircleIcon className="w-4 h-4" />
                             </button>
                           )}
-                          
+
                           <button
                             onClick={() => handleDeleteNotification(notification._id)}
                             className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -498,7 +498,7 @@ export default function BrandDashboard() {
       </div>
 
       {/* Competitors Section */}
-     <div className="bg-white rounded-sm p-2 hover:shadow-sm border border-gray-200/04 mt-4">
+      <div className="bg-white rounded-sm p-2 hover:shadow-sm border border-gray-200/04 mt-4">
         <div className="p-3 border-b border-gray-200">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
@@ -512,7 +512,7 @@ export default function BrandDashboard() {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3 w-full sm:w-auto sm:justify-end">
               <button
                 onClick={handleRefreshCompetitors}
@@ -522,7 +522,7 @@ export default function BrandDashboard() {
               >
                 <ArrowPathIcon className={`w-4 h-4 ${competitorsLoading ? 'animate-spin' : ''}`} />
               </button>
-              <Link 
+              <Link
                 href="/creator/competitors"
                 className="text-blue-600 hover:text-blue-700 text-sm font-medium"
               >
@@ -531,7 +531,7 @@ export default function BrandDashboard() {
             </div>
           </div>
         </div>
-        
+
         <div className="p-6">
           {competitorsLoading ? (
             <div className="flex items-center justify-center py-8">
@@ -561,8 +561,8 @@ export default function BrandDashboard() {
                       <div className="flex-shrink-0">
                         <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
                           {competitor.avatar ? (
-                            <img 
-                              src={competitor.avatar} 
+                            <img
+                              src={competitor.avatar}
                               alt={competitor.name}
                               className="w-12 h-12 rounded-full object-cover"
                             />
@@ -571,7 +571,7 @@ export default function BrandDashboard() {
                           )}
                         </div>
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-medium text-gray-900 truncate">{competitor.name}</h3>
@@ -580,7 +580,7 @@ export default function BrandDashboard() {
                             <span className="text-blue-500" title="Verified">✓</span>
                           )}
                         </div>
-                        
+
                         <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
                           <span className="flex items-center gap-1">
                             <span className="text-lg">{getPlatformIcon(competitor.platform)}</span>
@@ -595,7 +595,7 @@ export default function BrandDashboard() {
                             {competitor.engagement.toFixed(1)}% engagement
                           </span>
                         </div>
-                        
+
                         <div className="flex items-center gap-6 text-xs text-gray-500">
                           <span className="flex items-center gap-1">
                             <HeartIcon className="w-3 h-3" />
@@ -612,7 +612,7 @@ export default function BrandDashboard() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                       {competitor.profileUrl && (
                         <a
@@ -637,7 +637,7 @@ export default function BrandDashboard() {
               </div>
               <h3 className="text-sm font-medium text-gray-900 mb-2">No competitors analyzed yet</h3>
               <p className="text-sm text-gray-500 mb-4">Start analyzing competitors to gain insights into your market.</p>
-              <Link 
+              <Link
                 href="/creator/competitors"
                 className="inline-flex items-center gap-2 px-4 py-2  bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-sm hover:bg-blue-700 transition-colors"
               >
@@ -654,7 +654,7 @@ export default function BrandDashboard() {
         <div className=" border-b  border-gray-200">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <h2 className="text-lg font-semibold text-gray-900 mb-5">Recent Campaigns</h2>
-            <Link 
+            <Link
               href="/brand/campaigns"
               className="text-blue-600 hover:text-blue-700 text-sm font-medium"
             >
@@ -662,90 +662,90 @@ export default function BrandDashboard() {
             </Link>
           </div>
         </div>
-        
-       <div className="p-2">
 
-  {campaignsLoading ? (
-    <div className="flex items-center justify-center py-4">
-      <div className="animate-spin rounded-sm h-8 w-8 border-b-2 border-blue-600"></div>
-    </div>
-  ) : campaigns && campaigns.length > 0 ? (
-    <div className="space-y-4">
+        <div className="p-2">
 
-      {campaigns.slice(0, 5).map(campaign => (
-        <div 
-          key={campaign._id} 
-          className="
+          {campaignsLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <div className="animate-spin rounded-sm h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : campaigns && campaigns.length > 0 ? (
+            <div className="space-y-4">
+
+              {campaigns.slice(0, 5).map(campaign => (
+                <div
+                  key={campaign._id}
+                  className="
             flex flex-col md:flex-row md:items-center md:justify-between 
             gap-3 p-2
             bg-white border border-gray-200/04 rounded-sm hover:shadow-sm mt-6
           "
-        >
-          {/* Left Side */}
-          <div className="flex-1 text-left">
-            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-              {campaign.title}
-            </h3>
+                >
+                  {/* Left Side */}
+                  <div className="flex-1 text-left">
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                      {campaign.title}
+                    </h3>
 
-            <p className="text-xs sm:text-sm text-gray-500 mt-1 line-clamp-2">
-              {campaign.description}
-            </p>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1 line-clamp-2">
+                      {campaign.description}
+                    </p>
 
-            <div 
-              className="
+                    <div
+                      className="
                 flex flex-col sm:flex-row sm:items-center sm:gap-6 
                 gap-2 mt-2 text-gray-600 text-xs sm:text-sm
               "
-            >
-              <span>Budget: ₹{campaign.budget.toLocaleString()}</span>
-              <span>Deadline: {new Date(campaign.deadline).toLocaleDateString()}</span>
+                    >
+                      <span>Budget: ₹{campaign.budget.toLocaleString()}</span>
+                      <span>Deadline: {new Date(campaign.deadline).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+
+                  {/* Right Side */}
+                  <div className="flex items-center gap-2 sm:gap-3 self-start md:self-center">
+                    <span
+                      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium ${getStatusColor(campaign.status)}`}
+                    >
+                      {getStatusIcon(campaign.status)}
+                      {campaign.status}
+                    </span>
+
+                    <Link
+                      href={`/brand/campaigns`}
+                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                    >
+                      <EyeIcon className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+
             </div>
-          </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
+                <ChartBarIcon className="w-12 h-12" />
+              </div>
+              <h3 className="text-sm font-medium text-gray-900 mb-2">No campaigns yet</h3>
+              <p className="text-sm text-gray-500 mb-4">Get started by creating your first campaign.</p>
+              <Link
+                href="/brand/campaigns"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              >
+                <PlusIcon className="w-4 h-4" />
+                Create Campaign
+              </Link>
+            </div>
+          )}
 
-          {/* Right Side */}
-          <div className="flex items-center gap-2 sm:gap-3 self-start md:self-center">
-            <span 
-              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium ${getStatusColor(campaign.status)}`}
-            >
-              {getStatusIcon(campaign.status)}
-              {campaign.status}
-            </span>
-
-            <Link 
-              href={`/brand/campaigns`}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition"
-            >
-              <EyeIcon className="w-4 h-4" />
-            </Link>
-          </div>
         </div>
-      ))}
-
-    </div>
-  ) : (
-    <div className="text-center py-8">
-      <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
-        <ChartBarIcon className="w-12 h-12" />
-      </div>
-      <h3 className="text-sm font-medium text-gray-900 mb-2">No campaigns yet</h3>
-      <p className="text-sm text-gray-500 mb-4">Get started by creating your first campaign.</p>
-      <Link 
-        href="/brand/campaigns"
-        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-      >
-        <PlusIcon className="w-4 h-4" />
-        Create Campaign
-      </Link>
-    </div>
-  )}
-
-</div>
 
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-        <Link 
+        <Link
           href="/brand/campaigns"
           className="bg-white rounded-sm p-6  border border-gray-200/04 rounded-sm hover:shadow-sm transition-shadow group"
         >
@@ -760,7 +760,7 @@ export default function BrandDashboard() {
           </div>
         </Link>
 
-        <Link 
+        <Link
           href="/brand/marketplace"
           className="bg-white rounded-sm p-6 hover:shadow-sm border border-gray-200/04  transition-shadow group"
         >
@@ -775,7 +775,7 @@ export default function BrandDashboard() {
           </div>
         </Link>
 
-        <Link 
+        <Link
           href="/brand/bids"
           className="bg-white rounded-sm p-6  border border-gray-200/04 hover:shadow-sm transition-shadow group"
         >
@@ -789,9 +789,24 @@ export default function BrandDashboard() {
             </div>
           </div>
         </Link>
+
+        <Link
+          href="/brand/ai-video"
+          className="bg-white rounded-sm p-6  border border-gray-200/04 hover:shadow-sm transition-shadow group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-2 bg-indigo-100 rounded-sm group-hover:bg-indigo-200 transition-colors">
+              <VideoCameraIcon className="w-6 h-6 text-indigo-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Generate AI Video</h3>
+              <p className="text-sm text-gray-500">Create videos with AI</p>
+            </div>
+          </div>
+        </Link>
       </div>
-</div>
-   
+    </div>
+
   );
 }
 
