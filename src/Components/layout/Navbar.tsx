@@ -144,15 +144,15 @@ const Navbar = () => {
                     {isAuthenticated ? (
                       <>
                         <div className="relative">
-                          <div
+                          {/* <div
                             className="mr-6 relative w-10 h-10 cursor-pointer hover:scale-110 transition-transform duration-300"
                             onClick={() => setAiDropdownOpen(!aiDropdownOpen)}
                           >
                             <Image src={img8} alt="AI" fill className="object-contain" />
-                          </div>
+                          </div> */}
 
                           {/* AI Dropdown */}
-                          {aiDropdownOpen && (
+                          {/* {aiDropdownOpen && (
                             <div className="absolute top-12 left-1/2 -translate-x-1/2 w-80 bg-black/90 backdrop-blur-xl border border-white/20 rounded-2xl p-4 shadow-2xl z-50">
                               <div className="space-y-4">
                                 <div className="flex items-center justify-between">
@@ -213,9 +213,9 @@ const Navbar = () => {
                               </div>
 
                               {/* Arrow */}
-                              <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-black/90 border-t border-l border-white/20 rotate-45" />
+                              {/* <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-black/90 border-t border-l border-white/20 rotate-45" />
                             </div>
-                          )}
+                          )} */}
                         </div>
 
                         <Link href={user?.role === 'brand' ? '/brand' : '/creator'} className="flex items-center gap-2">
