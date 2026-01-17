@@ -14,6 +14,8 @@ steps:
       - 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/Bloocube/Bloocube-frontend:latest'
       - '--build-arg'
       - 'NEXT_PUBLIC_API_URL=https://api-backend.Bloocube.com'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_AI_VIDEO_GEN_URL=https://ai-video.bloocube.com'
       - 'Bloocube-frontend'
 
   # Step 2: Push image to Artifact Registry
