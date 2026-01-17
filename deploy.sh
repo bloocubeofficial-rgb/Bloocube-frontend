@@ -18,7 +18,10 @@ IMAGE_TAG=${IMAGE:-gcr.io/$PROJECT_ID/$SERVICE:$(date +%Y%m%d-%H%M%S)}
 
 echo "Building $IMAGE_TAG"
 
-docker build -t "$IMAGE_TAG" .
+docker build \
+  --build-arg NEXT_PUBLIC_API_URL=https://api-backend.Bloocube.com \
+  --build-arg NEXT_PUBLIC_AI_VIDEO_GEN_URL=https://ai-video.bloocube.com \
+  -t "$IMAGE_TAG" .
 
 echo "Pushing $IMAGE_TAG"
 
