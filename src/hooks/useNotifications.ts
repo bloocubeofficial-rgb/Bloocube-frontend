@@ -230,9 +230,6 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
     if (!autoRefresh) return;
 
     const interval = setInterval(() => {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ac687333-012d-42d4-b6b1-5e4b89356f84',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useNotifications.ts:232',message:'Auto-refresh interval triggered',data:{loading,refreshInterval},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       // Only fetch if auto-refresh is enabled and not currently loading
       if (!loading) {
         // Fetch unread count with rate limiting (silent - don't show errors)

@@ -17,21 +17,28 @@ export default function AiVideoModal({ isOpen, onClose }: AiVideoModalProps) {
   useEffect(() => {
     if (isOpen) {
       // Get the deployed AI Video Gen URL from config
-      // Try multiple sources to ensure we get the value
-      const url = config.aiVideoGenUrl || 
-                  process.env.NEXT_PUBLIC_AI_VIDEO_GEN_URL || 
-                  '';
+      // In production builds, NEXT_PUBLIC_* vars are replaced at build time
+      // Fallback to hardcoded production URL if env var wasn't set during build
+      let url = config.aiVideoGenUrl || process.env.NEXT_PUBLIC_AI_VIDEO_GEN_URL || '';
+      
+      // Fallback for production if env var wasn't set during build
+      if (!url && typeof window !== 'undefined' && window.location.hostname.includes('bloocube.com')) {
+        url = 'https://ai-video.bloocube.com';
+      }
       
       if (url && url.trim() !== '') {
         setIframeUrl(url.trim());
         setIframeError(null);
         setIsLoading(true);
       } else {
-        console.warn('⚠️ NEXT_PUBLIC_AI_VIDEO_GEN_URL is not configured', {
-          configValue: config.aiVideoGenUrl,
-          envValue: process.env.NEXT_PUBLIC_AI_VIDEO_GEN_URL,
-          message: 'Please add NEXT_PUBLIC_AI_VIDEO_GEN_URL to your .env.local file and restart the dev server'
-        });
+        // Only warn in development
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('⚠️ NEXT_PUBLIC_AI_VIDEO_GEN_URL is not configured', {
+            configValue: config.aiVideoGenUrl,
+            envValue: process.env.NEXT_PUBLIC_AI_VIDEO_GEN_URL,
+            message: 'Please add NEXT_PUBLIC_AI_VIDEO_GEN_URL to your .env.local file and restart the dev server'
+          });
+        }
       }
     } else {
       // Reset state when modal closes
