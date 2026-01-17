@@ -204,6 +204,9 @@ const Dashboard = () => {
     }).format(n);
 
   const fetchAnalytics = useCallback(async (options?: { sync?: boolean; showLoading?: boolean }) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ac687333-012d-42d4-b6b1-5e4b89356f84',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'creator/page.tsx:206',message:'fetchAnalytics called',data:{sync:options?.sync,showLoading:options?.showLoading},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     try {
       setError(null);
       if (options?.showLoading) setLoading(true);
@@ -248,6 +251,9 @@ const Dashboard = () => {
   }, []);
 
   const fetchPostCounts = useCallback(async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ac687333-012d-42d4-b6b1-5e4b89356f84',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'creator/page.tsx:250',message:'fetchPostCounts called',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     try {
       // Get total posts count with minimal payload
       const totalRes = await apiRequest<{
@@ -268,6 +274,9 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ac687333-012d-42d4-b6b1-5e4b89356f84',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'creator/page.tsx:270',message:'useEffect triggered',data:{fetchAnalyticsDeps:fetchAnalytics.toString().substring(0,50),fetchPostCountsDeps:fetchPostCounts.toString().substring(0,50)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     // Load from cache first for instant UI (optimistic loading)
     loadAnalyticsCache();
     loadCountsCache();

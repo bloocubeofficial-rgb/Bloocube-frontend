@@ -165,6 +165,9 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
     const cached = requestCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < cached.ttl) {
       console.log(`📦 Cache hit: ${method} ${path}`);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ac687333-012d-42d4-b6b1-5e4b89356f84',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'apiClient.ts:165',message:'Cache hit',data:{method,path,cacheKey},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
       return cached.data as T;
     }
   }
@@ -185,6 +188,10 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
     fullUrl: `${base}${path}`,
     usingCookies: true
   });
+
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/ac687333-012d-42d4-b6b1-5e4b89356f84',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'apiClient.ts:181',message:'API request initiated',data:{method,path,retries,cacheKey},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
 
   // Create request promise with performance monitoring
   const requestPromise = (async (): Promise<T> => {
@@ -245,6 +252,9 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
       // Only attempt refresh for protected, non-auth endpoints
       const isAuthEndpoint = path.startsWith('/api/auth/');
       if (res.status === 401 && retries > 0 && !isAuthEndpoint) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ac687333-012d-42d4-b6b1-5e4b89356f84',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'apiClient.ts:247',message:'401 token refresh triggered',data:{path,retries},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         console.log('🔑 Token expired, attempting refresh...');
         const newToken = await refreshAppToken();
         if (newToken) {
@@ -276,6 +286,9 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
 
       // Handle 429 (Too Many Requests) with Retry-After header support
       if (res.status === 429 && retries > 0) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ac687333-012d-42d4-b6b1-5e4b89356f84',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'apiClient.ts:278',message:'429 rate limit hit',data:{path,retries,retryAfter:res.headers.get('retry-after')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         const retryAfterHeader = res.headers.get('retry-after');
         let delay: number;
         
@@ -406,6 +419,9 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
         
         // Invalidate related caches
         if (basePath.includes('/posts')) {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/ac687333-012d-42d4-b6b1-5e4b89356f84',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'apiClient.ts:408',message:'Cache invalidation triggered',data:{basePath,method},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+          // #endregion
           cacheUtils.clearPattern('/api/posts');
           cacheUtils.clearPattern('/api/analytics');
           console.log(`🗑️ Auto-invalidated cache for: /api/posts, /api/analytics`);
@@ -439,6 +455,10 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
 
   // Store pending request
   pendingRequests.set(cacheKey, requestPromise);
+
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/ac687333-012d-42d4-b6b1-5e4b89356f84',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'apiClient.ts:441',message:'Pending requests count',data:{pendingCount:pendingRequests.size,cacheSize:requestCache.size,method,path},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  // #endregion
 
   return requestPromise;
 }
