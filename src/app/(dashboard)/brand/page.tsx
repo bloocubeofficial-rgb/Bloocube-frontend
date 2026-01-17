@@ -21,8 +21,7 @@ import {
   UserGroupIcon,
   HeartIcon,
   ChatBubbleLeftIcon,
-  ShareIcon,
-  VideoCameraIcon
+  ShareIcon
 } from '@heroicons/react/24/outline';
 import { TrendingUp } from 'lucide-react';
 import Link from 'next/link';
@@ -790,20 +789,6 @@ export default function BrandDashboard() {
           </div>
         </Link>
 
-        <Link
-          href="/brand/ai-video"
-          className="bg-white rounded-sm p-6  border border-gray-200/04 hover:shadow-sm transition-shadow group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="p-2 bg-indigo-100 rounded-sm group-hover:bg-indigo-200 transition-colors">
-              <VideoCameraIcon className="w-6 h-6 text-indigo-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Generate AI Video</h3>
-              <p className="text-sm text-gray-500">Create videos with AI</p>
-            </div>
-          </div>
-        </Link>
       </div>
     </div>
 

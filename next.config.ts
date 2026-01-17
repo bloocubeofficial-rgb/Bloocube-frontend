@@ -21,6 +21,7 @@ const nextConfig: NextConfig = {
   // Explicitly expose public environment variables
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '',
+    NEXT_PUBLIC_AI_VIDEO_GEN_URL: process.env.NEXT_PUBLIC_AI_VIDEO_GEN_URL || '',
   },
 
   // Performance optimizations

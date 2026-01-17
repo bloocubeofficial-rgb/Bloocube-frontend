@@ -17,7 +17,7 @@ const sizeClasses = {
   md: 'max-w-lg',
   lg: 'max-w-2xl',
   xl: 'max-w-4xl',
-  full: 'max-w-7xl'
+  full: 'max-w-[98vw] w-[98vw]'
 };
 
 export const Modal: React.FC<ModalProps> = ({
@@ -64,7 +64,7 @@ export const Modal: React.FC<ModalProps> = ({
       onClick={handleOverlayClick}
     >
       <div 
-        className={`bg-white rounded-xl shadow-2xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-hidden ${className}`}
+        className={`bg-white rounded-xl shadow-2xl w-full ${sizeClasses[size]} ${size === 'full' ? 'h-[95vh]' : 'max-h-[90vh]'} overflow-hidden flex flex-col ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -86,7 +86,7 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-100px)] sm:max-h-[calc(90vh-120px)]">
+        <div className={`overflow-y-auto flex-1 ${size === 'full' ? 'h-full' : 'max-h-[calc(90vh-100px)] sm:max-h-[calc(90vh-120px)]'}`}>
           {children}
         </div>
       </div>

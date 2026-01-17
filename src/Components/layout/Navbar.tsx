@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, X, Upload, ChevronDown } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import { Button } from "../ui/Button";
 import React, { useState, useEffect } from "react";
@@ -10,8 +10,6 @@ import clsx from "clsx";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { getAvatarUrl } from "@/lib/profile";
-import img8 from "@/assets/img8.png"
-import { apiRequest } from "@/lib/apiClient";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -23,55 +21,12 @@ const navItems = [
 const Navbar = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [open, setOpen] = useState(false);
-  const [aiDropdownOpen, setAiDropdownOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const { isAuthenticated, user, isLoading } = useAuth();
   const { profile } = useUserProfile();
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => setSelectedImage(e.target?.result as string);
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleGenerateVideo = async () => {
-    if (!selectedFile) return;
-
-    setIsUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-
-      await apiRequest('/api/generate-video', {
-        method: 'POST',
-        body: formData,
-      });
-
-      alert('Video generation started successfully!');
-      // Optional: Close dropdown or clear image
-      // setAiDropdownOpen(false);
-    } catch (error) {
-      console.error('Upload failed:', error);
-      alert('Failed to start video generation.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const clearImage = () => {
-    setSelectedImage(null);
-    setSelectedFile(null);
-  };
 
   return (
     <motion.nav
@@ -143,81 +98,6 @@ const Navbar = () => {
                   <div className="hidden md:flex items-center gap-3">
                     {isAuthenticated ? (
                       <>
-                        <div className="relative">
-                          {/* <div
-                            className="mr-6 relative w-10 h-10 cursor-pointer hover:scale-110 transition-transform duration-300"
-                            onClick={() => setAiDropdownOpen(!aiDropdownOpen)}
-                          >
-                            <Image src={img8} alt="AI" fill className="object-contain" />
-                          </div> */}
-
-                          {/* AI Dropdown */}
-                          {/* {aiDropdownOpen && (
-                            <div className="absolute top-12 left-1/2 -translate-x-1/2 w-80 bg-black/90 backdrop-blur-xl border border-white/20 rounded-2xl p-4 shadow-2xl z-50">
-                              <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                  <h3 className="text-white font-semibold flex items-center gap-2">
-                                    AI Video Gen
-                                  </h3>
-                                  <button
-                                    onClick={() => setAiDropdownOpen(false)}
-                                    className="text-zinc-400 hover:text-white"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </div>
-
-                                {selectedImage ? (
-                                  <div className="relative w-full h-40 border border-white/20 rounded-xl overflow-hidden group">
-                                    <Image
-                                      src={selectedImage}
-                                      alt="Preview"
-                                      fill
-                                      className="object-cover"
-                                    />
-                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                      <button
-                                        onClick={clearImage}
-                                        className="p-2 bg-red-500/80 hover:bg-red-600 rounded-full text-white transition-colors"
-                                      >
-                                        <X className="w-5 h-5" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="p-4 border-2 border-dashed border-white/10 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-center cursor-pointer group">
-                                    <input
-                                      type="file"
-                                      className="hidden"
-                                      id="nav-ai-upload"
-                                      accept="image/*"
-                                      onChange={handleImageUpload}
-                                    />
-                                    <label htmlFor="nav-ai-upload" className="cursor-pointer block">
-                                      <div className="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
-                                        <Upload className="w-5 h-5 text-white" />
-                                      </div>
-                                      <p className="text-sm text-zinc-300">Upload Image</p>
-                                      <p className="text-xs text-zinc-500 mt-1">to generate video</p>
-                                    </label>
-                                  </div>
-                                )}
-
-                                <Button
-                                  onClick={handleGenerateVideo}
-                                  disabled={!selectedImage || isUploading}
-                                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white border-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                  {isUploading ? 'Uploading...' : 'Generate Video'}
-                                </Button>
-                              </div>
-
-                              {/* Arrow */}
-                              {/* <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-black/90 border-t border-l border-white/20 rotate-45" />
-                            </div>
-                          )} */}
-                        </div>
-
                         <Link href={user?.role === 'brand' ? '/brand' : '/creator'} className="flex items-center gap-2">
                           {profile && getAvatarUrl(profile.profile?.avatar_url) ? (
                             <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/30">
@@ -295,81 +175,6 @@ const Navbar = () => {
               </Link>
             ))}
 
-            {isAuthenticated && (
-              <div className="border border-white/10 rounded-xl bg-white/5 overflow-hidden transition-all duration-300">
-                <button
-                  onClick={() => setAiDropdownOpen(!aiDropdownOpen)}
-                  className="w-full py-2 px-3 flex items-center gap-3 hover:bg-white/5 transition-colors"
-                >
-                  <div className="relative w-10 h-10 flex-shrink-0">
-                    <Image src={img8} alt="AI" fill className="object-contain" />
-                  </div>
-                  <span className="text-zinc-300 font-medium flex-1 text-left">AI Video Gen</span>
-                  <div className={`transition-transform duration-300 ${aiDropdownOpen ? 'rotate-180' : ''}`}>
-                    <ChevronDown className="w-5 h-5 text-zinc-400" />
-                  </div>
-                </button>
-
-                {/* Mobile AI Dropdown Content */}
-                {aiDropdownOpen && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="p-3 border-t border-white/10 bg-black/20">
-                      <div className="space-y-4">
-                        {selectedImage ? (
-                          <div className="relative w-full h-40 border border-white/20 rounded-xl overflow-hidden group">
-                            <Image
-                              src={selectedImage}
-                              alt="Preview"
-                              fill
-                              className="object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                              <button
-                                onClick={clearImage}
-                                className="p-2 bg-red-500/80 hover:bg-red-600 rounded-full text-white transition-colors"
-                              >
-                                <X className="w-5 h-5" />
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="p-4 border-2 border-dashed border-white/10 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-center cursor-pointer group">
-                            <input
-                              type="file"
-                              className="hidden"
-                              id="mobile-nav-ai-upload"
-                              accept="image/*"
-                              onChange={handleImageUpload}
-                            />
-                            <label htmlFor="mobile-nav-ai-upload" className="cursor-pointer block w-full">
-                              <div className="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
-                                <Upload className="w-5 h-5 text-white" />
-                              </div>
-                              <p className="text-sm text-zinc-300">Upload Image</p>
-                              <p className="text-xs text-zinc-500 mt-1">to generate video</p>
-                            </label>
-                          </div>
-                        )}
-
-                        <Button
-                          onClick={handleGenerateVideo}
-                          disabled={!selectedImage || isUploading}
-                          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white border-0 py-6 text-lg shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isUploading ? 'Uploading...' : 'Generate Video'}
-                        </Button>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-            )}
 
             <div className="pt-2 border-t border-white/10 space-y-2">
               {isAuthenticated ? (

@@ -35,7 +35,7 @@ import {
   Filter,
   Search,
   Clock,
-  TrendingDown, RefreshCw, Video
+  TrendingDown, RefreshCw
 } from "lucide-react";
 
 import CreatorLayout from "@/Components/Creater/CreatorLayout";
@@ -565,18 +565,6 @@ const Dashboard = () => {
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Link
-            href="/creator/ai-video"
-            className="bg-white rounded-sm p-6 border border-gray-200/04 hover:shadow-sm transition-shadow group flex items-center gap-4"
-          >
-            <div className="p-2 bg-indigo-100 rounded-sm group-hover:bg-indigo-200 transition-colors">
-              <Video className="w-6 h-6 text-indigo-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Generate AI Video</h3>
-              <p className="text-sm text-gray-500">Create videos with AI</p>
-            </div>
-          </Link>
         </div>
       </div>
 
