@@ -14,8 +14,9 @@ import {
   LogOut,
   Bell,
   User,
-  Divide,
-  Video,
+  MessageSquare,
+  Briefcase,
+  Wallet,
 } from 'lucide-react';
 import React, { useState, useEffect, useCallback } from 'react';
 import { cookieAuthUtils } from '@/lib/cookieAuth';
@@ -24,14 +25,15 @@ import { getAvatarUrl } from '@/lib/profile';
 import LogoutModal from './LogoutModel';
 
 const sidebarItems = [
-  { name: 'Overview', icon: Home, href: '/creator' },
-  { name: 'Posts', icon: FileText, href: '/creator/posts'},
+  { name: 'Dashboard', icon: Home, href: '/creator' },
+  { name: 'Find Campaigns', icon: Store, href: '/creator/marketplace' },
+  { name: 'My Applications', icon: FileText, href: '/creator/bids' },
+  { name: 'Messages', icon: MessageSquare, href: '/creator/messages' },
+  { name: 'My Collaborations', icon: Briefcase, href: '/creator/collaborations' },
+  { name: 'Payments', icon: Wallet, href: '/creator/payments' },
   { name: 'Analytics', icon: BarChart3, href: '/creator/analytics' },
-  { name: 'Marketplace', icon: Store, href: '/creator/marketplace' },
-  { name: 'Bids', icon: FileText, href: '/creator/bids' },
-  { name: 'AI Video', icon: Video, href: '/creator/ai-video' },
-  { name: 'Competitors', icon: Users, href: '/creator/competitors' },
   { name: 'Notifications', icon: Bell, href: '/creator/notifications' },
+  { name: 'My Profile', icon: User, href: '/creator/settings' },
   { name: 'Settings', icon: Settings, href: '/creator/settings' },
 ];
 

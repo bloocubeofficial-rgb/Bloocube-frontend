@@ -1,6 +1,32 @@
 // src/lib/profile.ts
 import { apiRequest } from './apiClient';
 
+export interface CreatorProfileSummary {
+  id: string;
+  niches: string[];
+  platforms: string[];
+  followers: number;
+  engagementRate: number;
+  avgReach: number;
+  startingPrice: number;
+  portfolio: string[];
+  availability: string;
+  verified: boolean;
+}
+
+export interface BrandProfileSummary {
+  id: string;
+  companyName: string;
+  logoUrl: string | null;
+  website: string | null;
+  industry: string | null;
+  location: string | null;
+  description: string | null;
+  instagram: string | null;
+  youtube: string | null;
+  verified: boolean;
+}
+
 export interface UserProfile {
   _id: string;
   name: string;
@@ -11,6 +37,8 @@ export interface UserProfile {
   lastLogin?: string;
   createdAt: string;
   updatedAt: string;
+  creator?: CreatorProfileSummary;
+  brand?: BrandProfileSummary;
   profile: {
     bio: string;
     avatar_url: string;
