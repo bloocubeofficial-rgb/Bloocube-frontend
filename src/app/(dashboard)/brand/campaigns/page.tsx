@@ -6,6 +6,7 @@ import type { Bid } from '@/types/bid';
 import { acceptBidApi, rejectBidApi } from '@/hooks/useBids';
 import { campaignService } from '@/lib/campaignService';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { ChevronDownIcon, PlusIcon, EyeIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { Instagram, Youtube, Twitter, Linkedin, Facebook, Users, Verified } from 'lucide-react';
 import Image from 'next/image';
@@ -16,6 +17,7 @@ type PlatformType = "instagram" | "youtube" | "twitter" | "linkedin" | "facebook
 
 export default function BrandCampaignsPage() {
   const { user, isLoading } = useAuth();
+  const { profile } = useUserProfile();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,10 +70,10 @@ export default function BrandCampaignsPage() {
         }
       }
       
-      const brandId = user?.id;
+      const brandId = profile?.brand?.id;
       if (!brandId) {
-        console.error('🚫 User authenticated but missing ID:', { user });
-        throw new Error('User ID not found. Please refresh the page or sign in again.');
+        console.error('🚫 Brand profile not loaded yet:', { user });
+        throw new Error('Brand profile not found. Please refresh the page or sign in again.');
       }
       
       console.log('✅ Fetching campaigns for brand:', brandId);
@@ -102,8 +104,8 @@ export default function BrandCampaignsPage() {
   };
 
   useEffect(() => {
-    // Only refetch when user is available and authenticated
-    if (user && user.id && user.role === 'brand') {
+    // Only refetch once the brand profile (and its id) has loaded
+    if (user && user.role === 'brand' && profile?.brand?.id) {
       refetch();
     } else if (!isLoading && user === null) {
       // If authentication is complete but no user, show error
@@ -111,7 +113,7 @@ export default function BrandCampaignsPage() {
       setInitialLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, isLoading]);
+  }, [user, isLoading, profile?.brand?.id]);
 
   useEffect(() => {
     (async () => {

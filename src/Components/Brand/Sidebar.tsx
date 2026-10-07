@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { Bell, Briefcase, Home, Settings, Users, Store, BarChart3, User, LogOut, Video } from 'lucide-react';
+import { Bell, Briefcase, Home, Settings, Users, Store, BarChart3, User, LogOut, MessageSquare, Wallet } from 'lucide-react';
 import React, { useState } from 'react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { cookieAuthUtils } from '@/lib/cookieAuth';
@@ -17,13 +17,14 @@ interface SidebarProps {
 }
 
 const nav = [
-  { name: 'Overview', href: '/brand', icon: Home },
+  { name: 'Dashboard', href: '/brand', icon: Home },
   { name: 'Campaigns', href: '/brand/campaigns', icon: Briefcase },
-  { name: 'Marketplace', href: '/brand/marketplace', icon: Store },
-  { name: 'Bids', href: '/brand/bids', icon: Users },
-  { name: 'AI Video', href: '/brand/ai-video', icon: Video },
+  { name: 'Applications', href: '/brand/bids', icon: Users },
+  { name: 'Messages', href: '/brand/messages', icon: MessageSquare },
+  { name: 'Payments', href: '/brand/payments', icon: Wallet },
   { name: 'Analytics', href: '/brand/analytics', icon: BarChart3 },
   { name: 'Notifications', href: '/brand/notifications', icon: Bell },
+  { name: 'Brand Profile', href: '/brand/settings', icon: User },
   { name: 'Settings', href: '/brand/settings', icon: Settings }
 ];
 

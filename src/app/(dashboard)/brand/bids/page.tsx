@@ -2,12 +2,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { campaignService } from '@/lib/campaignService';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import type { Bid } from '@/types/bid';
 import { ChevronDownIcon, CheckIcon, EyeIcon, ChatBubbleLeftRightIcon, CalendarIcon, CurrencyDollarIcon, TagIcon } from '@heroicons/react/24/outline';
 import { acceptBidApi, rejectBidApi } from '@/hooks/useBids';
 
 export default function BrandBidsPage() {
   const { user, isLoading } = useAuth();
+  const { profile } = useUserProfile();
   const [selectedBid, setSelectedBid] = useState<Bid | null>(null);
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(false);
@@ -17,8 +19,8 @@ export default function BrandBidsPage() {
   const [processing, setProcessing] = useState<{ id: string; action: 'accept' | 'reject' } | null>(null);
 
   const brandId = useMemo(() => {
-    return user?.id || null;
-  }, [user]);
+    return profile?.brand?.id || null;
+  }, [profile]);
 
   useEffect(() => {
     let cancelled = false;

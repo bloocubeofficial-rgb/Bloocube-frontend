@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { useCampaigns } from '@/hooks/useCampaigns';
 import { campaignService } from '@/lib/campaignService';
+import type { Campaign } from '@/types/campaign';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useCompetitors } from '@/hooks/useCompetitors';
 import {
@@ -25,11 +26,12 @@ import {
 } from '@heroicons/react/24/outline';
 import { TrendingUp } from 'lucide-react';
 import Link from 'next/link';
-import BrandLayout from './layout'
 import { Plus } from 'lucide-react';
 export default function BrandDashboard() {
   const { user, isLoading } = useAuth();
-  const { data: campaigns, loading: campaignsLoading } = useCampaigns({ limit: 5 });
+  const { profile } = useUserProfile();
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaignsLoading, setCampaignsLoading] = useState(true);
   const [stats, setStats] = useState({
     totalBids: 0,
     pendingBids: 0,
@@ -66,7 +68,7 @@ export default function BrandDashboard() {
     refreshInterval: 300000 // 5 minutes
   });
 
-  const brandId = user?.id;
+  const brandId = profile?.brand?.id;
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -74,9 +76,12 @@ export default function BrandDashboard() {
 
       try {
         setLoading(true);
+        setCampaignsLoading(true);
         // Reduce initial load to improve responsiveness
         const res = await campaignService.listByBrand(brandId as string, { limit: 20 });
         const campaigns = res.data.campaigns || [];
+        setCampaigns(campaigns);
+        setCampaignsLoading(false);
 
         if (campaigns.length === 0) {
           setLoading(false);
@@ -106,6 +111,7 @@ export default function BrandDashboard() {
         setStats(totals);
       } catch (error) {
         console.error('Failed to fetch stats:', error);
+        setCampaignsLoading(false);
       } finally {
         setLoading(false);
       }
@@ -293,10 +299,10 @@ export default function BrandDashboard() {
     <div>
 
       <div className='mb-6 mt-4 lg:mt-1 md:mt-1 flex justify-start lg:justify-end '>
-        <Link href="/creator/posts" >
+        <Link href="/brand/campaigns/new" >
           <button className="   bg-gradient-to-r from-blue-600 to-purple-600 text-sm text-white px-4 py-2.5 rounded-sm  flex items-center space-x-1 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md">
             <Plus className="w-4 h-4" />
-            <span>Create New Post</span>
+            <span>Create Campaign</span>
           </button>
         </Link>
       </div>
