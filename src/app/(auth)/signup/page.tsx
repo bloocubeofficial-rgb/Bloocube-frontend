@@ -17,14 +17,6 @@ const SignupForm: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
-  // Redirect authenticated users away from signup
-  if (!authLoading && isAuthenticated) {
-    const target = user?.role === 'brand' ? '/brand' : '/creator';
-    if (typeof window !== 'undefined') {
-      router.replace(target);
-    }
-    return null;
-  }
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -91,6 +83,17 @@ const SignupForm: React.FC = () => {
       clearTimeout(t);
     };
   }, [email]);
+
+  // Redirect authenticated users away from signup. This check must run
+  // after every hook above it (Rules of Hooks — an early return before a
+  // useState/useEffect call would skip it conditionally).
+  if (!authLoading && isAuthenticated) {
+    const target = user?.role === 'brand' ? '/brand' : '/creator';
+    if (typeof window !== 'undefined') {
+      router.replace(target);
+    }
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

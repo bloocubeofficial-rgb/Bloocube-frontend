@@ -20,7 +20,7 @@ interface LoginResponse {
       name: string;
       email: string;
       role: string;
-      profile?: any;
+      profile?: unknown;
       isActive: boolean;
       isVerified: boolean;
       lastLogin: string;
