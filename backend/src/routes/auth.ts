@@ -1,11 +1,15 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { prisma } from '../db';
 import { ok, fail } from '../utils/responses';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { setAuthCookies, clearAuthCookies } from '../utils/cookies';
 import { requireAuth, AuthedRequest } from '../middleware/auth';
+
+const RESET_SECRET = process.env.JWT_ACCESS_SECRET || 'dev-access-secret-change-me';
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:3080';
 
 const router = Router();
 
@@ -114,6 +118,41 @@ router.get('/me', requireAuth, async (req: AuthedRequest, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.userId } });
   if (!user) return fail(res, 'User not found', 404);
   return ok(res, { user: publicUser(user) });
+});
+
+// No email provider is configured in local dev. Rather than silently fail
+// or fake a "sent" email, we log the reset link to the backend console —
+// same honesty rule as skipping OTP on register (see NotificationService).
+router.post('/request-password-reset', async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) return fail(res, 'Email is required', 422);
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  // Always return the same generic success message whether or not the
+  // account exists, to avoid leaking which emails are registered.
+  if (user) {
+    const resetToken = jwt.sign({ sub: user.id, purpose: 'password_reset' }, RESET_SECRET, { expiresIn: '30m' });
+    const resetUrl = `${FRONTEND_ORIGIN}/reset-password/${resetToken}`;
+    console.log(`[password-reset] No email provider configured — reset link for ${email}:\n  ${resetUrl}`);
+  }
+  return ok(res, { message: 'If an account exists, a reset link has been sent to your email.' });
+});
+
+router.post('/reset-password/:token', async (req, res) => {
+  const { newPassword } = req.body || {};
+  if (!newPassword || String(newPassword).length < 6) return fail(res, 'Password must be at least 6 characters', 422);
+
+  let payload: { sub: string; purpose: string };
+  try {
+    payload = jwt.verify(req.params.token, RESET_SECRET) as typeof payload;
+  } catch {
+    return fail(res, 'This reset link is invalid or has expired', 400);
+  }
+  if (payload.purpose !== 'password_reset') return fail(res, 'Invalid reset token', 400);
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  await prisma.user.update({ where: { id: payload.sub }, data: { passwordHash } });
+  return ok(res, { redirectTo: 'login' });
 });
 
 export default router;
