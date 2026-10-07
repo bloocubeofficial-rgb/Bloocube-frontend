@@ -4,54 +4,46 @@ import Image from 'next/image'
 
 const Footer = () => {
   return (
-         <footer className="relative z-10 border-t border-white/[0.06] px-4 sm:px-6 py-10 sm:py-16 backdrop-blur bg-white/[0.02]">
-        <div className="max-w-7xl mx-auto text-gray-300 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10">
-          <div>
-            <div className="flex items-center mb-4">
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24">
-                <Image
-                  src="/logo.png"
-                  alt="Bloocube"
-                  fill
-                  className="object-contain p-1"
-                />
-              </div>
-            </div>
-            <p className="text-gray-400">Your social media workspace powered by AI.</p>
+    <footer className="border-t border-slate-200 bg-white px-4 sm:px-6 py-12">
+      <div className="max-w-7xl mx-auto text-slate-600 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10">
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Image src="/logo.png" alt="BlooCube" width={32} height={32} className="rounded-lg" />
+            <span className="font-bold text-slate-900">BlooCube</span>
           </div>
-          <div>
-            <h4 className="font-semibold mb-3">Product</h4>
-            <ul className="space-y-2 text-gray-400">
-              <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Use Cases</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Integrations</a></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-3">Resources</h4>
-            <ul className="space-y-2 text-gray-400">
-              <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Docs</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Support</a></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-3">Company</h4>
-            <ul className="space-y-2 text-gray-400">
-              <li><Link href="/cancellation-refund" className="hover:text-white transition-colors">Cancellation & Refund Policy</Link></li>
-              <li><Link href="/shipping-delivery" className="hover:text-white transition-colors">Shipping & Delivery Policy</Link></li>
-              <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
-            </ul>
-          </div>
+          <p className="text-slate-500 text-sm">Brands post. Creators apply. Deals happen.</p>
         </div>
-        <div className="max-w-7xl mx-auto mt-8 sm:mt-10 text-center text-gray-500 text-sm sm:text-base">
-          <p>&copy; 2025 Bloocube. All rights reserved.</p>
+        <div>
+          <h4 className="font-semibold mb-3 text-slate-900 text-sm">Product</h4>
+          <ul className="space-y-2 text-sm">
+            <li><Link href="/find-creators" className="hover:text-indigo-600 transition-colors">Find Creators</Link></li>
+            <li><Link href="/campaigns" className="hover:text-indigo-600 transition-colors">Campaigns</Link></li>
+            <li><Link href="/pricing" className="hover:text-indigo-600 transition-colors">Pricing</Link></li>
+          </ul>
         </div>
-      </footer>
+        <div>
+          <h4 className="font-semibold mb-3 text-slate-900 text-sm">Resources</h4>
+          <ul className="space-y-2 text-sm">
+            <li><Link href="/how-it-works" className="hover:text-indigo-600 transition-colors">How It Works</Link></li>
+            <li><Link href="/resources" className="hover:text-indigo-600 transition-colors">Resources</Link></li>
+            <li><Link href="/contact" className="hover:text-indigo-600 transition-colors">Contact</Link></li>
+          </ul>
+        </div>
+        <div>
+          <h4 className="font-semibold mb-3 text-slate-900 text-sm">Company</h4>
+          <ul className="space-y-2 text-sm">
+            <li><Link href="/cancellation-refund" className="hover:text-indigo-600 transition-colors">Cancellation & Refund Policy</Link></li>
+            <li><Link href="/shipping-delivery" className="hover:text-indigo-600 transition-colors">Shipping & Delivery Policy</Link></li>
+            <li><Link href="/privacy" className="hover:text-indigo-600 transition-colors">Privacy Policy</Link></li>
+            <li><Link href="/terms" className="hover:text-indigo-600 transition-colors">Terms of Service</Link></li>
+          </ul>
+        </div>
+      </div>
+      <div className="max-w-7xl mx-auto mt-10 pt-6 border-t border-slate-100 text-center text-slate-400 text-sm">
+        <p>&copy; {new Date().getFullYear()} BlooCube. All rights reserved.</p>
+      </div>
+    </footer>
   )
 }
 
 export default Footer
-
-

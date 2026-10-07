@@ -30,7 +30,8 @@ const SignupForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [role, setRole] = useState("creator");
+  const initialRole = searchParams.get("role") === "brand" ? "brand" : "creator";
+  const [role, setRole] = useState(initialRole);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -55,44 +56,6 @@ const SignupForm: React.FC = () => {
   };
   const isStrongPassword = Object.values(passwordChecks).every(Boolean);
   const passwordsMatch = password === confirm && confirm.length > 0;
-
-  // ✅ Handles Google signup redirect
-  const handleGoogle = async () => {
-    try {
-      // With HttpOnly cookies, we don't need to set guest tokens
-      // The server will handle authentication via cookies
-
-      const callbackUrl = `${window.location.origin}/auth/google/callback`;
-      const data = await apiRequest<{
-        success: boolean;
-        authURL?: string;
-        state?: string;
-        message?: string;
-        error?: string;
-      }>("/api/google/auth-url", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ redirectUri: callbackUrl }),
-      });
-
-      if (!data.success || !data.authURL)
-        return setError(
-          data.message || data.error || "Failed to start Google auth"
-        );
-
-      // Store OAuth state in sessionStorage for security
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem("google_state", data.state || "");
-      }
-      window.location.href = data.authURL;
-    } catch (e: unknown) {
-      const message =
-        e instanceof Error ? e.message : "Failed to start Google auth";
-      setError(message);
-    }
-  };
 
   // Auto-fill email from URL param
   useEffect(() => {
@@ -216,12 +179,12 @@ const SignupForm: React.FC = () => {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#050510] px-2 py-6">
+    <section className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-b from-[var(--brand-lavender)] to-white px-2 py-6">
       {/* Animated glowing background */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-[450px] h-[450px] bg-gradient-to-br from-indigo-600/30 to-purple-500/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -right-40 w-[450px] h-[450px] bg-gradient-to-tr from-fuchsia-600/30 to-cyan-500/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-gradient-to-br from-blue-600/10 to-purple-600/10 rounded-full blur-3xl opacity-50" />
+        <div className="hidden" />
+        <div className="hidden" />
+        <div className="hidden" />
       </div>
 
       {/* Subtle grid overlay */}
@@ -231,21 +194,21 @@ const SignupForm: React.FC = () => {
         initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-lg rounded-3xl border border-white/10 bg-white/5 backdrop-blur-2xl shadow-[0_0_40px_rgba(99,102,241,0.25)] p-6 sm:p-8"
+        className="relative z-10 w-full max-w-lg rounded-3xl border border-slate-100 bg-white shadow-xl shadow-slate-200/60 p-6 sm:p-8"
       >
-        <div className="absolute -top-2 -left-2 w-24 h-24 bg-gradient-to-br from-blue-600 to-purple-600 rounded-tl-3xl blur-2xl opacity-50" />
-        <div className="absolute -bottom-2 -right-2 w-24 h-24 bg-gradient-to-tl from-fuchsia-600 to-cyan-600 rounded-br-3xl blur-2xl opacity-50" />
+        <div className="hidden" />
+        <div className="hidden" />
 
         <div className="text-center mb-6">
-          <h2 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
+          <h2 className="text-4xl font-bold text-slate-900">
             Create Your Account
           </h2>
-          <p className="text-zinc-400 text-sm mt-1">
+          <p className="text-slate-500 text-sm mt-1">
             Join thousands of creators and brands
           </p>
           {searchParams.get("email") && (
-            <div className="mt-3 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-              <p className="text-sm text-emerald-300">
+            <div className="mt-3 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
+              <p className="text-sm text-emerald-700">
                 Email pre-filled from landing page
               </p>
             </div>
@@ -255,49 +218,49 @@ const SignupForm: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Full Name */}
           <div>
-            <Label htmlFor="name" className="text-zinc-300 text-sm mb-2 block">
+            <Label htmlFor="name" className="text-slate-700 text-sm mb-2 block">
               Full Name
             </Label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
               <Input
                 id="name"
                 type="text"
                 placeholder="John Doe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-zinc-500 rounded-xl focus:ring-2 focus:ring-indigo-500/30"
+                className="pl-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl focus:ring-2 focus:ring-indigo-100"
               />
             </div>
           </div>
 
           {/* Email */}
           <div>
-            <Label htmlFor="email" className="text-zinc-300 text-sm mb-2 block">
+            <Label htmlFor="email" className="text-slate-700 text-sm mb-2 block">
               Email Address
             </Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
               <Input
                 id="email"
                 type="email"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-zinc-500 rounded-xl focus:ring-2 focus:ring-indigo-500/30"
+                className="pl-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl focus:ring-2 focus:ring-indigo-100"
               />
               {email && (
                 <div className="mt-2 text-xs">
                   {checkingEmail && (
-                    <span className="text-zinc-400">Checking email…</span>
+                    <span className="text-slate-500">Checking email…</span>
                   )}
                   {!checkingEmail && emailExists === true && (
-                    <span className="text-red-400">
+                    <span className="text-red-600">
                       Email already exists. Try logging in.
                     </span>
                   )}
                   {!checkingEmail && emailExists === false && (
-                    <span className="text-emerald-400">
+                    <span className="text-emerald-600">
                       Email is available.
                     </span>
                   )}
@@ -311,11 +274,11 @@ const SignupForm: React.FC = () => {
             <div className="relative">
               <Label
                 htmlFor="password"
-                className="text-zinc-300 text-sm mb-2 block"
+                className="text-slate-700 text-sm mb-2 block"
               >
                 Password
               </Label>
-              <Lock className="absolute left-3 top-[38px] w-5 h-5 text-zinc-400" />
+              <Lock className="absolute left-3 top-[38px] w-5 h-5 text-slate-500" />
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
@@ -323,31 +286,31 @@ const SignupForm: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onBlur={() => setPasswordTouched(true)}
-                className="pl-10 pr-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-zinc-500 rounded-xl focus:ring-2 focus:ring-indigo-500/30"
+                className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl focus:ring-2 focus:ring-indigo-100"
               />
             {passwordTouched || password.length > 0 ? (
               <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                <div className={`flex items-center gap-2 ${passwordChecks.length ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                <div className={`flex items-center gap-2 ${passwordChecks.length ? 'text-emerald-600' : 'text-slate-500'}`}>
                   <span className={`w-2 h-2 rounded-full ${passwordChecks.length ? 'bg-emerald-400' : 'bg-zinc-500'}`}></span>
                   At least {passwordRules.minLength} characters
                 </div>
-                <div className={`flex items-center gap-2 ${passwordChecks.upper ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                <div className={`flex items-center gap-2 ${passwordChecks.upper ? 'text-emerald-600' : 'text-slate-500'}`}>
                   <span className={`w-2 h-2 rounded-full ${passwordChecks.upper ? 'bg-emerald-400' : 'bg-zinc-500'}`}></span>
                   One uppercase letter (A-Z)
                 </div>
-                <div className={`flex items-center gap-2 ${passwordChecks.lower ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                <div className={`flex items-center gap-2 ${passwordChecks.lower ? 'text-emerald-600' : 'text-slate-500'}`}>
                   <span className={`w-2 h-2 rounded-full ${passwordChecks.lower ? 'bg-emerald-400' : 'bg-zinc-500'}`}></span>
                   One lowercase letter (a-z)
                 </div>
-                <div className={`flex items-center gap-2 ${passwordChecks.number ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                <div className={`flex items-center gap-2 ${passwordChecks.number ? 'text-emerald-600' : 'text-slate-500'}`}>
                   <span className={`w-2 h-2 rounded-full ${passwordChecks.number ? 'bg-emerald-400' : 'bg-zinc-500'}`}></span>
                   One number (0-9)
                 </div>
-                <div className={`flex items-center gap-2 ${passwordChecks.special ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                <div className={`flex items-center gap-2 ${passwordChecks.special ? 'text-emerald-600' : 'text-slate-500'}`}>
                   <span className={`w-2 h-2 rounded-full ${passwordChecks.special ? 'bg-emerald-400' : 'bg-zinc-500'}`}></span>
                   One special character (!@#$...)
                 </div>
-                <div className={`flex items-center gap-2 ${passwordChecks.noSpace ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                <div className={`flex items-center gap-2 ${passwordChecks.noSpace ? 'text-emerald-600' : 'text-slate-500'}`}>
                   <span className={`w-2 h-2 rounded-full ${passwordChecks.noSpace ? 'bg-emerald-400' : 'bg-zinc-500'}`}></span>
                   No spaces
                 </div>
@@ -356,7 +319,7 @@ const SignupForm: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[38px] text-zinc-400 hover:text-white"
+                className="absolute right-3 top-[38px] text-slate-500 hover:text-slate-700"
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -369,11 +332,11 @@ const SignupForm: React.FC = () => {
             <div className="relative">
               <Label
                 htmlFor="confirm"
-                className="text-zinc-300 text-sm mb-2 block"
+                className="text-slate-700 text-sm mb-2 block"
               >
                 Confirm Password
               </Label>
-              <Lock className="absolute left-3 top-[38px] w-5 h-5 text-zinc-400" />
+              <Lock className="absolute left-3 top-[38px] w-5 h-5 text-slate-500" />
               <Input
                 id="confirm"
                 type={showConfirm ? "text" : "password"}
@@ -381,11 +344,11 @@ const SignupForm: React.FC = () => {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 onBlur={() => setConfirmTouched(true)}
-                className="pl-10 pr-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-zinc-500 rounded-xl focus:ring-2 focus:ring-indigo-500/30"
+                className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl focus:ring-2 focus:ring-indigo-100"
               />
             {(confirmTouched || confirm.length > 0) && (
               <div className="mt-2 text-xs">
-                <span className={`${passwordsMatch ? 'text-emerald-400' : 'text-red-400'}`}>
+                <span className={`${passwordsMatch ? 'text-emerald-600' : 'text-red-600'}`}>
                   {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
                 </span>
               </div>
@@ -393,7 +356,7 @@ const SignupForm: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-3 top-[38px] text-zinc-400 hover:text-white"
+                className="absolute right-3 top-[38px] text-slate-500 hover:text-slate-700"
               >
                 {showConfirm ? (
                   <EyeOff className="w-5 h-5" />
@@ -406,7 +369,7 @@ const SignupForm: React.FC = () => {
 
           {/* Role */}
           <div>
-            <Label htmlFor="role" className="text-zinc-300 text-sm mb-2 block">
+            <Label htmlFor="role" className="text-slate-700 text-sm mb-2 block">
               Select Role
             </Label>
             <Select>
@@ -414,9 +377,9 @@ const SignupForm: React.FC = () => {
                 id="role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="h-11 w-full bg-white/5 border-white/10 text-gray-600 placeholder:text-zinc-500 rounded-xl focus:ring-2 focus:ring-gray-500/30"
+                className="h-11 w-full bg-slate-50 border-slate-200 text-slate-900 rounded-xl focus:ring-2 focus:ring-indigo-100"
               >
-                <option value="" disabled className="text-zinc-100">
+                <option value="" disabled className="text-slate-900">
                   Select your role...
                 </option>
                 <SelectItem value="creator" className="cursor-pointer">
@@ -430,16 +393,16 @@ const SignupForm: React.FC = () => {
           </div>
 
           {error && (
-            <Alert className="bg-red-500/10 border-red-500/20 rounded-xl">
-              <AlertDescription className="text-red-400 text-sm">
+            <Alert className="bg-red-50 border-red-200 rounded-xl">
+              <AlertDescription className="text-red-600 text-sm">
                 {error}
               </AlertDescription>
             </Alert>
           )}
 
           {message && (
-            <Alert className="bg-emerald-500/10 border-emerald-500/20 rounded-xl">
-              <AlertDescription className="text-emerald-400 text-sm">
+            <Alert className="bg-emerald-50 border-emerald-200 rounded-xl">
+              <AlertDescription className="text-emerald-600 text-sm">
                 {message}
               </AlertDescription>
             </Alert>
@@ -448,7 +411,7 @@ const SignupForm: React.FC = () => {
           <Button
             type="submit"
             disabled={isLoading || !isStrongPassword || !passwordsMatch}
-            className="w-full h-11 bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 rounded-xl text-white font-semibold shadow-lg hover:shadow-[0_0_20px_rgba(147,51,234,0.4)] transition-all duration-300"
+            className="w-full h-11 bg-slate-900 hover:bg-slate-800 rounded-xl text-white font-semibold"
           >
             {isLoading ? (
               <div className="flex items-center gap-2">
@@ -463,53 +426,11 @@ const SignupForm: React.FC = () => {
             )}
           </Button>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4  text-zinc-400">Or continue with</span>
-            </div>
-          </div>
-
-          {/* Google Signup */}
-          <button
-            onClick={handleGoogle}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all duration-300 hover:scale-105"
-          >
-            <svg
-              className="w-5 h-5"
-              viewBox="0 0 48 48"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path
-                fill="#FFC107"
-                d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36 16.8 36 11 30.2 11 23S16.8 10 24 10c3.2 0 6.1 1.2 8.3 3.2l5.7-5.7C34.6 4.2 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c12.1 0 21.6-8.8 21.6-22 0-1.2-.1-2.3-.3-3.5z"
-              />
-              <path
-                fill="#FF3D00"
-                d="M6.3 14.7l6.6 4.8C14.9 16.3 19.1 14 24 14c3.2 0 6.1 1.2 8.3 3.2l5.7-5.7C34.6 4.2 29.6 2 24 2 15 2 7.5 7.2 6.3 14.7z"
-              />
-              <path
-                fill="#4CAF50"
-                d="M24 46c5.2 0 10-1.9 13.6-5.2l-6.3-5.2C29.1 37.2 26.7 38 24 38c-5.3 0-9.7-3.1-11.5-7.6l-6.6 5.1C7.5 40.8 15 46 24 46z"
-              />
-              <path
-                fill="#1976D2"
-                d="M43.6 20.5H42V20H24v8h11.3c-1.1 2.6-3.1 4.7-5.7 6.1l6.3 5.2C38.9 36.5 42 30.9 42 24c0-1.2-.1-2.3-.4-3.5z"
-              />
-            </svg>
-
-            <span className="text-sm font-medium">Sign up with Google</span>
-          </button>
-
-          <p className="mt-5 text-center text-zinc-400 text-sm z-50">
+          <p className="mt-5 text-center text-slate-500 text-sm z-50">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="text-indigo-400 hover:text-fuchsia-400 font-semibold transition-colors"
+              className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors"
             >
               Login
             </Link>
@@ -523,7 +444,7 @@ const SignupForm: React.FC = () => {
 const SignupPage: React.FC = () => (
   <Suspense
     fallback={
-      <div className="min-h-screen flex items-center justify-center text-white">
+      <div className="min-h-screen flex items-center justify-center text-slate-900">
         Loading...
       </div>
     }

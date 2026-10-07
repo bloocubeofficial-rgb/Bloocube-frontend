@@ -40,9 +40,10 @@ export const config = {
 };
 
 export const getApiBase = (): string => {
-  // In development mode, always use localhost
+  // In development mode, default to localhost but allow overriding the port
+  // (e.g. when 5000 is already taken by macOS AirPlay Receiver / ControlCenter).
   if (process.env.NODE_ENV === 'development' || (typeof window !== 'undefined' && window.location.hostname === 'localhost')) {
-    return 'http://localhost:5000';
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
   }
 
   const runtime = (globalThis as any)?.NEXT_PUBLIC_API_URL as string | undefined;
