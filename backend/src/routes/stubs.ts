@@ -25,6 +25,7 @@ router.post('/analytics/user/:userId/sync', requireAuth, (req, res) =>
   fail(res, 'Analytics sync requires a connected social account. Not available in local dev.', 501, 'NOT_CONFIGURED')
 );
 
+router.get('/competitor/history', requireAuth, (req, res) => ok(res, { analyses: [], pagination: { page: 1, limit: 5, total: 0, pages: 1 } }));
 router.get('/competitor/analysis/:id', requireAuth, (req, res) => fail(res, 'Not found', 404));
 router.post('/competitor/analyze', requireAuth, (req, res) =>
   fail(res, 'Competitor analysis requires an AI provider to be configured. Not available in local dev.', 501, 'NOT_CONFIGURED')

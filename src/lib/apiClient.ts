@@ -422,6 +422,9 @@ export async function apiRequest<T = unknown>(path: string, init: RequestInit = 
         } else if (basePath.includes('/engagement')) {
           cacheUtils.clearPattern('/api/engagement');
           console.log(`🗑️ Auto-invalidated cache for: /api/engagement`);
+        } else if (basePath.includes('/conversations')) {
+          cacheUtils.clearPattern('/api/conversations');
+          console.log(`🗑️ Auto-invalidated cache for: /api/conversations`);
         }
       }
 

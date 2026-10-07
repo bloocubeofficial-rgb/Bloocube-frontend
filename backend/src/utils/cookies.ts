@@ -12,7 +12,10 @@ const baseOpts = {
 export function setAuthCookies(res: Response, accessToken: string, refreshToken: string, userData: Record<string, unknown>) {
   res.cookie('access_token', accessToken, { ...baseOpts, maxAge: 15 * 60 * 1000 });
   res.cookie('refresh_token', refreshToken, { ...baseOpts, maxAge: 7 * 24 * 60 * 60 * 1000 });
-  // user_data is readable by the frontend (not HttpOnly) — mirrors cookieAuth.ts contract
+  // user_data is readable by the frontend (not HttpOnly) — mirrors cookieAuth.ts
+  // contract. Keep the default percent-encoding here (raw JSON contains
+  // characters like {, }, "," that Node's cookie serializer rejects
+  // outright) — see the decodeURIComponent fix in cookieAuth.ts's getUser().
   res.cookie('user_data', JSON.stringify(userData), { ...baseOpts, httpOnly: false, maxAge: 7 * 24 * 60 * 60 * 1000 });
 }
 

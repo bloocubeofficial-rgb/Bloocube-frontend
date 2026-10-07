@@ -3,6 +3,18 @@
 
 export type Role = 'creator' | 'brand' | 'admin';
 
+// The backend percent-encodes this cookie's value (raw JSON contains
+// characters like {, }, "," that cookie serializers reject outright). The
+// frontend's own setCookie() below writes it unencoded instead, so decode
+// defensively — decodeURIComponent on an already-plain string is a no-op.
+function parseCookieJson(raw: string): Record<string, unknown> {
+  try {
+    return JSON.parse(decodeURIComponent(raw));
+  } catch {
+    return JSON.parse(raw);
+  }
+}
+
 export function isAuthorized(role: Role) {
   return role === 'creator' || role === 'brand' || role === 'admin';
 }
@@ -34,7 +46,7 @@ export const cookieAuthUtils = {
         return null;
       }
       
-      const user = JSON.parse(userCookie);
+      const user = parseCookieJson(userCookie);
       
       // Validate user data structure
       if (!user || typeof user !== 'object' || !user.id) {
@@ -136,7 +148,7 @@ export const cookieAuthUtils = {
     if (!userCookie) return null;
     
     try {
-      const user = JSON.parse(userCookie);
+      const user = parseCookieJson(userCookie);
       
       // Update cache with fresh data
       userCache = {
